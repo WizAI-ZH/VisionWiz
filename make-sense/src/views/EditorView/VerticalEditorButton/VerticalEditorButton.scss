@@ -1,0 +1,44 @@
+@import '../../../settings/Settings';
+
+.VerticalEditorButton {
+  height: $sideNavigationBarCompanionWidth;
+  width: 80px;
+  background-color: transparent;
+  transition: 0.3s ease-in-out;
+  transform: rotate(-90deg);
+  transform-origin: 0 0;
+  margin-bottom: 60px;
+  user-select: none;
+  cursor: pointer;
+  position: absolute;
+  top: 81px;
+  left: 0;
+
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+
+  color: white;
+  font-size: 13px;
+  border-color: $darkThemeSecondColor;
+  border-left: 1px;
+
+  img {
+    width: 15px;
+    height: 15px;
+    filter: brightness(0) invert(1);
+    margin-right: 5px;
+    user-select: none;
+  }
+
+  &:hover {
+    background-color: $darkThemeFirstColor;
+  }
+
+  &.active {
+    background-color: $darkThemeFirstColor;
+  }
+}

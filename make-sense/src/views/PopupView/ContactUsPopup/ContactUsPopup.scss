@@ -1,0 +1,58 @@
+@import '../../../settings/Settings';  
+
+.ContactUsPopup {  
+    align-self: stretch;  
+    flex: 1;  
+    display: flex;  
+    flex-direction: column;  
+    flex-wrap: nowrap;  
+    justify-content: flex-start;  
+    align-items: center;  
+    align-content: flex-start;  
+    padding-top: 30px;  
+    background-color: #333333; /* 深色背景 */  
+    border-radius: 8px;  
+    width: 90%; /* 尽可能利用宽度 */  
+    max-width: 50%; /* 最大限宽 */  
+    max-height: 90%;
+    margin: auto auto;  
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); /* 更深的阴影 */  
+}  
+
+.Content {  
+    display: flex;  
+    flex-direction: column;  
+    align-items: center;  
+    text-align: center;  
+    color: #ffffff; /* 文字颜色改为白色 */  
+}  
+
+.PhoneNumber, .Address {  
+    margin: 10px 0;  
+    font-size: 15px;  
+    padding: 0 40px;  
+    color: #ffffff; /* 文字颜色改为白色 */  
+}  
+
+.QRCode {  
+    margin: 10px 0;  
+    img {  
+        width: auto; /* 适应容器宽度 */  
+        height: auto; /* 保持比例 */  
+        max-height: 200px; /* 控制最大高度，避免太长 */  
+    }  
+}  
+
+.CloseButton {  
+    margin-top: 20px; /* 减少与地址之间的间隔 */  
+    padding: 10px 0;  
+    background-color: #007bff; /* 按钮背景颜色改为蓝色 */  
+    color: white;  
+    width: 100%; /* 宽度与容器一致 */  
+    text-align: center;  
+    cursor: pointer;  
+    border-radius: 0 0 8px 8px; /* 只在底部圆角 */  
+    font-size: 16px; /* 增大字体 */  
+    font-weight: bold; /* 加粗字体 */  
+    border: none; /* 移除边框 */  
+}
