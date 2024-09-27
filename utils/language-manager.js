@@ -6,6 +6,7 @@
 const fs = require('fs');  
 const path = require('path');   
 let locales = {}; // 存储当前语言的文本  
+console.log('language-manager loaded')
 
 function loadLocale(language) {  
     const localePath = path.join('locales', `${language}.json`);  

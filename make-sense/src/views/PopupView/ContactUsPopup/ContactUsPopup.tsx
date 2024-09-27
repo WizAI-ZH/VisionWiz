@@ -35,11 +35,4 @@ const ContactUsPopup: React.FC = () => {
     );  
 };  
 
-// const mapStateToProps = (state: AppState) => ({});
-// const mapDispatchToProps = {};
-
-// export default connect(
-//     mapStateToProps,
-//     mapDispatchToProps
-// )(ContactUsPopup); 
 export default ContactUsPopup

@@ -14,14 +14,15 @@ function createMakeSenseWindow(language) {
     height: 800,  
     autoHideMenuBar: true,
     webPreferences: {  
-      nodeIntegration: false, // 禁用 Node.js 集成  
-      contextIsolation: true, // 启用上下文隔离  
-      preload: path.join(__dirname, 'make-sense-preload.js'), // 预加载脚本
+      nodeIntegration: true, 
+      contextIsolation: false,
+      preload: path.join(__dirname, 'preload.js'),
     },  
   });  
 
   // 加载 make-sense 的 index.html 
-  makeSenseWindow.loadFile(path.join(__dirname,'tools', 'make-sense-'+language , 'index.html'));  
+  makeSenseWindow.loadFile(path.join(__dirname,'tools', 'make-sense' , 'index.html'));  
+  // makeSenseWindow.loadFile(path.join(__dirname, 'make-sense','dist' , 'index.html'));  
   // 可选：打开开发者工具  
   makeSenseWindow.webContents.openDevTools({ mode: 'detach' })
 }  

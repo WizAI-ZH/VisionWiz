@@ -10,6 +10,7 @@ interface IProps {
     isActive?:boolean;
     isDisabled?:boolean;
     externalClassName?:string;
+    id:string;
 }
 
 export const TextButton = (props:IProps) => {

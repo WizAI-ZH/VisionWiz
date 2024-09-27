@@ -27,7 +27,7 @@ window.app = {
   // 获取当前语言  
   getLanguage: () => ipcRenderer.invoke('get-language'),  
 
-  // 更新语言  
+  // 更新main.js文本语言  
   setLanguage: (language) => ipcRenderer.invoke('set-language', language),  
 
   // 加载语言文件  
@@ -41,10 +41,7 @@ window.app = {
       return null;  
     }  
   },  
-  onChangeLanguage: (callback) => ipcRenderer.on('change-language', (event, language) => callback(language)),  
-  sendGetState: () => ipcRenderer.send('get-state'),  
-  onStateData: (callback) => ipcRenderer.on('state-data', (event, stateData) => callback(stateData)),  
-  startTask: (taskData) => ipcRenderer.send('task-start', taskData),  
+  onChangeLanguage: (callback) => ipcRenderer.on('change-language', (event, language) => callback(language)),   
   sendToMain: (channel, data) => {  
     // 在这里可以同样加入安全检查  
     ipcRenderer.send(channel, data);  
