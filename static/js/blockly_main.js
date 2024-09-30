@@ -6,7 +6,7 @@ Notiflix.Notify.init({
 Notiflix.Report.init({})  
 
 let camold = '';  
-document.getElementById('cam_list').innerHTML = '<li><a class="dropdown-item" href="#">没有发现摄像头</a></li>';  
+document.getElementById('cam_list').innerHTML = '<li><a class="dropdown-item" href="#">'+'No Cams'+'</a></li>';  
 
 const getVideoList = () => {  
     let cams = '';  
@@ -19,12 +19,12 @@ const getVideoList = () => {
             });  
 
             if (cams.length == 0) {  
-                cams = '<li><a class="dropdown-item" href="#">没有发现摄像头</a></li>';  
+                cams = '<li><a id="camera_not_found" class="dropdown-item" href="#">'+current_locales.camera_not_found+'</a></li>';  
                 document.getElementById('cam_list').innerHTML = cams;  
             }  
             if (camold != cams) {  
                 camold = cams;  
-                cams += '<li><a id="disconnect_camera" class="dropdown-item" href="#" onclick="stopcam()">断开摄像头</a></li>';  
+                cams += '<li><a id="disconnect_camera" class="dropdown-item" href="#" onclick="stopcam()">'+current_locales.disconnect_camera+'</a></li>';  
                 document.getElementById('cam_list').innerHTML = cams;  
             }  
         });  
@@ -43,11 +43,11 @@ function opencam(id, name) {
             document.getElementById("cbtn").classList.replace("btn-danger", "btn-success");  
             MediaStream = success.getTracks()[0];  
             zt = true;  
-            Notiflix.Notify.success('摄像头已打开。');  
+            Notiflix.Notify.success(current_locales.camera_opened);  
         })  
         .catch(error => {  
             console.log(error);  
-            Notiflix.Notify.warning('摄像头开启失败，请检查摄像头是否可用！');  
+            Notiflix.Notify.warning(current_locales.camera_open_failed);  
             console.error('摄像头开启失败，请检查摄像头是否可用！');  
         });  
 }  
@@ -61,11 +61,10 @@ function stopcam() {
     if (MediaStream) {  
         MediaStream.stop();  
     }  
-    document.getElementById('cbtn').innerHTML = '连接摄像头';  
+    document.getElementById('cbtn').innerHTML = current_locales.connect_camera;  
     document.getElementById("cbtn").classList.replace("btn-success", "btn-danger");  
-    Notiflix.Notify.success('摄像头已断开。');  
+    Notiflix.Notify.success(current_locales.camera_disconnected);  
     zt = false;  
 }  
-
-getVideoList();  
+ 
 startcam();
