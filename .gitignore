@@ -14,6 +14,10 @@ get-electron-abi.js
 /py39/
 /node_modules/
 /maix_train/
+#有修改/添加过的内容
+!maix_train/train/detector/predict_test.py
+!maix_train/train/detector/test.py
+!maix_train/train/classifier/predict_test.py
 
 #开发文件
 Wiz_AI_tool.code-workspace
