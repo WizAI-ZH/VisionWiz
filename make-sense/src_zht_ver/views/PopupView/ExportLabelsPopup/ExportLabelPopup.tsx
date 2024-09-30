@@ -77,7 +77,7 @@ const ExportLabelPopup: React.FC<IProps> = ({ activeLabelType }) => {
     const renderInternalContent = (type: LabelType) => {
         return <>
             <div className='Message'>
-            選擇標籤類型和您想要用於匯出標註文件的文件格式。
+            選擇標籤類型和您想要用於導出標註文件的文件格式。
             </div>
             <div className='Options'>
                 {getOptions(ExportFormatData[type])}

@@ -30,7 +30,7 @@ export const NotificationsDataMap: ExportFormatDataMap = {
     },  
     [Notification.LABELS_FILE_UPLOAD_ERROR]: {  
         header: '標籤文件未上傳',  
-        description: '看起來您忘記上傳包含檢測類名稱列表的文本文件。我們需要它來將YOLOv5模型輸出映射到標籤。請重新上傳所有模型文件。'  
+        description: '看起來您忘記上傳包含檢測類名稱列表的文本文件。我們需要它來將YOLOv5模型導出映射到標籤。請重新上傳所有模型文件。'  
     },  
     [Notification.ANNOTATION_FILE_PARSE_ERROR]: {  
         header: '標註文件無法解析',  

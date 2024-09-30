@@ -44,8 +44,8 @@ export const DropDownMenuData: DropDownMenuNode[] = [
                 onClick: () => store.dispatch(updateActivePopupType(PopupWindowType.IMPORT_ANNOTATIONS))
             },
             {
-                name: '匯出標註檔案',
-                description: '匯出標註檔案',
+                name: '導出標註檔案',
+                description: '導出標註檔案',
                 imageSrc: './ico/export-labels.png',
                 imageAlt: 'export-labels',
                 disabled: false,

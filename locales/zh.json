@@ -107,6 +107,6 @@
     "test_loss": "测试集损失值",
     "test_acc": "测试集准确率",
     "plz_select_xml_dir": "请先选择标签地址",
-    "anchors_key":"锚点 : "
-
+    "anchors_key":"锚点 : ",
+    "make_sense_tool_button":"使用慧标进行图片标注"
 }

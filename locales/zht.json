@@ -3,9 +3,9 @@
     "description": "這是一種多語言支援的示例。",
     "btn": "按鈕",
     "Electron_life_cycle": "Electron生命週期",
-    "descript_ob_detect": "在此進行目標檢測模型訓練，可以設定目標檢測參數、查看訓練過程以及測試與匯出訓練結果",
+    "descript_ob_detect": "在此進行目標檢測模型訓練，可以設定目標檢測參數、查看訓練過程以及測試與導出訓練結果",
     "descript_data_collect": "在此可通過攝像頭進行數據獲取，可以設定當前拍攝目標名字、圖片保存路徑",
-    "descript_img_classifier":"在此進行圖像分類模型訓練，可以設定訓練參數、查看訓練過程以及測試與匯出訓練結果",
+    "descript_img_classifier":"在此進行圖像分類模型訓練，可以設定訓練參數、查看訓練過程以及測試與導出訓練結果",
     "descript_toolset":"包含基礎的圖像標注、圖像收集工具",
     "class_name": "種類名稱",
     "save_dir": "保存資料夾",
@@ -70,7 +70,7 @@
     "target_detection": "目標檢測",
     "loss_and_confusion_mx": "Loss圖表與混淆矩陣",
     "confusion_mx": "混淆矩陣",
-    "choose_export_path": "選擇匯出路徑",
+    "choose_export_path": "選擇導出路徑",
     "label_key":"標籤     : ",
     "alpha_key":"Alpha    : ",
     "model_type_key":"模型類型 : ",
@@ -107,6 +107,7 @@
     "test_loss": "測試集損失值",
     "test_acc": "測試集準確率",
     "plz_select_xml_dir": "請先選擇標籤地址",
-    "anchors_key":"錨點 : "
+    "anchors_key":"錨點 : ",
+    "make_sense_tool_button":"使用慧標進行圖片标註"
 }
 

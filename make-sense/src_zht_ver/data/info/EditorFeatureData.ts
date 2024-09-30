@@ -21,12 +21,12 @@ export const EditorFeatureData: IEditorFeature[] = [
         "imageAlt": "labels"  
     },  
     {  
-        "displayText": "支持輸出文件格式如 YOLO, VOC XML, VGG JSON, CSV",  
+        "displayText": "支持導出文件格式如 YOLO, VOC XML, VGG JSON, CSV",  
         "imageSrc": "./ico/file.png",  
         "imageAlt": "file"  
     },  
     {  
-        "displayText": "使用人工智慧讓您的標註更高效",  
+        "displayText": "使用人工智能讓您的標註更高效",  
         "imageSrc": "./ico/robot.png",  
         "imageAlt": "robot"  
     }

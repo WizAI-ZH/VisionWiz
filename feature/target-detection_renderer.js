@@ -75,7 +75,7 @@ xterm_yolo.onData(data => { ipcRenderer.send('send_data_terminal_yolo', data); }
 
 ipcRenderer.on('window-resize',(event,{width,height})=>{
     // 窗口尺寸变化时，终端尺寸自适应
-    console.log(document.getElementById('xterm_yolo'))
+    // console.log(document.getElementById('xterm_yolo'))
     fitAddon_yolo.fit()
     // // 获取终端元素  
     const terminalElement = document.getElementById('xterm_yolo');  
