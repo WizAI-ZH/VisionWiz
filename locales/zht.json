@@ -108,6 +108,7 @@
     "test_acc": "測試集準確率",
     "plz_select_xml_dir": "請先選擇標籤地址",
     "anchors_key":"錨點 : ",
-    "make_sense_tool_button":"使用慧標進行圖片标註"
+    "make_sense_tool_button":"使用慧標進行圖片标註",
+    "disconnect_camera": "斷開攝像頭"
 }
 

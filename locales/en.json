@@ -108,5 +108,6 @@
     "test_acc": "Test set accuracy",
     "plz_select_xml_dir": "Please select the label directory first",
     "anchors_key": "Anchor: ",
-    "make_sense_tool_button":"Open Make-Sense"
+    "make_sense_tool_button":"Open Make-Sense",
+    "disconnect_camera": "Disconnect camera"
 }

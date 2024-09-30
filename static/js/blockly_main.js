@@ -24,7 +24,7 @@ const getVideoList = () => {
             }  
             if (camold != cams) {  
                 camold = cams;  
-                cams += '<li><a class="dropdown-item" href="#" onclick="stopcam()">断开摄像头</a></li>';  
+                cams += '<li><a id="disconnect_camera" class="dropdown-item" href="#" onclick="stopcam()">断开摄像头</a></li>';  
                 document.getElementById('cam_list').innerHTML = cams;  
             }  
         });  
