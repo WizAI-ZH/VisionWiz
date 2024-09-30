@@ -63,72 +63,70 @@ const LoadLabelNamesPopup: React.FC<IProps> = (
         updateActivePopupTypeAction(PopupWindowType.INSERT_LABEL_NAMES);
     };
 
-    const getDropZoneContent = () => {
-        if (invalidFileLoadedStatus)
-            return <>
-                <input {...getInputProps()} />
-                <img
-                    draggable={false}
-                    alt={'upload'}
-                    src={'./ico/box-opened.png'}
-                />
-                <p className='extraBold'>Loading of labels file was unsuccessful</p>
-                <p className='extraBold'>Try again</p>
-            </>;
-        else if (acceptedFiles.length === 0)
-            return <>
-                <input {...getInputProps()} />
-                <img
-                    draggable={false}
-                    alt={'upload'}
-                    src={'./ico/box-opened.png'}
-                />
-                <p className='extraBold'>Drop labels file</p>
-                <p>or</p>
-                <p className='extraBold'>Click here to select it</p>
-            </>;
-        else if (labelsList.length === 1)
-            return <>
-                <img
-                    draggable={false}
-                    alt={'uploaded'}
-                    src={'./ico/box-closed.png'}
-                />
-                <p className='extraBold'>only 1 label found</p>
-            </>;
-        else
-            return <>
-                <img
-                    draggable={false}
-                    alt={'uploaded'}
-                    src={'./ico/box-closed.png'}
-                />
-                <p className='extraBold'>{labelsList.length} labels found</p>
-            </>;
+    const getDropZoneContent = () => {  
+        if (invalidFileLoadedStatus)  
+            return <>  
+                <input {...getInputProps()} />  
+                <img  
+                    draggable={false}  
+                    alt={'upload'}  
+                    src={'./ico/box-opened.png'}  
+                />  
+                <p className='extraBold'>标注文件加载失败</p>  
+                <p className='extraBold'>请重试</p>  
+            </>;  
+        else if (acceptedFiles.length === 0)  
+            return <>  
+                <input {...getInputProps()} />  
+                <img  
+                    draggable={false}  
+                    alt={'upload'}  
+                    src={'./ico/box-opened.png'}  
+                />  
+                <p className='extraBold'>拖放标注文件</p>  
+                <p>或者</p>  
+                <p className='extraBold'>点击此处选择</p>  
+            </>;  
+        else if (labelsList.length === 1)  
+            return <>  
+                <img  
+                    draggable={false}  
+                    alt={'uploaded'}  
+                    src={'./ico/box-closed.png'}  
+                />  
+                <p className='extraBold'>仅找到1个标签</p>  
+            </>;  
+        else  
+            return <>  
+                <img  
+                    draggable={false}  
+                    alt={'uploaded'}  
+                    src={'./ico/box-closed.png'}  
+                />  
+                <p className='extraBold'>{labelsList.length} 个标签已找到</p>  
+            </>;  
     };
 
-    const renderContent = () => {
-        return (<div className='LoadLabelsPopupContent'>
-            <div className='Message'>
-                Load a text file with a list of labels you are planning to use. The names of
-                each label should be separated by new line. If you don&apos;t have a prepared file, no problem. You can
-                create your own list now.
-            </div>
-            <div {...getRootProps({ className: 'DropZone' })}>
-                {getDropZoneContent()}
-            </div>
-        </div>);
+    const renderContent = () => {  
+        return (<div className='LoadLabelsPopupContent'>  
+            <div className='Message'>  
+                加载一个包含您计划使用的标签列表的文本文件。每个标签的名称应以换行符分隔。如果您没有准备好的文件，您可以创建自己的列表。  
+            </div>  
+            <div {...getRootProps({ className: 'DropZone' })}>  
+                {getDropZoneContent()}  
+            </div>  
+        </div>);  
     };
 
     return (
-        <GenericYesNoPopup
-            title={'Load file with labels description'}
-            renderContent={renderContent}
-            acceptLabel={'Start project'}
-            onAccept={onAccept}
-            disableAcceptButton={labelsList.length === 0}
-            rejectLabel={'Back'}
-            onReject={onReject}
+        <GenericYesNoPopup  
+            title={'加载包含标签描述的文件'}  
+            renderContent={renderContent}  
+            acceptLabel={'开始项目'}  
+            onAccept={onAccept}  
+            disableAcceptButton={labelsList.length === 0}  
+            rejectLabel={'返回'}  
+            onReject={onReject}  
         />
     );
 };

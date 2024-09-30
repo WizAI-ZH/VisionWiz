@@ -21,9 +21,8 @@ function createMakeSenseWindow(language) {
   });  
 
   // 加载 make-sense 的 index.html 
-  makeSenseWindow.loadFile(path.join(__dirname,'tools', 'make-sense' , 'index.html'));  
+  makeSenseWindow.loadFile(path.join(__dirname,'tools', 'make-sense-'+language , 'index.html'));  
   // makeSenseWindow.loadFile(path.join(__dirname, 'make-sense','dist' , 'index.html'));  
-  // 可选：打开开发者工具  
   makeSenseWindow.webContents.openDevTools({ mode: 'detach' })
 }  
 

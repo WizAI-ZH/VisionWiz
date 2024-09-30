@@ -99,25 +99,25 @@ const PolygonLabelsList: React.FC<IProps> = (
     };
 
     return (
-        <div
-            className='PolygonLabelsList'
-            style={listStyle}
-            onClickCapture={onClickHandler}
-        >
-            {imageData.labelPolygons.length === 0 ?
-                <EmptyLabelList
-                    labelBefore={'draw your first polygon'}
-                    labelAfter={'no labels created for this image yet'}
-                /> :
-                <Scrollbars>
-                    <div
-                        className='PolygonLabelsListContent'
-                        style={listStyleContent}
-                    >
-                        {getChildren()}
-                    </div>
-                </Scrollbars>
-            }
+        <div  
+            className='PolygonLabelsList'  
+            style={listStyle}  
+            onClickCapture={onClickHandler}  
+        >  
+            {imageData.labelPolygons.length === 0 ?  
+                <EmptyLabelList  
+                    labelBefore={'绘制您的第一个多边形'}  
+                    labelAfter={'此图像尚未创建标签'}  
+                /> :  
+                <Scrollbars>  
+                    <div  
+                        className='PolygonLabelsListContent'  
+                        style={listStyleContent}  
+                    >  
+                        {getChildren()}  
+                    </div>  
+                </Scrollbars>  
+            }  
         </div>
     );
 };

@@ -77,8 +77,8 @@ const ExportLabelPopup: React.FC<IProps> = ({ activeLabelType }) => {
     const renderInternalContent = (type: LabelType) => {
         return <>
             <div className='Message'>
-                Select label type and the file format you would like to use to export labels.
-            </div>,
+            选择您想要用于导出标注文件的标签类型和文件格式。
+            </div>
             <div className='Options'>
                 {getOptions(ExportFormatData[type])}
             </div>
@@ -90,15 +90,27 @@ const ExportLabelPopup: React.FC<IProps> = ({ activeLabelType }) => {
         setExportFormatType(null);
     };
 
+    const getLabelTypeName = (type: LabelType) =>{
+        if(type.toLowerCase() == "rect"){
+            return "矩形"
+        }else if(type.toLowerCase() == "point"){
+            return "点"
+        }else if(type.toLowerCase() == "line"){
+            return "线段"
+        }else if(type.toLowerCase() == "polygon"){
+            return "多边形"
+        }
+    }
+
     return (
         <GenericLabelTypePopup
             activeLabelType={labelType}
-            title={`Export ${labelType.toLowerCase()} annotations`}
+            title={`导出 ${getLabelTypeName(labelType)} 标注文件`}
             onLabelTypeChange={onLabelTypeChange}
-            acceptLabel={'Export'}
+            acceptLabel={'导出'}
             onAccept={onAccept}
             disableAcceptButton={!exportFormatType}
-            rejectLabel={'Cancel'}
+            rejectLabel={'取消'}
             onReject={onReject}
             renderInternalContent={renderInternalContent}
         />

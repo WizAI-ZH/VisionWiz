@@ -12,6 +12,7 @@ export const FeatureInProgress: React.FC = () => {
                 src={"ico/take-off.png"}
             />
             <p className="extraBold">new feature <br/> coming soon...</p>
+            <p className="extraBold">新功能 <br/> 即将实装...</p>
         </div>
     )
 };

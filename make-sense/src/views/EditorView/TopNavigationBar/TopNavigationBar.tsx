@@ -44,16 +44,16 @@ const TopNavigationBar: React.FC<IProps> = (props) => {
                         <img
                             draggable={false}
                             alt={'make-sense'}
-                            src={'/make-sense-ico-transparent.png'}
+                            src={'./make-sense-ico-transparent.png'}
                         />
-                        Make Sense
+                        慧标(Make Sense)
                     </div>
                 </div>
                 <div className='NavigationBarGroupWrapper'>
                     <DropDownMenu/>
                 </div>
                 <div className='NavigationBarGroupWrapper middle'>
-                    <div className='ProjectName'>Start you Labeling Here!</div>
+                    <div className='ProjectName'>在这里开始你的标注</div>
                 </div>
             </div>
         </div>

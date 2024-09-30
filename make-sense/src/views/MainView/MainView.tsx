@@ -81,7 +81,7 @@ const MainView: React.FC = () => {
                     <img
                         draggable={false}
                         alt={'main-logo'}
-                        src={'./ico/main-image-color.png'}
+                        src={'./ico/慧标图标.png'}
                     />
                 </div>
                 <div className='EditorFeaturesWrapper'>
@@ -91,7 +91,7 @@ const MainView: React.FC = () => {
                     <div className='TriangleVerticalContent' />
                 </div>
                 {projectInProgress && <TextButton
-                    label={'Go Back'}
+                    label={'回到介绍页'}
                     onClick={endProject}
                 />}
             </div>
@@ -99,7 +99,7 @@ const MainView: React.FC = () => {
                 <div />
                 <ImagesDropZone />
                 {!projectInProgress && <TextButton
-                    label={'Get Started'}
+                    label={'开始'}
                     onClick={startProject}
                     externalClassName={'get-started-button'}
                 />}

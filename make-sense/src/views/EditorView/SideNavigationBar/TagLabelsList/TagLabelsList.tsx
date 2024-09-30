@@ -101,7 +101,7 @@ const TagLabelsList: React.FC<IProps> = (
                         alt={"upload"}
                         src={"ico/type-writer.png"}
                     />
-                    <p className="extraBold">Your label list is empty</p>
+                    <p className="extraBold">你的标签列表为空</p>
                 </div> :
                 <Scrollbars>
                     <div

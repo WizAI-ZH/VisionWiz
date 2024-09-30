@@ -107,43 +107,43 @@ const ImportLabelPopup: React.FC<IProps> = (
         setFormatType(format);
     };
 
-    const getDropZoneContent = () => {
-        if (annotationsLoadedError) {
-            return <>
-                <input {...getInputProps()} />
-                <img
-                    draggable={false}
-                    alt={'upload'}
-                    src={'./ico/box-opened.png'}
-                />
-                <p className='extraBold'>Annotation import was unsuccessful</p>
-                {annotationsLoadedError.message}
-                <p className='extraBold'>Try again</p>
-            </>;
-        } else if (loadedImageData.length !== 0 && loadedLabelNames.length !== 0) {
-            return <>
-                <img
-                    draggable={false}
-                    alt={'uploaded'}
-                    src={'./ico/box-closed.png'}
-                />
-                <p className='extraBold'>Annotation ready for import</p>
-                After import you will lose
-                all your current annotations
-            </>;
-        } else {
-            return <>
-                <input {...getInputProps()} />
-                <img
-                    draggable={false}
-                    alt={'upload'}
-                    src={'./ico/box-opened.png'}
-                />
-                <p className='extraBold'>{`Drop ${formatType} annotations`}</p>
-                <p>or</p>
-                <p className='extraBold'>Click here to select them</p>
-            </>;
-        }
+    const getDropZoneContent = () => {  
+        if (annotationsLoadedError) {  
+            return <>  
+                <input {...getInputProps()} />  
+                <img  
+                    draggable={false}  
+                    alt={'upload'}  
+                    src={'./ico/box-opened.png'}  
+                />  
+                <p className='extraBold'>标注导入失败</p>  
+                {annotationsLoadedError.message}  
+                <p className='extraBold'>请重试</p>  
+            </>;  
+        } else if (loadedImageData.length !== 0 && loadedLabelNames.length !== 0) {  
+            return <>  
+                <img  
+                    draggable={false}  
+                    alt={'uploaded'}  
+                    src={'./ico/box-closed.png'}  
+                />  
+                <p className='extraBold'>标注准备好导入</p>  
+                导入后，您将失去  
+                所有当前的标注  
+            </>;  
+        } else {  
+            return <>  
+                <input {...getInputProps()} />  
+                <img  
+                    draggable={false}  
+                    alt={'upload'}  
+                    src={'./ico/box-opened.png'}  
+                />  
+                <p className='extraBold'>{`拖放 ${formatType} 格式的标注文件`}</p>  
+                <p>或者</p>  
+                <p className='extraBold'>点击此处选择标注文件</p>  
+            </>;  
+        }  
     };
 
     const getOptions = (exportFormatData: ILabelFormatData[]) => {
@@ -172,9 +172,9 @@ const ImportLabelPopup: React.FC<IProps> = (
     const renderInternalContent = (type: LabelType) => {
         if (!formatType && ImportFormatData[type].length !== 0) {
             return <>
-                <div className='Message'>
-                    Select file format you would like to use to import labels.
-                </div>,
+                <div className='Message'>  
+                    选择您想要用于导入标签的文件格式。  
+                </div>
                 <div className='Options'>
                     {getOptions(ImportFormatData[type])}
                 </div>
@@ -188,16 +188,29 @@ const ImportLabelPopup: React.FC<IProps> = (
             </div>;
     };
 
+
+    const getLabelTypeName = (type: LabelType) =>{
+        if(type.toLowerCase() == "rect"){
+            return "矩形"
+        }else if(type.toLowerCase() == "point"){
+            return "点"
+        }else if(type.toLowerCase() == "line"){
+            return "线段"
+        }else if(type.toLowerCase() == "polygon"){
+            return "多边形"
+        }
+    }
+
     return (
         <GenericLabelTypePopup
             activeLabelType={labelType}
-            title={`Import ${labelType.toLowerCase()} annotations`}
+            title={`导入 ${getLabelTypeName(labelType)} 标注文件`}
             onLabelTypeChange={onLabelTypeChange}
-            acceptLabel={'Import'}
+            acceptLabel={'导入'}
             onAccept={onAccept}
             skipAcceptButton={ImportFormatData[labelType].length === 0}
             disableAcceptButton={loadedImageData.length === 0 || loadedLabelNames.length === 0 || !!annotationsLoadedError}
-            rejectLabel={'Cancel'}
+            rejectLabel={'取消'}
             onReject={onReject}
             renderInternalContent={renderInternalContent}
         />

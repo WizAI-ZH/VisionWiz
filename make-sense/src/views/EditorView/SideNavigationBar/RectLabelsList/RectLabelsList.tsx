@@ -1,20 +1,20 @@
 import React from 'react';
-import {ISize} from '../../../../interfaces/ISize';
+import { ISize } from '../../../../interfaces/ISize';
 import Scrollbars from 'react-custom-scrollbars-2';
-import {ImageData, LabelName, LabelRect} from '../../../../store/labels/types';
+import { ImageData, LabelName, LabelRect } from '../../../../store/labels/types';
 import './RectLabelsList.scss';
 import {
     updateActiveLabelId,
     updateActiveLabelNameId,
     updateImageDataById
 } from '../../../../store/labels/actionCreators';
-import {AppState} from '../../../../store';
-import {connect} from 'react-redux';
+import { AppState } from '../../../../store';
+import { connect } from 'react-redux';
 import LabelInputField from '../LabelInputField/LabelInputField';
 import EmptyLabelList from '../EmptyLabelList/EmptyLabelList';
-import {LabelActions} from '../../../../logic/actions/LabelActions';
-import {LabelStatus} from '../../../../data/enums/LabelStatus';
-import {findLast} from 'lodash';
+import { LabelActions } from '../../../../logic/actions/LabelActions';
+import { LabelStatus } from '../../../../data/enums/LabelStatus';
+import { findLast } from 'lodash';
 
 interface IProps {
     size: ISize;
@@ -96,7 +96,7 @@ const RectLabelsList: React.FC<IProps> = (
                     id={labelRect.id}
                     key={labelRect.id}
                     onDelete={deleteRectLabelById}
-                    value={labelRect.labelId !== null ? findLast(labelNames, {id: labelRect.labelId}) : null}
+                    value={labelRect.labelId !== null ? findLast(labelNames, { id: labelRect.labelId }) : null}
                     options={labelNames}
                     onSelectLabel={updateRectLabel}
                     toggleLabelVisibility={toggleRectLabelVisibilityById}
@@ -112,8 +112,8 @@ const RectLabelsList: React.FC<IProps> = (
         >
             {imageData.labelRects.filter((labelRect: LabelRect) => labelRect.status === LabelStatus.ACCEPTED).length === 0 ?
                 <EmptyLabelList
-                    labelBefore={'draw your first bounding box'}
-                    labelAfter={'no labels created for this image yet'}
+                    labelBefore={'绘制您的第一个矩形边界框'}
+                    labelAfter={'此图像尚未创建标签'}
                 /> :
                 <Scrollbars>
                     <div
@@ -137,7 +137,7 @@ const mapDispatchToProps = {
 const mapStateToProps = (state: AppState) => ({
     activeLabelId: state.labels.activeLabelId,
     highlightedLabelId: state.labels.highlightedLabelId,
-    labelNames : state.labels.labels
+    labelNames: state.labels.labels
 });
 
 export default connect(

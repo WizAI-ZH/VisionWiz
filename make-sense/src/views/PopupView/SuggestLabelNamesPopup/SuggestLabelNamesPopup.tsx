@@ -149,9 +149,8 @@ const SuggestLabelNamesPopup: React.FC<IProps> = (
 
     const renderContent = () => {
         return(<div className='SuggestLabelNamesPopupContent'>
-            <div className='Message'>
-                We found objects of classes that are not yet included in the list of labels. Select the names you
-                would like to add. This will help to speed up the labeling process.
+            <div className='Message'>  
+                AI发现了一些尚未包含在标签列表中的类别对象。请选择您想要添加的名称。这将有助于加快标注过程。  
             </div>
             <div className='AllToggle'>
                 <div
@@ -169,7 +168,7 @@ const SuggestLabelNamesPopup: React.FC<IProps> = (
                             src={'./ico/checkbox-unchecked.png'}
                             alt={'unchecked'}
                         />}
-                    {selectAllFlag ? 'Deselect all' : 'Select all'}
+                    {selectAllFlag ? '取消全选' : '全选'}
                 </div>
             </div>
             <div className='LabelNamesContainer'>
@@ -186,11 +185,11 @@ const SuggestLabelNamesPopup: React.FC<IProps> = (
 
     return(
         <GenericYesNoPopup
-            title={'New classes found'}
+            title={'检测到新类别'}
             renderContent={renderContent}
-            acceptLabel={'Accept'}
+            acceptLabel={'添加'}
             onAccept={onAccept}
-            rejectLabel={'Reject'}
+            rejectLabel={'拒绝添加'}
             onReject={onReject}
         />
     );

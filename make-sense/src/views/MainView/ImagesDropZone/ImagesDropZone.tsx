@@ -51,9 +51,9 @@ const ImagesDropZone: React.FC<IProps> = (props: PropsWithChildren<IProps>) => {
                     alt={'upload'}
                     src={'./ico/box-opened.png'}
                 />
-                <p className='extraBold'>Drop images</p>
-                <p>or</p>
-                <p className='extraBold'>Click here to select them</p>
+                <p className='extraBold'>拖入图片</p>
+                <p>或者</p>
+                <p className='extraBold'>点击此处选择图片</p>
             </>;
         else if (acceptedFiles.length === 1)
             return <>
@@ -62,7 +62,7 @@ const ImagesDropZone: React.FC<IProps> = (props: PropsWithChildren<IProps>) => {
                     alt={'uploaded'}
                     src={'./ico/box-closed.png'}
                 />
-                <p className='extraBold'>1 image loaded</p>
+                <p className='extraBold'>1 张图片加载成功</p>
             </>;
         else
             return <>
@@ -73,7 +73,7 @@ const ImagesDropZone: React.FC<IProps> = (props: PropsWithChildren<IProps>) => {
                     alt={'uploaded'}
                     src={'./ico/box-closed.png'}
                 />
-                <p key={2} className='extraBold'>{acceptedFiles.length} images loaded</p>
+                <p key={2} className='extraBold'>{acceptedFiles.length} 张图片加载成功</p>
             </>;
     };
 
@@ -87,10 +87,9 @@ const ImagesDropZone: React.FC<IProps> = (props: PropsWithChildren<IProps>) => {
             </div>
             <div className='DropZoneButtons'>
                 <TextButton
-                    label={'Start Labeling!'}
+                    label={'开始标注!'}
                     isDisabled={!acceptedFiles.length}
                     onClick={startEditorWithObjectDetection}
-                    
                 />
             </div>
         </div>

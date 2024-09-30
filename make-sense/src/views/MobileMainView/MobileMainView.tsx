@@ -56,7 +56,7 @@ const MobileMainView: React.FC<IProps> = ({size}) => {
                 <img
                     draggable={false}
                     alt={"make-sense"}
-                    src={"/make-sense-ico-transparent.png"}
+                    src={"./make-sense-ico-transparent.png"}
                 />
                 Make Sense
             </div>
@@ -70,7 +70,7 @@ const MobileMainView: React.FC<IProps> = ({size}) => {
         <img
             draggable={false}
             alt={"main-logo"}
-            src={"ico/main-image-color.png"}
+            src={"ico/慧标图标.png"}
         />
         <div className="TriangleHorizontal Bottom">
             <div className="TriangleHorizontalContent"/>

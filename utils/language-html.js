@@ -2,8 +2,6 @@
 // 根据GPLv3或更高版本的条款进行许可  
 // 请参阅LICENSE文件以获取详细信息
 
-const { ipcRenderer } = require('electron');
-
 // 处理html的语言本地化
 console.log(__dirname)
 let languageManager;

@@ -38,7 +38,7 @@ const ExitProjectPopup: React.FC<IProps> = ({
         return (
             <div className="ExitProjectPopupContent">
                 <div className="Message">
-                    Are you sure you want to leave the editor? You will permanently lose all your progress.
+                    您确定要离开编辑器吗？您将永久丢失目前项目的所有进度。    
                 </div>
             </div>
         );
@@ -60,11 +60,11 @@ const ExitProjectPopup: React.FC<IProps> = ({
 
     return (
         <GenericYesNoPopup
-            title={"Exit project"}
+            title={"离开项目"}
             renderContent={renderContent}
-            acceptLabel={"Exit"}
+            acceptLabel={"确定离开"}
             onAccept={onAccept}
-            rejectLabel={"Back"}
+            rejectLabel={"返回项目"}
             onReject={onReject}
         />);
 };

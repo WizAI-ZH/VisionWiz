@@ -1,3 +1,8 @@
+// 原始版权所有 (C) [2019] [Piotr Skalski]  
+// 版权所有 (C) [2024] [珠海威智人工智能有限公司]  
+// 根据GPLv3或更高版本的条款进行许可  
+// 请参阅LICENSE文件以获取详细信息
+
 import {HotKeyAction} from "../../data/HotKeyAction";
 import {EditorModel} from "../../staticModels/EditorModel";
 import {LabelType} from "../../data/enums/LabelType";
@@ -11,6 +16,10 @@ import {Direction} from "../../data/enums/Direction";
 import {PlatformUtil} from "../../utils/PlatformUtil";
 import {LabelActions} from "../actions/LabelActions";
 import {LineRenderEngine} from "../render/LineRenderEngine";
+import { AIActions } from '../../logic/actions/AIActions';
+import { LabelsSelector } from '../../store/selectors/LabelsSelector';
+
+
 
 export class EditorContext extends BaseContext {
     public static actions: HotKeyAction[] = [
@@ -38,7 +47,7 @@ export class EditorContext extends BaseContext {
                     }
                 }
                 EditorActions.fullRender();
-            }
+            } 
         },
         {
             keyCombo: PlatformUtil.isMac(window.navigator.userAgent) ? ["Alt", "ArrowLeft"] : ["Control", "ArrowLeft"],
@@ -50,6 +59,12 @@ export class EditorContext extends BaseContext {
             keyCombo: ["a"],
             action: (event: KeyboardEvent) => {
                 ImageActions.getPreviousImage();
+            }
+        },
+        {
+            keyCombo: ["v"],
+            action: (event: KeyboardEvent) => {
+                AIActions.acceptAllSuggestedLabels(LabelsSelector.getActiveImageData());
             }
         },
         {
