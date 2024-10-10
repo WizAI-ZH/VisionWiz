@@ -90,11 +90,20 @@ ipcRenderer.on('window-resize', (event, { width, height }) => {
     const train_chart = document.querySelector('[data-zr-dom-id="zr_0"]')
     // console.log(train_chart)
     if (train_chart) {
-        train_chart.width = document.getElementById("model_graph_pane").offsetWidth;
-        train_chart.style.width = document.getElementById("model_graph_pane").offsetWidth + 'px';
-        train_chart.height = document.getElementById("model_graph_pane").offsetHeight;
-        train_chart.style.height = document.getElementById("model_graph_pane").offsetHeight + 'px';
-        console.log('model_graph_plane size:',document.getElementById("model_graph_pane").offsetWidth,document.getElementById("model_graph_pane").offsetHeight)
+        const train_chart_container = document.getElementById("echarts")
+        const parentDiv = train_chart.parentElement;
+        console.log(parentDiv)
+        let new_width = document.getElementById("model_graph_pane").offsetWidth * 0.72
+        let new_height = new_width/2
+        train_chart_container.style.width = new_width + 'px';
+        train_chart_container.style.height = new_height + 'px';
+        parentDiv.style.width = new_width + 'px';
+        parentDiv.style.height = new_height + 'px';
+        // train_chart.width = document.getElementById("model_graph_pane").offsetWidth;
+        train_chart.style.width = new_width + 'px';
+        // train_chart.height = document.getElementById("model_graph_pane").offsetHeight;
+        train_chart.style.height = new_height  + 'px';
+        // console.log('model_graph_plane size:', document.getElementById("model_graph_pane").offsetWidth, document.getElementById("model_graph_pane").offsetHeight)
     }
 })
 
@@ -454,16 +463,16 @@ ipcRenderer.on('show_test_result_img', function (event, arg) {
     imgPath = path.normalize(imgPath)
     imgPath = imgPath.replace(/\\/g, '/');
 
-    for (let f of data['list']) {  
-        html += '<div style="padding:20px; cursor: pointer;" onclick="open_image('+"\'" + imgPath + '/' + f +"\'"+ ')\"">' +  
-                '<img class="rounded mx-auto d-block" style="width: 120px;height: 100%;" src="' + imgPath + '/' + f + '" alt="' + f + '">' +  
-                '</div>';  
+    for (let f of data['list']) {
+        html += '<div style="padding:20px; cursor: pointer;" onclick="open_image(' + "\'" + imgPath + '/' + f + "\'" + ')\"">' +
+            '<img class="rounded mx-auto d-block" style="width: 120px;height: 100%;" src="' + imgPath + '/' + f + '" alt="' + f + '">' +
+            '</div>';
     }
     html += "</div>"
     document.getElementById('test_result_wrap').innerHTML = html
 });
 
-function open_image(imagePath){
+function open_image(imagePath) {
     ipcRenderer.send('open_image', imagePath);
 }
 

@@ -6,7 +6,6 @@ const path = require('path');
 
 
 let train_situation_cls = false
-let model_graph_chart = null
 let current_tab_dir
 
 document.getElementById("dataset_dir_cls").onclick = function () {
@@ -77,12 +76,23 @@ ipcRenderer.on('window-resize',(event,{width,height})=>{
     terminalElement.style.marginRight = 'auto';
 
     //训练数据图根据详情窗口大小自适应修改
-    if (model_graph_chart) {
-        model_graph_chart.resize({
-            width: document.getElementById("model_graph_pane").width,
-            height: document.getElementById("model_graph_pane").height,
-        }
-        );
+    const train_chart = document.querySelector('[data-zr-dom-id="zr_0"]')
+    console.log(train_chart)
+    if (train_chart) {
+        const train_chart_container = document.getElementById("echarts")
+        const parentDiv = train_chart.parentElement;
+        console.log(parentDiv)
+        let new_width = document.getElementById("model_graph_pane").offsetWidth * 0.72
+        let new_height = new_width/2
+        train_chart_container.style.width = new_width + 'px';
+        train_chart_container.style.height = new_height + 'px';
+        parentDiv.style.width = new_width + 'px';
+        parentDiv.style.height = new_height + 'px';
+        // train_chart.width = document.getElementById("model_graph_pane").offsetWidth;
+        train_chart.style.width = new_width + 'px';
+        // train_chart.height = document.getElementById("model_graph_pane").offsetHeight;
+        train_chart.style.height = new_height  + 'px';
+        // console.log('model_graph_plane size:', document.getElementById("model_graph_pane").offsetWidth, document.getElementById("model_graph_pane").offsetHeight)
     }
 })
 
