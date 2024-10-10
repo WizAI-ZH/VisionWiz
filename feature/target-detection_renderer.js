@@ -1,10 +1,10 @@
-const { ipcRenderer} = require('electron');
+const { ipcRenderer } = require('electron');
 const { FitAddon } = require('xterm-addon-fit');
 const { WebLinksAddon } = require('xterm-addon-web-links');
 const echarts = require('echarts');
+const path = require('path');
 
 let train_situation_yolo = false
-let model_graph_chart = null
 let current_tab_dir
 
 document.getElementById("dataset_dir_yolo").onclick = function () {
@@ -17,9 +17,9 @@ document.getElementById("train_xml_dir_yolo").onclick = function () {
     ipcRenderer.send('open_train_xml_dir_yolo', '');
 }
 
-document.getElementById('test_img_dir_yolo').onclick = function(){
+document.getElementById('test_img_dir_yolo').onclick = function () {
     //向主进程main.js发送消息,确定要打开目标检测测试图片所在的文件夹
-    ipcRenderer.send('open_test_img_dir_yolo','');
+    ipcRenderer.send('open_test_img_dir_yolo', '');
 }
 
 ipcRenderer.on('update_dataset_dir_yolo', function (event, arg) {
@@ -73,20 +73,29 @@ xterm_yolo.loadAddon(new WebLinksAddon());
 xterm_yolo.open(document.getElementById('xterm_yolo'));
 xterm_yolo.onData(data => { ipcRenderer.send('send_data_terminal_yolo', data); });
 
-ipcRenderer.on('window-resize',(event,{width,height})=>{
+ipcRenderer.on('window-resize', (event, { width, height }) => {
     // 窗口尺寸变化时，终端尺寸自适应
     // console.log(document.getElementById('xterm_yolo'))
     fitAddon_yolo.fit()
     // // 获取终端元素  
-    const terminalElement = document.getElementById('xterm_yolo');  
+    const terminalElement = document.getElementById('xterm_yolo');
 
     // 将宽度缩小到原来的90%  
     terminalElement.style.width = (width * 0.9) + 'px';
 
     // 将终端居中  
-    terminalElement.style.marginLeft = 'auto';  
+    terminalElement.style.marginLeft = 'auto';
     terminalElement.style.marginRight = 'auto';
-
+    //训练数据图根据详情窗口大小自适应修改
+    const train_chart = document.querySelector('[data-zr-dom-id="zr_0"]')
+    // console.log(train_chart)
+    if (train_chart) {
+        train_chart.width = document.getElementById("model_graph_pane").offsetWidth;
+        train_chart.style.width = document.getElementById("model_graph_pane").offsetWidth + 'px';
+        train_chart.height = document.getElementById("model_graph_pane").offsetHeight;
+        train_chart.style.height = document.getElementById("model_graph_pane").offsetHeight + 'px';
+        console.log('model_graph_plane size:',document.getElementById("model_graph_pane").offsetWidth,document.getElementById("model_graph_pane").offsetHeight)
+    }
 })
 
 ipcRenderer.on('write_data_to_xterm_yolo', function (event, arg) {
@@ -124,9 +133,9 @@ document.getElementById('test_model_button').addEventListener('click', function 
     let test_dir = document.getElementById('test_img_dir_yolo').value
     //当前模型的训练资料路径
     let dir = `${process.cwd()}/out/${current_tab_dir}`
-    test_model(dir,test_dir)
+    test_model(dir, test_dir)
     //更新测试结果到详情窗口中
-    ipcRenderer.send('update_test_result_yolo',current_tab_dir)
+    ipcRenderer.send('update_test_result_yolo', current_tab_dir)
 });
 
 ipcRenderer.on('update_train_history', function (event, arg) {
@@ -139,10 +148,10 @@ ipcRenderer.on('update_train_history', function (event, arg) {
         let time = d['name'].split('_')[2].replace('-', ':').replace('-', ':')
         if (name == 'yolo') {
             if (d['train_result'] == "success") {
-                html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail("' + d['name'] + '")>'+ current_locales.target_detection +'</button><a>' + year + ' ' + time + '</a> <button type="button" class="btn-close" aria-label="Close" onclick="del_dir(\'' + d['name'] + '\')"></button></div>'
+                html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail("' + d['name'] + '")>' + current_locales.target_detection + '</button><a>' + year + ' ' + time + '</a> <button type="button" class="btn-close" aria-label="Close" onclick="del_dir(\'' + d['name'] + '\')"></button></div>'
             }
             else {
-                html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail_err("' + d['name'] + '")>'+current_locales.target_detection+'</button><a>' + year + ' ' + time + '</a> <button type="button" class="btn-close" aria-label="Close" onclick="del_dir(\'' + d['name'] + '\')"></button></div>'
+                html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail_err("' + d['name'] + '")>' + current_locales.target_detection + '</button><a>' + year + ' ' + time + '</a> <button type="button" class="btn-close" aria-label="Close" onclick="del_dir(\'' + d['name'] + '\')"></button></div>'
             }
         }
     }
@@ -152,7 +161,7 @@ ipcRenderer.on('update_train_history', function (event, arg) {
 function open_dir(dir) {
     //向主进程发送打开dir路径文件夹指令
     ipcRenderer.send('open_dir', dir)
-    console.log('open_dir: ',dir)
+    console.log('open_dir: ', dir)
 }
 
 function del_dir(dir) {
@@ -174,7 +183,7 @@ document.getElementById('start_train_yolo').addEventListener('click', function (
         ipcRenderer.send('send_data_terminal_yolo', 'cls\r'); //清空终端信息
         //获取前端的训练超参数
         let img = document.getElementById('dataset_dir_yolo').value
-        let xml=document.getElementById('train_xml_dir_yolo').value
+        let xml = document.getElementById('train_xml_dir_yolo').value
         let epoch = document.getElementById('epoch_yolo').value
         let t = document.getElementById("alpha_yolo");
         let alpha = t.options[t.selectedIndex].value;
@@ -183,13 +192,13 @@ document.getElementById('start_train_yolo').addEventListener('click', function (
         if (img.length == 0) {
             Notiflix.Notify.warning(current_locales.plz_select_img_dir);
         }
-        else if(xml.length==0){
+        else if (xml.length == 0) {
             Notiflix.Notify.warning(current_locales.plz_select_xml_dir);
         }
         else {
             fitAddon_yolo.fit()
             //开始训练
-            ipcRenderer.send('send_data_terminal_yolo', 'py39/python.exe maix_train/train.py -t detector -di '+img+' -dx '+xml+' -ep '+epoch+' -ap '+alpha+' -bz '+batch_size+' train\r');
+            ipcRenderer.send('send_data_terminal_yolo', 'py39/python.exe maix_train/train.py -t detector -di ' + img + ' -dx ' + xml + ' -ep ' + epoch + ' -ap ' + alpha + ' -bz ' + batch_size + ' train\r');
             //设定开始训练状态为进行中
             train_situation_yolo = true
             //将状况图标切换成加载图标
@@ -207,7 +216,7 @@ document.getElementById('stop_train_yolo').addEventListener('click', function ()
     if (train_situation_yolo) {
         ipcRenderer.send('stop_process', '')
         Notiflix.Notify.success(current_locales.train_stopped);
-        
+
         train_situation_yolo = false
         document.getElementById('training_situation_yolo').innerHTML = "<i class='fa fa-check' style='color:#069b34'></i>"
     }
@@ -226,9 +235,9 @@ ipcRenderer.on('show_train_succeed', function (event, arg) {
 ipcRenderer.on('show_test_succeed', function (event, arg) {
     //收到主进程发出的测试成功信息，进行信息提醒并且更新状态
     //更新测试结果到详情窗口中
-    ipcRenderer.send('update_test_result_yolo',current_tab_dir)
+    ipcRenderer.send('update_test_result_yolo', current_tab_dir)
     train_situation_yolo = false
-    Notiflix.Report.success(current_locales.test_succeed,current_locales.test_succeed_to_test_model_result_look_result, current_locales.confirm)
+    Notiflix.Report.success(current_locales.test_succeed, current_locales.test_succeed_to_test_model_result_look_result, current_locales.confirm)
     document.getElementById('training_situation_yolo').innerHTML = "<i class='fa fa-check' style='color:#069b34'></i>"
     document.getElementById('test_situation_yolo').innerHTML = "<i class='fa fa-check' style='color:#069b34'></i>"
 });
@@ -313,7 +322,7 @@ function open_model_detail_err(dir) {
     myerrModal.show()
 }
 
-function test_model(dir,test_dir){
+function test_model(dir, test_dir) {
     //测试模型
     if (train_situation_yolo == false) {
         //判断测试路径是否有图片
@@ -322,11 +331,11 @@ function test_model(dir,test_dir){
         }
         else {
             ipcRenderer.send('send_data_terminal_yolo', 'cls\r'); //清空终端信息
-            ipcRenderer.send('clean_file',`${dir}/test`); //清空存放以前测试图片的文件
+            ipcRenderer.send('clean_file', `${dir}/test`); //清空存放以前测试图片的文件
             fitAddon_yolo.fit()
             //PS C:\Users\chanw\Desktop\威智相关\产品研发\软件开发\VESIBIT_AI_TOOL> py39/python.exe .\maix_train\train\classifier\predict_batch.py --dir C:\Users\chanw\Desktop\威智相
             //开始测试图片
-            ipcRenderer.send('send_data_terminal_yolo', 'py39/python.exe .\\maix_train\\train\\detector\\predict_test.py --dir '+ dir + ' --img_dir ' + test_dir + '\r');
+            ipcRenderer.send('send_data_terminal_yolo', 'py39/python.exe .\\maix_train\\train\\detector\\predict_test.py --dir ' + dir + ' --img_dir ' + test_dir + '\r');
             //设定状态为进行中
             train_situation_yolo = true
             //将状态图标设为加载图标
@@ -374,118 +383,49 @@ ipcRenderer.on('update_model_train_graph', function (event, arg) {
     var model_graph_chart = echarts.init(document.getElementById('echarts'));
     let data = JSON.parse(arg)
     console.log(data)
-    if (data['type'] == 'yolo') {
-        model_graph_chart.setOption({
-            tooltip: {
-                trigger: 'axis',
-                axisPointer: { type: 'cross' }
-            },
-            toolbox: {
-                show: true,
-                feature: {
-                    dataZoom: {
-                        yAxisIndex: 'none'
-                    },
-                    dataView: { readOnly: false },
-                    restore: {},
-                    saveAsImage: {}
-                }
-            },
-            legend: {},
-            xAxis: {
-                data: Array.from({ length: data['loss'].length }, (v, i) => i)
-            },
-            yAxis: {
-                show: true,
-                axisLine: { show: true },
-                axisTick: { show: true },
-                splitLine: { show: true },
-            },
-            series: [
-                {
-                    data: data['loss'],
-                    name: current_locales.test_loss,
-                    type: 'line',
-                    smooth: true
+    model_graph_chart.setOption({
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: { type: 'cross' }
+        },
+        toolbox: {
+            show: true,
+            feature: {
+                dataZoom: {
+                    yAxisIndex: 'none'
                 },
-                {
-                    data: data['val_loss'],
-                    name: current_locales.val_loss,
-                    type: 'line',
-                    smooth: true
-                }
-            ]
-        }, true);
-    }
-    else {
-        model_graph_chart.setOption({
-            tooltip: {
-                trigger: 'axis',
-                axisPointer: { type: 'cross' }
+                dataView: { readOnly: false },
+                restore: {},
+                saveAsImage: {}
+            }
+        },
+        legend: {},
+        xAxis: {
+            data: Array.from({ length: data['loss'].length }, (v, i) => i)
+        },
+        yAxis: {
+            show: true,
+            axisLine: { show: true },
+            axisTick: { show: true },
+            splitLine: { show: true },
+        },
+        series: [
+            {
+                data: data['loss'],
+                name: current_locales.test_loss,
+                type: 'line',
+                smooth: true
             },
-            toolbox: {
-                show: true,
-                feature: {
-                    dataZoom: {
-                        yAxisIndex: 'none'
-                    },
-                    dataView: { readOnly: false },
-                    restore: {},
-                    saveAsImage: {}
-                }
-            },
-            legend: {},
-            xAxis: {
-                data: Array.from({ length: data['loss'].length }, (v, i) => i)
-            },
-            yAxis: {
-                show: true,
-                axisLine: { show: true },
-                axisTick: { show: true },
-                splitLine: { show: true },
-            },
-            series: [
-                {
-                    data: data['acc'],
-                    name: current_locales.test_acc,
-                    type: 'line',
-                    smooth: true
-                },
-                {
-                    data: data['loss'],
-                    name: current_locales.test_loss,
-                    type: 'line',
-                    smooth: true
-                },
-                {
-                    data: data['val_acc'],
-                    name: current_locales.val_acc,
-                    type: 'line',
-                    smooth: true
-                },
-                {
-                    data: data['val_loss'],
-                    name: current_locales.val_loss,
-                    type: 'line',
-                    smooth: true
-                }
-            ]
-        });
-    }
-
-
+            {
+                data: data['val_loss'],
+                name: current_locales.val_loss,
+                type: 'line',
+                smooth: true
+            }
+        ]
+    }, true);
 });
 
-window.addEventListener('resize', function () {
-    //训练数据图根据详情窗口大小自适应修改
-    if (model_graph_chart) {
-        model_graph_chart.resize({
-            width: document.getElementById("model_graph_pane").width,
-            height: document.getElementById("model_graph_pane").height,
-        }
-        );
-    }
-});
 
 ipcRenderer.on('update_model_param_err', function (event, arg) {
     data = JSON.parse(arg)
@@ -510,17 +450,23 @@ ipcRenderer.on('show_test_result_img', function (event, arg) {
     let html = ''
     let data = arg
     console.log(data)
-    let path = data['dir']
-    for (let f of data['list']) {
-        html += '<div style="padding:20px"><img class="rounded mx-auto d-block" style="width: 120px;height: 100%;" src="' + path + '/' + f + '" alt="' + f + '"></div>'
+    let imgPath = data['dir']
+    imgPath = path.normalize(imgPath)
+    imgPath = imgPath.replace(/\\/g, '/');
+
+    for (let f of data['list']) {  
+        html += '<div style="padding:20px; cursor: pointer;" onclick="open_image('+"\'" + imgPath + '/' + f +"\'"+ ')\"">' +  
+                '<img class="rounded mx-auto d-block" style="width: 120px;height: 100%;" src="' + imgPath + '/' + f + '" alt="' + f + '">' +  
+                '</div>';  
     }
     html += "</div>"
     document.getElementById('test_result_wrap').innerHTML = html
 });
 
-// var preview = new Preview({
-//     imgWrap: 'wrap' // 指定该容器里的图片点击预览
-// })
+function open_image(imagePath){
+    ipcRenderer.send('open_image', imagePath);
+}
+
 
 function export_model(dir) {
     ipcRenderer.send('export_model', dir)
@@ -536,7 +482,7 @@ ipcRenderer.on('show_export_reuslt_failed', function (event, arg) {
 
 ipcRenderer.on('show_train_graph', function (event, arg) {
     document.getElementById('model_train_graph_tab').innerHTML = current_locales.model_train_graph_tab
-    html = '<img src="' + arg + '" style="width:50%" class="rounded float-start" alt="'+ current_locales.confusion_mx +'">'
+    html = '<img src="' + arg + '" style="width:50%" class="rounded float-start" alt="' + current_locales.confusion_mx + '">'
     document.getElementById('mximg').innerHTML = html
 });
 

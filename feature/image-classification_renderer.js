@@ -2,6 +2,8 @@ const { ipcRenderer, remote } = require('electron');
 const { FitAddon } = require('xterm-addon-fit');
 const { WebLinksAddon } = require('xterm-addon-web-links');
 const echarts = require('echarts');
+const path = require('path');
+
 
 let train_situation_cls = false
 let model_graph_chart = null
@@ -74,6 +76,14 @@ ipcRenderer.on('window-resize',(event,{width,height})=>{
     terminalElement.style.marginLeft = 'auto';  
     terminalElement.style.marginRight = 'auto';
 
+    //训练数据图根据详情窗口大小自适应修改
+    if (model_graph_chart) {
+        model_graph_chart.resize({
+            width: document.getElementById("model_graph_pane").width,
+            height: document.getElementById("model_graph_pane").height,
+        }
+        );
+    }
 })
 
 ipcRenderer.on('write_data_to_xterm_cls', function (event, arg) {
@@ -347,118 +357,63 @@ ipcRenderer.on('update_model_train_graph', function (event, arg) {
     var model_graph_chart = echarts.init(document.getElementById('echarts'));
     let data = JSON.parse(arg)
     //console.log(data)
-    if (data['type'] == 'yolo') {
-        model_graph_chart.setOption({
-            tooltip: {
-                trigger: 'axis',
-                axisPointer: { type: 'cross' }
-            },
-            toolbox: {
-                show: true,
-                feature: {
-                    dataZoom: {
-                        yAxisIndex: 'none'
-                    },
-                    dataView: { readOnly: false },
-                    restore: {},
-                    saveAsImage: {}
-                }
-            },
-            legend: {},
-            xAxis: {
-                data: Array.from({ length: data['loss'].length }, (v, i) => i)
-            },
-            yAxis: {
-                show: true,
-                axisLine: { show: true },
-                axisTick: { show: true },
-                splitLine: { show: true },
-            },
-            series: [
-                {
-                    data: data['loss'],
-                    name: current_locales.test_loss,
-                    type: 'line',
-                    smooth: true
+    model_graph_chart.setOption({
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: { type: 'cross' }
+        },
+        toolbox: {
+            show: true,
+            feature: {
+                dataZoom: {
+                    yAxisIndex: 'none'
                 },
-                {
-                    data: data['val_loss'],
-                    name: current_locales.val_loss,
-                    type: 'line',
-                    smooth: true
-                }
-            ]
-        }, true);
-    }
-    else {
-        model_graph_chart.setOption({
-            tooltip: {
-                trigger: 'axis',
-                axisPointer: { type: 'cross' }
+                dataView: { readOnly: false },
+                restore: {},
+                saveAsImage: {}
+            }
+        },
+        legend: {},
+        xAxis: {
+            data: Array.from({ length: data['loss'].length }, (v, i) => i)
+        },
+        yAxis: {
+            show: true,
+            axisLine: { show: true },
+            axisTick: { show: true },
+            splitLine: { show: true },
+        },
+        series: [
+            {
+                data: data['acc'],
+                name: current_locales.test_acc,
+                type: 'line',
+                smooth: true
             },
-            toolbox: {
-                show: true,
-                feature: {
-                    dataZoom: {
-                        yAxisIndex: 'none'
-                    },
-                    dataView: { readOnly: false },
-                    restore: {},
-                    saveAsImage: {}
-                }
+            {
+                data: data['loss'],
+                name: current_locales.test_loss,
+                type: 'line',
+                smooth: true
             },
-            legend: {},
-            xAxis: {
-                data: Array.from({ length: data['loss'].length }, (v, i) => i)
+            {
+                data: data['val_acc'],
+                name: current_locales.val_acc,
+                type: 'line',
+                smooth: true
             },
-            yAxis: {
-                show: true,
-                axisLine: { show: true },
-                axisTick: { show: true },
-                splitLine: { show: true },
-            },
-            series: [
-                {
-                    data: data['acc'],
-                    name: current_locales.test_acc,
-                    type: 'line',
-                    smooth: true
-                },
-                {
-                    data: data['loss'],
-                    name: current_locales.test_loss,
-                    type: 'line',
-                    smooth: true
-                },
-                {
-                    data: data['val_acc'],
-                    name: current_locales.val_acc,
-                    type: 'line',
-                    smooth: true
-                },
-                {
-                    data: data['val_loss'],
-                    name: current_locales.val_loss,
-                    type: 'line',
-                    smooth: true
-                }
-            ]
-        });
-    }
+            {
+                data: data['val_loss'],
+                name: current_locales.val_loss,
+                type: 'line',
+                smooth: true
+            }
+        ]
+    });
 
 
 });
 
-window.addEventListener('resize', function () {
-    //训练数据图根据详情窗口大小自适应修改
-    if (model_graph_chart) {
-        model_graph_chart.resize({
-            width: document.getElementById("model_graph_pane").width,
-            height: document.getElementById("model_graph_pane").height,
-        }
-        );
-    }
-});
 
 ipcRenderer.on('update_model_param_err', function (event, arg) {
     data = JSON.parse(arg)
@@ -483,17 +438,21 @@ ipcRenderer.on('show_test_result_img', function (event, arg) {
     let html = ''
     let data = arg
     //console.log(data)
-    let path = data['dir']
-    for (let f of data['list']) {
-        html += '<div style="padding:20px"><img class="rounded mx-auto d-block" style="width: 120px;height: 100%;" src="' + path + '/' + f + '" alt="' + f + '"></div>'
+    let imgPath = data['dir']
+    imgPath = path.normalize(imgPath)
+    imgPath = imgPath.replace(/\\/g, '/');
+    for (let f of data['list']) {  
+        html += '<div style="padding:20px; cursor: pointer;" onclick="open_image('+"\'" + imgPath + '/' + f +"\'"+ ')\"">' +  
+                '<img class="rounded mx-auto d-block" style="width: 120px;height: 100%;" src="' + imgPath + '/' + f + '" alt="' + f + '">' +  
+                '</div>';  
     }
     html += "</div>"
     document.getElementById('test_result_wrap').innerHTML = html
 });
 
-// var preview = new Preview({
-//     imgWrap: 'wrap' // 指定该容器里的图片点击预览
-// })
+function open_image(imagePath){
+    ipcRenderer.send('open_image', imagePath);
+}
 
 function export_model(dir) {
     ipcRenderer.send('export_model', dir)

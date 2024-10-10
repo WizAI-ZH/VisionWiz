@@ -145,6 +145,7 @@
                     _this.onOff=false;
                     _this.moveX = ev.pageX-_this.startX+_this.LEFT;
                     _this.moveY = ev.pageY-_this.startY+_this.TOP;
+                    console.log('mousemove,pos:',_this.moveX,_this.moveY)
 
                     util.css(_this.moveObj,{
                         "left":_this.moveX+"px",

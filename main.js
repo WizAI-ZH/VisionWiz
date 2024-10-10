@@ -172,13 +172,18 @@ const createWindow = () => {
     mainWindow = null
   })
 
-  //主窗口事件处理
-  mainWindow.on('resize', () => {
+  const handleResize = ()=>{
     const [width, height] = mainWindow.getSize();
+    // console.log('resize to width:',width,'height:',height)
     mainWindow_views[getCurrentView()].setBounds({ x: 0, y: 0, width, height });
     // 发送消息到 BrowserView  
     sendMessageToAllViews(mainWindow_views, 'window-resize', { width, height });
-  });
+  }
+
+  //主窗口事件处理
+  mainWindow.on('resize', handleResize);
+  mainWindow.on('maximize', handleResize);  
+  mainWindow.on('unmaximize', handleResize);  
 
   // 打开开发工具
   // mainWindow.webContents.openDevTools()
@@ -207,12 +212,6 @@ ipcMain.handle('set-language', async (event, language) => {
 // 部分 API 在 ready 事件触发后才能使用。
 app.whenReady().then(() => {
   createWindow()
-  // setupWindowManager()
-
-  // globalShortcut.register('Ctrl+Shift+I', () => {
-  //   mainWindow.webContents.toggleDevTools();
-  // });
-
   app.on('activate', () => {
     // 在 macOS 系统内, 如果没有已开启的应用窗口
     // 点击托盘图标时通常会重新创建一个新窗口
@@ -244,6 +243,17 @@ function timeout(ms) {
     setTimeout(resolve, ms, 'done');
   });
 }
+
+//使用系统默认图片查看器打开图片
+ipcMain.on('open_image', (event, imagePath) => {  
+  const fullPath = path.normalize(imagePath);    
+  console.log(fullPath)
+  exec(`start "" "${fullPath}"`, (error) => {  
+      if (error) {  
+          console.error('Error opening image:', error);  
+      }  
+  });  
+});  
 
 //以下是工具调用相关进程函数
 ipcMain.on('open_make_sense', () => {  

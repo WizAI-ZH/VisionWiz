@@ -89,7 +89,7 @@ document.getElementById('classname').oninput = function () {
     ipcRenderer.send('config_save_img_name', this.value)
 }
 
-// var preview = new Preview({
-//     //建立预览图对象
-//     imgWrap: 'wrap' // 指定该容器里的图片点击预览
-// })
+var preview = new Preview({
+    //建立预览图对象
+    imgWrap: 'wrap' // 指定该容器里的图片点击预览
+})
