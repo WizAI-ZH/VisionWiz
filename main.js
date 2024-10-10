@@ -438,7 +438,7 @@ ptyProcess_cls.onData((data) => {
   if (data.indexOf("Test succeed!") != -1) {
     sendMessageToView(mainWindow_views, 'imgCls', 'show_test_succeed')
   }
-  if (data.indexOf("train error:") != -1) {
+  if (data.indexOf("训练错误:") != -1) {
     sendMessageToView(mainWindow_views, 'imgCls', 'show_train_failed', data)
   }
   sendMessageToView(mainWindow_views, 'imgCls', 'write_data_to_xterm_cls', data)
@@ -465,7 +465,7 @@ ptyProcess_yolo.onData((data) => {
   if (data.indexOf("Test succeed!") != -1) {
     sendMessageToView(mainWindow_views, 'objectDetection', 'show_test_succeed')
   }
-  if (data.indexOf("train error:") != -1) {
+  if (data.indexOf("训练错误:") != -1) {
     sendMessageToView(mainWindow_views, 'objectDetection', 'show_train_failed', data)
   }
   sendMessageToView(mainWindow_views, 'objectDetection', 'write_data_to_xterm_yolo', data)

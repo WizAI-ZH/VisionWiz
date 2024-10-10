@@ -42,6 +42,7 @@ def do_predict(model, img):
 def main(dir, custom_img_dir):  
     # 数据生成器  
     print(f'在路径 <<{dir}>> 的子文件夹中搜索预测图像: ')  
+    print('Search for prediction images in subfolders of path <<' + dir + '>>: ')
     img_dir = custom_img_dir or os.path.join(dir, 'sample_images')  # 使用自定义路径，如果提供  
 
     for root, dirs, files in os.walk(dir):  # 遍历指定目录下所有文件和文件夹  
@@ -61,9 +62,9 @@ def main(dir, custom_img_dir):
     classes = labels  # 定义类名列表  
 
     # 打印类名和索引  
-    print('\n类名:', classes)  
+    print('\n类名（class names）:', classes)  
     n_classes = len(classes)  # 计算类别数量  
-    print('类别数量:', n_classes, '\n')  
+    print('类别数量（number of classes）:', n_classes, '\n')  
 
     # 定义模型路径和信息文件路径  
     emodel_path = os.path.join(dir, 'mx.tflite.h5')  
@@ -113,11 +114,12 @@ def main(dir, custom_img_dir):
             output_path = os.path.join(ewrite_dname, i)  # 定义输出路径  
             images = images.convert('RGB')  # 将图像转换为 RGB 格式  
             images.save(output_path)  # 保存标注后的图像  
-            print(f"Image: {i}              Label: {classes[int(op)]}")  # 打印结果  
+            print(f"图片（Image）: {i}              （标签）Label: {classes[int(op)]}")  # 打印结果  
         except Exception as e:  
             traceback.print_exc()  # 打印异常堆栈跟踪  
-            print(f"Image: {i}              Error: {str(e)}")  # 打印错误信息  
+            print(f"图片（Image）: {i}              错误（Error）: {str(e)}")  # 打印错误信息  
     print("Test succeed!")
+    print("测试完成!")
     return True  # 返回成功标志  
 
 if __name__ == '__main__':  

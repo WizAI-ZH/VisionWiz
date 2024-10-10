@@ -101,35 +101,27 @@ def test(model_path,test_path=None):
         img_path = img_dir / filename
         img_fname = filename
 
-        print(f"Processing file: {img_fname} from path: {img_path}")
+        print(f"处理文件: {img_fname}，文件路径: {img_path}. Processing file: {img_fname} from path: {img_path}")
 
         # 使用 imageio 读取图像
         try:
             image = iio.imread(str(img_path))
         except Exception as e:
-            print(f"Error reading image: {e}")
+            print(f"读取图像时出错: {e}. Error reading image: {e}")
             continue  # 跳过这个文件，继续下一个
-
-        # print(f"Type of image read (imageio): {type(image)}")
-        # print(f"Image shape: {image.shape}")
-        # print(f"Image data type: {image.dtype}")
 
         if not isinstance(image, np.ndarray):
             image = np.asarray(image)
 
-        # print(f"Type after conversion to np.ndarray: {type(image)}")
-        # print(f"Image shape: {image.shape}")
-        # print(f"Image data type: {image.dtype}")
-
         if image is None or image.size == 0:
-            print(f"Warning: Failed to read image from path: {img_path}")
+            print(f"警告: 无法从路径读取图像: {img_path}. Warning: Failed to read image from path: {img_path}")
             continue  # 跳过这个文件，继续下一个
 
         # 转换 RGB 到 BGR 以便使用 OpenCV 处理
         try:
             image_bgr = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         except Exception as e:
-            print(f"Error converting to BGR: {e}")
+            print(f"转换为 BGR 时出错: {e}. Error converting to BGR: {e}")
             continue  # 跳过这个文件，继续下一个
 
         boxes, probs = yolo.predict(image_bgr, float(DEFAULT_THRESHOLD))
@@ -147,10 +139,11 @@ def test(model_path,test_path=None):
         # 使用 imageio 保存图像
         try:
             iio.imwrite(str(output_path), result_image_bgr)
-            print("{} boxes are detected. {} saved.".format(len(boxes), output_path))
-        except Exception as e:
-            print(f"Error during saving image: {e}")
+            print("{} 个框被检测到。{} 已保存。{} boxes are detected. {} saved.".format(len(boxes), output_path, len(boxes), output_path))  
+        except Exception as e:  
+            print(f"保存图像时出错: {e}. Error during saving image: {e}")
     print("Test succeed!")
+    print("测试成功!")
     return True
 
 if __name__ == '__main__':  
