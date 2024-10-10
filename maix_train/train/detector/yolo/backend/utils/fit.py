@@ -58,9 +58,9 @@ def train(model,
 
 def _print_time(process_time):
     if process_time < 60:
-        print("{:d} 秒用于训练 | {:d}-seconds to train".format(int(process_time), int(process_time)))
+        print("训练用时{:d} 秒 | {:d}-seconds to train".format(int(process_time), int(process_time)))
     else:
-        print("{:d} 分钟用于训练 | {:d}-mins to train".format(int(process_time / 60), int(process_time / 60)))
+        print("训练用时{:d} 分钟 | {:d}-mins to train".format(int(process_time / 60), int(process_time / 60)))
 
 
 def save_model(model, h5_path, tflite_path=None):
@@ -137,8 +137,12 @@ def _create_callbacks(save_best_weights_path, other_callbacks=[]):
                     else:
                         if self.monitor_op(current, self.best):
                             if self.verbose > 0:
-                                print('\n第%d轮: %s 从 %0.5f 误差率改进到 %0.5f误差率，保存模型到 %s | Epoch-%d: %s improved from %0.5f to %0.5f, saving model to %s' %   
-                                        (epoch + 1, self.monitor, self.best, current, filepath, epoch + 1, self.monitor, self.best, current, filepath))
+                                if self.monitor == 'loss':
+                                    monitor_val = '误差率（loss)'
+                                else:
+                                    monitor_val = self.monitor
+                                print('\n第%d轮(Epoch-%d): %s 从(from) %0.5f 改进到(improve to) %0.5f，保存模型到（save model to) %s' %   
+                                        (epoch + 1, epoch + 1, monitor_val, self.best, current, filepath))
                             self.best = current
                             if self.save_weights_only:
                                 # self.model.save_weights(filepath, overwrite=True)
@@ -152,8 +156,8 @@ def _create_callbacks(save_best_weights_path, other_callbacks=[]):
                                         (epoch + 1, self.monitor, self.best, epoch + 1, self.monitor, self.best))
                 else:
                     if self.verbose > 0:
-                        print('\n第%d轮: 正在保存模型到 %s | Epoch %d: saving model to %s' %   
-                                (epoch + 1, filepath, epoch + 1, filepath))
+                        print('\n第%d轮(Epoch %d): 正在保存模型到(saving model to) %s' %   
+                                (epoch + 1, epoch + 1, filepath))
                     if self.save_weights_only:
                         self.model.save_weights(filepath, overwrite=True)
                     else:

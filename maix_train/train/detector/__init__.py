@@ -157,19 +157,21 @@ class Detector(Train_Base):
             for bbox in items:
                 bboxes.append(( (bbox[2] - bbox[0])/w, (bbox[3] - bbox[1])/h ))
         bboxes = np.array(bboxes)
-        self.log.i(f"bboxes num: {len(bboxes)}, first bbox: {bboxes[0]}")
-        out = kmeans.kmeans(bboxes, k=clusters)
-        iou = kmeans.avg_iou(bboxes, out) * 100
-        self.log.i("bbox accuracy(IOU): {:.2f}%".format(iou))
-        self.log.i("bound boxes: {}".format( ",".join("({:f},{:.2f})".format(item[0] * w, item[1] * h) for item in out) ))
+        self.log.i(f"边界框数量（Bboxes num）: {len(bboxes)}, 第一个边界框（First bbox）: {bboxes[0]}")  
+        out = kmeans.kmeans(bboxes, k=clusters)  
+        iou = kmeans.avg_iou(bboxes, out) * 100  
+        self.log.i("边界框准确率(IOU): {:.2f}% | Bbox accuracy (IOU): {:.2f}%".format(iou, iou))  
+        self.log.i("边界框（Bound boxes）: {}".format(  
+            ",".join("({:f},{:.2f})".format(item[0] * w, item[1] * h) for item in out)
+        ))
         for i, wh in enumerate(out):
             out[i][0] = wh[0]*w/strip_size
             out[i][1] = wh[1]*h/strip_size
         anchors = list(out.flatten())
         #anchors=[28.0, 49.99, 53, 82.99, 95.71, 106.0, 129.0 ,152.85, 198.57, 247.14]
-        self.log.i(f"anchors: {anchors}")
+        self.log.i(f"锚点参数（anchors）: {anchors}")
         ratios = np.around(out[:, 0] / out[:, 1], decimals=2).tolist()
-        self.log.i("w/h ratios: {}".format(sorted(ratios)))
+        self.log.i("宽高比（w/h ratios）: {}".format(sorted(ratios)))
         
         return anchors
 
@@ -730,7 +732,7 @@ class Detector(Train_Base):
         for xml_path in xmls:
             ok, result = decode_pascal_voc_xml(xml_path)
             if not ok:
-                result = f"解码 XML {xml_path} 失败，原因: {result} | Decode XML {xml_path} fail, reason: {result}"
+                result = f"解码 XML (Decode XML) {xml_path} 失败(fail)，原因(reason): {result}"
                 self.on_warning_message(result)
                 continue
             # shape

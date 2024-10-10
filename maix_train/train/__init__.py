@@ -263,7 +263,7 @@ class Train():
                              progress_cb=self.__on_train_progress)
         except Exception as e:
             log.e("训练错误: {}. Train error: {}".format(e, e))  
-            traceback.print_exc()  
+            traceback.print_exc()
             raise Exception((TrainFailReason.ERROR_INTERNAL, "训练时发生错误，错误信息: {}. Error occurred during training, error: {}".format(str(e), str(e))))
         # 训练结束, 生成报告
         log.i("训练完成，现在生成报告。Train completed, now generating report.")

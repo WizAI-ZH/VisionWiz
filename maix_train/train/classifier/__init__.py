@@ -50,13 +50,13 @@ class Classifier(Train_Base):
         if datasets_zip:
             self.datasets_dir = self._unpack_datasets(datasets_zip, unpack_dir)
             if not self.datasets_dir:
-                self.log.e("can't detect datasets, check zip format")
-                raise Exception("can't detect datasets, check zip format")
+                self.log.e("无法检测到数据集，请检查 zip 格式 | Can't detect datasets, check zip format")  
+                raise Exception("无法检测到数据集，请检查 zip 格式 | Can't detect datasets, check zip format")
         elif datasets_cls_dir:
             self.datasets_dir = datasets_cls_dir
         else:
-            self.log.e("no datasets args")
-            raise Exception("no datasets args")
+            self.log.e("没有数据集参数 | No datasets args")  
+            raise Exception("没有数据集参数 | No datasets args")
         # get labels by directory name
         self.labels = self._get_labels(self.datasets_dir)
         # check label
@@ -79,22 +79,23 @@ class Classifier(Train_Base):
                 self.user_progress_callback = user_progress_callback
 
             def on_epoch_begin(self, epoch, logs=None):
-                self.logger.i("epoch {} start".format(epoch))
+                self.logger.i("第 {} 轮训练开始。Epoch {} start.".format(epoch, epoch))
+
 
             def on_epoch_end(self, epoch, logs=None):
-                self.logger.i("epoch {} end: {}".format(epoch, logs))
+                self.logger.i("第 {} 轮训练结束：{}。Epoch {} end: {}.".format(epoch, logs, epoch, logs))
                 if self.user_progress_callback:
                     self.user_progress_callback((epoch + 1) / self.epochs * 100, "train epoch end")
 
             def on_train_begin(self, logs=None):
-                self.logger.i("train start")
+                self.logger.i("训练开始。Train start")
                 if self.user_progress_callback:
-                    self.user_progress_callback(0, "train start")
+                    self.user_progress_callback(0, "训练开始。Train start")
 
             def on_train_end(self, logs=None):
-                self.logger.i("train end")
+                self.logger.i("训练结束。Train end")
                 if self.user_progress_callback:
-                    self.user_progress_callback(100, "train end")
+                    self.user_progress_callback(100, "训练结束。Train end")
         self.Train_progress_cb = _Train_progress_cb
 
     def __del__(self):
@@ -103,9 +104,9 @@ class Classifier(Train_Base):
                 shutil.rmtree(self.datasets_dir)
             except Exception as e:
                 try:
-                    self.log.e("clean temp files error:{}".format(e))
+                    self.log.e("清理临时文件错误：{}。Clean temp files error: {}.".format(e, e))
                 except Exception:
-                    print("log object invalid")
+                    print("日志对象无效。Log object invalid")
                 
     def train(self, epochs= 100,
                     progress_cb=None,
@@ -114,8 +115,8 @@ class Classifier(Train_Base):
                     batch_size = 5
                     ):
         weights=os.path.join(curr_file_dir, "weights", weights)
-        self.log.i("train, labels:{}".format(self.labels))
-        self.log.d("train, datasets dir:{}".format(self.datasets_dir))
+        self.log.i("标签列表（labels）:{}".format(self.labels))
+        self.log.d("数据集路径:{}".format(self.datasets_dir))
         
         from mobilenet_sipeed import mobilenet
         import tensorflow as tf
@@ -171,7 +172,9 @@ class Classifier(Train_Base):
                 shuffle=False,
                 subset= "validation"
                 )
-        self.log.i("train data:{}, valid data:{}".format(train_data.samples, valid_data.samples))
+        self.log.i("训练数据: {}, 验证数据: {} | Train data: {}, Valid data: {}".format(  
+            train_data.samples, valid_data.samples, train_data.samples, valid_data.samples  
+        ))
         callbacks = [self.Train_progress_cb(epochs, progress_cb, self.log)]
         self.history = self.model.fit_generator(train_data, validation_data=valid_data,
                                  steps_per_epoch=train_data.samples//batch_size,
@@ -184,7 +187,7 @@ class Classifier(Train_Base):
         '''
             generate result charts
         '''
-        self.log.i("generate report image")
+        self.log.i("生成报告图像。Generate report image.")
         if not self.history:
             return
         history = self.history
@@ -284,21 +287,21 @@ class Classifier(Train_Base):
         axes2.set_xlabel('Predicted label')
         fig2.savefig(os.path.join(os.path.join(os.path.abspath(os.path.dirname(out_path)),'confusion_matrix.png')))
         plt.close()
-        self.log.i("generate report image end")
+        self.log.i("结束生成图表 | Generate report image end")
 
     def save(self, h5_path=None, tflite_path=None):
         if h5_path:
-            self.log.i("save model as .h5 file")
+            self.log.i("将模型保存为 .h5 文件 | Save model as .h5 file")
             if not h5_path.endswith(".h5"):
                 if os.path.isdir(h5_path):
                     h5_path = os.path.join(h5_path, "classifier.h5")
                 else:
                     h5_path += ".h5"
             if not self.model:
-                raise Exception("no model defined")
+                raise Exception("未定义模型 | No model defined")
             self.model.save(h5_path)
         if tflite_path:
-            self.log.i("save model as .tflite file")
+            self.log.i("将模型保存为 .tflite 文件 | Save model as .tflite file")
             if not tflite_path.endswith(".tflite"):
                 if os.path.isdir(tflite_path):
                     tflite_path = os.path.join(tflite_path, "classifier.tflite")
@@ -315,7 +318,7 @@ class Classifier(Train_Base):
 
     def get_sample_images(self, sample_num, copy_to_dir):
         if not self.datasets_dir or not os.path.exists(self.datasets_dir):
-            raise Exception("datasets dir not exists")
+            raise Exception("数据集目录不存在 | Datasets directory does not exist")
         num_gen = self._get_sample_num(len(self.labels), sample_num)
         for label in self.labels:
             num = num_gen.__next__()
@@ -400,21 +403,21 @@ class Classifier(Train_Base):
             images number in every label should > 40
         '''
         if len(labels) <= 1:
-            err_msg = "datasets no enough class or directory error"
+            err_msg = "数据集类别不足或目录错误 | Datasets not enough class or directory error"
             return False, err_msg
         if len(labels) > max_classes_num:
-            err_msg = "datasets too much class or directory error, limit:{} classses".format(max_classes_num)
+            err_msg = "数据集类别过多或目录错误，限制：{} 类别 | Datasets too much class or directory error, limit: {} classes".format(max_classes_num, max_classes_num)
             return False, err_msg
         print(labels,"---------")
         for label in labels:
             if not isascii(label):
-                return False, "class name(label) should not contain special letters"
+                return False, "类名（标签）不应包含特殊字符 | Class name (label) should not contain special letters"
             # check image number
             files = os.listdir(os.path.join(self.datasets_dir, label))
             if len(files) < min_images_num:
-                return False, "no enough train images in one class, should > {}".format(min_images_num)
+                return False, "某一类的训练图像数量不足，应该大于 {} | Not enough train images in one class, should be > {}".format(min_images_num, min_images_num)
             if len(files) > max_images_num:
-                return False, "too many train images in one class, should < {}".format(max_images_num)
+                return False, "某一类的训练图像数量过多，应该少于 {} | Too many train images in one class, should be < {}".format(max_images_num, max_images_num)
         return True, ""
     
     def _is_datasets_shape_valid(self, datasets_dir, shape):
@@ -435,7 +438,7 @@ class Classifier(Train_Base):
 
 def train_on_progress(progress, msg):
     print("\n==============")
-    print("progress:{}%, msg:{}".format(progress, msg))
+    print("进度（progress）:{}%, 信息（msg）:{}".format(progress, msg))
     print("==============")
 
 def test_main(datasets_zip, model_path, report_path, use_cpu=False):
@@ -448,11 +451,11 @@ def test_main(datasets_zip, model_path, report_path, use_cpu=False):
         gpu = None
     if gpu is None:
         if not use_cpu:
-            log.e("no free GPU")
+            log.e("没有空闲的 GPU。No free GPU.") 
             return 1
-        log.i("no GPU, will use [CPU]")
+        log.i("没有 GPU，将使用 [CPU]。No GPU, will use [CPU].")  
     else:
-        log.i("select", gpu)
+        log.i("选择 GPU: {}。Selected GPU: {}".format(gpu, gpu))
     classifier = Classifier(datasets_zip=datasets_zip, logger=log)
     classifier.train(epochs=2, progress_cb=train_on_progress)
     classifier.report(report_path)

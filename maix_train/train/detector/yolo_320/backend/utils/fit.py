@@ -143,9 +143,9 @@ def train(model,
 
 def _print_time(process_time):
     if process_time < 60:
-        print("{:d} 秒用于训练 | {:d}-seconds to train".format(int(process_time), int(process_time)))
+        print("训练用时{:d} 秒 | {:d}-seconds to train".format(int(process_time), int(process_time)))
     else:
-        print("{:d} 分钟用于训练 | {:d}-mins to train".format(int(process_time / 60), int(process_time / 60)))
+        print("训练用时{:d} 分钟 | {:d}-mins to train".format(int(process_time / 60), int(process_time / 60)))
 
 def save_model(model, h5_path, tflite_path=None):
     print("保存 .h5 权重文件到: | save .h5 weights file to: {}".format(h5_path))
@@ -221,8 +221,12 @@ def _create_callbacks(save_best_weights_path, other_callbacks=[]):
                     else:
                         if self.monitor_op(current, self.best):
                             if self.verbose > 0:
-                                print('\n第%d轮: %s 从 %0.5f 误差率改进到 %0.5f误差率，保存模型到 %s | Epoch-%05d: %s improved from %0.5f to %0.5f, saving model to %s' %   
-                                        (epoch + 1, self.monitor, self.best, current, filepath, epoch + 1, self.monitor, self.best, current, filepath))
+                                if self.monitor == 'loss':
+                                    monitor_val = '误差率（loss)'
+                                else:
+                                    monitor_val = self.monitor
+                                print('\n第%d轮(Epoch-%d): %s 从(from) %0.5f 改进到(improve to) %0.5f，保存模型到（save model to) %s' %   
+                                        (epoch + 1, epoch + 1, monitor_val, self.best, current, filepath))
                             self.best = current
                             if self.save_weights_only:
                                 self.model.save_weights(filepath, overwrite=True)
@@ -235,8 +239,8 @@ def _create_callbacks(save_best_weights_path, other_callbacks=[]):
                                         (epoch + 1, self.monitor, self.best, epoch + 1, self.monitor, self.best))
                 else:
                     if self.verbose > 0:
-                        print('\n第%d轮: 正在保存模型到 %s | Epoch %d: saving model to %s' %   
-                                (epoch + 1, filepath, epoch + 1, filepath))
+                        print('\n第%d轮(Epoch %d): 正在保存模型到(saving model to) %s' %   
+                                (epoch + 1, epoch + 1, filepath))
                     if self.save_weights_only:
                         self.model.save_weights(filepath, overwrite=True)
                     else:
@@ -264,9 +268,8 @@ def _create_callbacks(save_best_weights_path, other_callbacks=[]):
             self.epochs_since_last_save = 0
 
             if mode not in ['auto', 'min', 'max']:
-                warnings.warn('ModelCheckpoint mode %s is unknown, '
-                            'fallback to auto mode.' % (mode),
-                            RuntimeWarning)
+                warnings.warn('ModelCheckpoint 模式 %s 未知，回退到自动模式。 | ModelCheckpoint mode %s is unknown, fallback to auto mode.' %   
+              (mode, mode), RuntimeWarning)
                 mode = 'auto'
 
             if mode == 'min':
@@ -292,15 +295,13 @@ def _create_callbacks(save_best_weights_path, other_callbacks=[]):
                 if self.save_best_only:
                     current = logs.get(self.monitor)
                     if current is None:
-                        warnings.warn('Can save best model only with %s available, '
-                                    'skipping.' % (self.monitor), RuntimeWarning)
+                        warnings.warn('只能在 %s 可用时保存最佳模型，跳过此步骤。 | Can save best model only with %s available, skipping.' %   
+                                        (self.monitor, self.monitor), RuntimeWarning)
                     else:
                         if self.monitor_op(current, self.best):
                             if self.verbose > 0:
-                                print('\nEpoch-%05d: %s improved from %0.5f to %0.5f,'
-                                    ' saving model to %s'
-                                    % (epoch + 1, self.monitor, self.best,
-                                        current, filepath))
+                                print('\n第%d轮: %s 从 %0.5f 误差率改进到 %0.5f误差率，保存模型到 %s | Epoch-%d: %s improved from %0.5f to %0.5f, saving model to %s' %   
+                                        (epoch + 1, self.monitor, self.best, current, filepath, epoch + 1, self.monitor, self.best, current, filepath))
                             self.best = current
                             if self.save_weights_only:
                                 # self.model.save_weights(filepath, overwrite=True)
@@ -310,11 +311,12 @@ def _create_callbacks(save_best_weights_path, other_callbacks=[]):
                                 save_model(self.model, filepath, tflite_path)
                         else:
                             if self.verbose > 0:
-                                print('\nEpoch %05d: %s did not improve from %0.5f' %
-                                    (epoch + 1, self.monitor, self.best))
+                                print('\n第%05d轮: %s 没有从 %0.5f 误差率改进 | Epoch %d: %s did not improve from %0.5f' %  
+                                        (epoch + 1, self.monitor, self.best, epoch + 1, self.monitor, self.best))
                 else:
                     if self.verbose > 0:
-                        print('\nEpoch %05d: saving model to %s' % (epoch + 1, filepath))
+                        print('\n第%d轮: 正在保存模型到 %s | Epoch %d: saving model to %s' %   
+                                (epoch + 1, filepath, epoch + 1, filepath))
                     if self.save_weights_only:
                         self.model.save_weights(filepath, overwrite=True)
                     else:
