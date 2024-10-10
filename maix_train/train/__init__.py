@@ -190,12 +190,9 @@ class Train():
         if len(obj.warning_msg) > 0:
             result_warning_msg += "=========================================================================\n"
             result_warning_msg += "train warnings: these warn info may lead train error(accuracy loss), please check carefully\n"
-            result_warning_msg += "=========================================================================\n"
             result_warning_msg += "训练警告： 这些警告信息可能导致训练误差，请务必仔细检查\n"
-            result_warning_msg += "=========================================================================\n\n\n"
-            result_warning_msg += "=========================================================================\n"
             result_warning_msg += "訓練警告： 這些警告信息可能導致訓練誤差，請務必仔細檢查\n"
-            result_warning_msg += "=========================================================================\n\n\n"
+            result_warning_msg += "=========================================================================\n"
             
             for msg in obj.warning_msg:
                 result_warning_msg += "{}\n\n".format(msg)

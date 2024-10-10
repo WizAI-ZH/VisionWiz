@@ -139,7 +139,7 @@ def test(model_path,test_path=None):
         # 使用 imageio 保存图像
         try:
             iio.imwrite(str(output_path), result_image_bgr)
-            print("{} 个框被检测到({} boxes are detected)。推理结果保存（result saved in）:{}".format(len(boxes),len(boxes), output_path))  
+            print("{} 个框被检测到({} boxes are detected)。测试结果保存到（result saved in）:{}".format(len(boxes),len(boxes), output_path))  
         except Exception as e:  
             print(f"保存图像时出错(Error during saving image): {e}")
     print("Test succeed!")

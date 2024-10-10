@@ -64,10 +64,10 @@ def _print_time(process_time):
 
 
 def save_model(model, h5_path, tflite_path=None):
-    print("保存 .h5 权重文件到: | save .h5 weights file to: {}".format(h5_path))
+    print("保存 .h5 权重文件到(save .h5 weights file to): {}".format(h5_path))
     model.save(h5_path, overwrite=True, include_optimizer=False)
     if tflite_path:
-        print("保存 tflite 文件到: | save tflite to: {}".format(tflite_path))
+        print("保存 tflite 文件到(save tflite to): {}".format(tflite_path))
         import tensorflow as tf
         # converter = tf.lite.TFLiteConverter.from_keras_model(model)
         # tflite_model = converter.convert()

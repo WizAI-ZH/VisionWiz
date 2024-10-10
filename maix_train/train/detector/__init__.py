@@ -169,7 +169,7 @@ class Detector(Train_Base):
             out[i][1] = wh[1]*h/strip_size
         anchors = list(out.flatten())
         #anchors=[28.0, 49.99, 53, 82.99, 95.71, 106.0, 129.0 ,152.85, 198.57, 247.14]
-        self.log.i(f"锚点参数（anchors）: {anchors}")
+        self.log.i(f"anchors: {anchors}")
         ratios = np.around(out[:, 0] / out[:, 1], decimals=2).tolist()
         self.log.i("宽高比（w/h ratios）: {}".format(sorted(ratios)))
         
@@ -878,7 +878,7 @@ def test_main(datasets_zip, model_path, report_path, log, use_cpu=False):
     detector.save(tflite_path = "out/best_weights.tflite")
     detector.get_sample_images(5, "out/sample_images")
     print("--------result---------")
-    print("锚点参数（anchors）: {}".format(detector.anchors))
+    print("anchors: {}".format(detector.anchors))
     print("标签列表（labels）:{}".format(detector.labels))
     print("-----------------------")
     if len(detector.warning_msg) > 0:

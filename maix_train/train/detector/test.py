@@ -71,7 +71,6 @@ def main(file_dirs):
     info_dir = curr_dir / 'out' / file_dirs / 'info.json'
     with open(info_dir, 'r', encoding='utf-8') as f:
         data = json.loads(f.read())
-
     ty = getanchors(file_dirs)
     data['anchors'] = ty
     #将anchors参数写入info.json中  
@@ -143,7 +142,7 @@ def main(file_dirs):
         # 使用 imageio 保存图像
         try:
             iio.imwrite(str(output_path), result_image_bgr)
-            print("{} 个框被检测到({} boxes are detected)。推理结果保存（result saved in）:{}".format(len(boxes),len(boxes), output_path))  
+            print("{} 个框被检测到({} boxes are detected)。测试结果保存到（result saved in）:{}".format(len(boxes),len(boxes), output_path))  
         except Exception as e:  
             print(f"保存图像时出错(Error during saving image): {e}")
 
