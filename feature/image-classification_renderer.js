@@ -81,7 +81,7 @@ ipcRenderer.on('window-resize',(event,{width,height})=>{
     if (train_chart) {
         const train_chart_container = document.getElementById("echarts")
         const parentDiv = train_chart.parentElement;
-        console.log(parentDiv)
+        // console.log(parentDiv)
         let new_width = document.getElementById("model_graph_pane").offsetWidth * 0.72
         let new_height = new_width/2
         train_chart_container.style.width = new_width + 'px';

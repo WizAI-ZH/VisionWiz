@@ -92,7 +92,7 @@ ipcRenderer.on('window-resize', (event, { width, height }) => {
     if (train_chart) {
         const train_chart_container = document.getElementById("echarts")
         const parentDiv = train_chart.parentElement;
-        console.log(parentDiv)
+        // console.log(parentDiv)
         let new_width = document.getElementById("model_graph_pane").offsetWidth * 0.72
         let new_height = new_width/2
         train_chart_container.style.width = new_width + 'px';
@@ -310,14 +310,14 @@ function open_model_detail(dir) {
     var button = document.getElementById("open_model_file");
     current_tab_dir = dir
     if (button) {
-        console.log("更新了模型文件夹路径到按钮'open_model_file'中");
+        // console.log("更新了模型文件夹路径到按钮'open_model_file'中");
         button.onclick = function () {
             open_dir(dir);
         };
     }
     var button = document.getElementById("export_model_file");
     if (button) {
-        console.log("更新了模型文件夹路径到按钮'export_model_file'中");
+        // console.log("更新了模型文件夹路径到按钮'export_model_file'中");
         button.onclick = function () {
             export_model(dir);
         };
@@ -383,7 +383,7 @@ ipcRenderer.on('update_model_anchors', function (event, arg) {
 ipcRenderer.on('update_model_train_log', function (event, arg) {
     var reg = new RegExp("\r\n", "g");
     document.getElementById('train_log').innerHTML = arg[0].replaceAll(reg, '<br/>');
-    console.log(arg)
+    // console.log(arg)
 });
 
 
@@ -451,7 +451,7 @@ ipcRenderer.on('update_model_param_err', function (event, arg) {
 ipcRenderer.on('update_model_train_log_err', function (event, arg) {
     var reg = new RegExp("\r\n", "g");
     document.getElementById('train_log_err').innerHTML = arg[0].replaceAll(reg, '<br/>');
-    console.log(arg)
+    // console.log(arg)
 });
 
 ipcRenderer.on('show_test_result_img', function (event, arg) {
