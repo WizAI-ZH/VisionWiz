@@ -40,8 +40,6 @@ const createWindow = () => {
   mainWindow = new BrowserWindow({
     x: 0,
     y: 0,
-    width: 1300,
-    height: 850,
     // fullscreen: true, 
     resizable: true,
     transparent: false,
@@ -155,7 +153,7 @@ const createWindow = () => {
   loadViews().then(() => {
     mainWindow.addBrowserView(mainWindow_views['Wizhome']);
     mainWindow_views['Wizhome'].setBounds({ x: 0, y: 0, width: mainWindow.getBounds().width, height: mainWindow.getBounds().height });
-    mainWindow_views['Wizhome'].webContents.openDevTools({ mode: 'detach' })
+    // mainWindow_views['Wizhome'].webContents.openDevTools({ mode: 'detach' })
     childWindow.destroy();
     mainWindow.show();
   });
@@ -166,6 +164,10 @@ const createWindow = () => {
   // 设置应用菜单，并传递主窗口的引用
   setAppMenu(mainWindow, mainWindow_views, get_store_value('current_lang') || 'zh')
   console.log('finished setAppMenu')
+
+  mainWindow.once('ready-to-show',()=>{
+    mainWindow.maximize();
+  })
 
   mainWindow.webContents.on('close', () => {
     console.log('8--->this window is closed')
@@ -212,6 +214,9 @@ ipcMain.handle('set-language', async (event, language) => {
 // 部分 API 在 ready 事件触发后才能使用。
 app.whenReady().then(() => {
   createWindow()
+  globalShortcut.register('Control+Shift+I',()=>{
+    mainWindow_views[getCurrentView()].webContents.openDevTools({ mode: 'detach' });
+  })
   app.on('activate', () => {
     // 在 macOS 系统内, 如果没有已开启的应用窗口
     // 点击托盘图标时通常会重新创建一个新窗口
@@ -390,6 +395,7 @@ ipcMain.on('savedir', function (event, arg) {
 
 
 let pty = require('node-pty');
+const { main } = require('@popperjs/core');
 const shell = os.platform() === "win32" ? "powershell.exe" : "bash";
 const ptyProcess_yolo = pty.spawn(shell, [], {
   name: 'xterm-color',

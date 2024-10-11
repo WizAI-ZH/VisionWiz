@@ -88,8 +88,3 @@ document.getElementById('classname').oninput = function () {
     //更新种类名称，用于命名拍摄的图像名字
     ipcRenderer.send('config_save_img_name', this.value)
 }
-
-var preview = new Preview({
-    //建立预览图对象
-    imgWrap: 'wrap' // 指定该容器里的图片点击预览
-})

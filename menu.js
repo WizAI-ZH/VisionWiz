@@ -1,6 +1,6 @@
 const { Menu } = require('electron');
 let currentLanguage
-let currentView
+let currentView = 'Wizhome'
 
 //菜单本地化数据翻译
 const languages = {
@@ -67,13 +67,18 @@ function switchView(mainWindow, views, viewName) {
         mainWindow.setBrowserView(views[viewName]);
         currentView = viewName;
         views[viewName].setBounds({ x: 0, y: 0, width: mainWindow.getBounds().width, height: mainWindow.getBounds().height });
-        views[viewName].webContents.openDevTools({ mode: 'detach' })
+        // views[viewName].webContents.openDevTools({ mode: 'detach' })
     }
 }
 
 function getCurrentView() {
     return currentView;
 }
+
+function showDevTools(viewName){
+    
+}
+
 // 动态生成菜单模板函数  
 const menuTemplate = (browserWindow, views) => [
     {

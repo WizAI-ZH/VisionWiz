@@ -23,7 +23,7 @@ function createMakeSenseWindow(language) {
   // 加载 make-sense 的 index.html 
   makeSenseWindow.loadFile(path.join(__dirname,'tools', 'make-sense-'+language , 'index.html'));  
   // makeSenseWindow.loadFile(path.join(__dirname, 'make-sense','dist' , 'index.html'));  
-  makeSenseWindow.webContents.openDevTools({ mode: 'detach' })
+  // makeSenseWindow.webContents.openDevTools({ mode: 'detach' })
 }  
 
 module.exports = {createMakeSenseWindow};
