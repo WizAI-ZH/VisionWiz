@@ -370,6 +370,7 @@ class Detector(Train_Base):
         #     tflite_model = converter.convert()
         #     with open (tflite_path, "wb") as f:
         #         f.write(tflite_model)
+        print("-"*70)
 
     def infer(self, input):
         pass
@@ -768,14 +769,14 @@ class Detector(Train_Base):
                 if os.path.exists(img_path):
                     img = np.array(Image.open(img_path), dtype='uint8')
                 else:
-                    result = f"解码 XML {xml_path}，无法找到图像: {result['path']} | Decode XML {xml_path}, cannot find image: {result['path']}"
+                    result = f"解码 XML 失败（Decode XML failed) {xml_path}，无法找到图像(cannot find image): {result['path']}"
                     self.on_warning_message(result)
                     continue
             # load bndboxes
             y = []
             for bbox in result['bboxes']:
                 if not bbox[4] in labels:
-                    result = f"解码 XML {xml_path}，无法找到图像: {result['path']} | Decode XML {xml_path}, cannot find image: {result['path']}"
+                    f"解码 XML 失败（Decode XML failed) {xml_path}，无法找到图像(cannot find image): {result['path']}"
                     self.on_warning_message(result)
                     continue
                 label_idx = labels.index(bbox[4])
@@ -784,7 +785,7 @@ class Detector(Train_Base):
                 # range to [0, 1]
                 y.append( bbox[:5])
             if len(y) < 1:
-                result = f"解码 XML {xml_path}，没有对象，跳过 | Decode XML {xml_path}, no object, skip"
+                result = f"解码 XML (Decode XML failed) {xml_path}，没有对象，跳过(no object, skip)"
                 self.on_warning_message(result)
                 continue
             #if img_shape != self.input_shape:

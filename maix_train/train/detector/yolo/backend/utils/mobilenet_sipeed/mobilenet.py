@@ -324,7 +324,7 @@ def MobileNet(input_shape=None,
             alpha_text = '2_5'
         model_name = 'mobilenet_%s_%d_tf_no_top.h5' % (alpha_text, rows)
         weights=os.path.join(os.getcwd(),'maix_train/train/detector/weights',model_name)
-        print(f"加载本地权重文件: {weights}. Load local weight file: {weights}")
+        print(f"加载本地权重文件(Load local weight file): {weights}")
         model.load_weights(weights)
 
     if old_data_format:

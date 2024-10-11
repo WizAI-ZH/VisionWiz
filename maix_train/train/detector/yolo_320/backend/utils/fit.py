@@ -167,6 +167,7 @@ def save_model(model, h5_path, tflite_path=None):
         tfmodel = converter.convert()
         with open (tflite_path , "wb") as f:
             f.write(tfmodel)
+    print("-"*70)
 
 def _create_callbacks(save_best_weights_path, other_callbacks=[]):
     from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
