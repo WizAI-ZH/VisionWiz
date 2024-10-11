@@ -29,7 +29,7 @@ Copyright © 2024 Zhuhai Wiz Artificial Intelligence Co., Ltd.
 
 ## 安装
 
-请访问我们的[官方网站](https://vesibit.yuque.com/ednd8n/rp34u1/cw5ignmloda92t0f/edit)下载最新版的威智慧眼。安装指南详见官方网站。
+请访问我们的[官方下载网站](https://vesibit.yuque.com/ednd8n/rp34u1/cw5ignmloda92t0f/edit)下载最新版的威智慧眼。安装指南详见官方网站。
 
 ## 贡献
 
