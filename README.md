@@ -21,8 +21,11 @@
 
 
 ## 开源许可证
-这款软件遵循GPL-3.0许可证 - 具体详情请参见LICENSE文件。版权所有 © 2024 珠海威智人工智能有限公司.
-This software is licensed under the GPL-3.0 License - see the LICENSE file for details. Copyright © 2024 Zhuhai Wiz Artificial Intelligence Co., Ltd..
+这款软件遵循GPL-3.0许可证 - 具体详情请参见LICENSE文件。  
+版权所有 © 2024 珠海威智人工智能有限公司.  
+
+This software is licensed under the GPL-3.0 License - see the LICENSE file for details.  
+Copyright © 2024 Zhuhai Wiz Artificial Intelligence Co., Ltd.
 
 ## 安装
 
