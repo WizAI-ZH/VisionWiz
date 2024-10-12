@@ -38,7 +38,9 @@
       "oneClick": false,               
       "perMachine": true,             
       "createDesktopShortcut": true,   
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true
     },  
     "electronVersion": "29.4.6",
     "asar": true  
