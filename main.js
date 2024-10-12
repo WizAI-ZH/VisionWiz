@@ -261,6 +261,11 @@ ipcMain.on('open_image', (event, imagePath) => {
   });  
 });  
 
+//获取当前app根目录
+ipcMain.on('get_app_path', (event) => {  
+  event.reply('get_app_path_reply', app.getAppPath());  
+});  
+
 //以下是工具调用相关进程函数
 ipcMain.on('open_make_sense', () => {  
   //打开make-sense软件，并且设定make-sense语言

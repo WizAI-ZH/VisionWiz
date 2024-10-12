@@ -5,16 +5,34 @@ const echarts = require('echarts');
 const path = require('path');
 
 
+
 let train_situation_cls = false
 let current_tab_dir
+
+//定义python路径和运行脚本变量
+let pythonExec
+let trainScript
+let testScript
+
+//发送获取应用根目录指令
+ipcRenderer.send('get_app_path');
+
+ipcRenderer.on('get_app_path_reply', (event, appPath) => {
+    // 获取 python.exe 和 train.py 的路径  
+    pythonExec = path.join(appPath, 'py39', 'python.exe');
+    trainScript = path.join(appPath, 'maix_train', 'train.py');
+    testScript = path.join(appPath, 'maix_train', 'train', 'classifier', 'predict_test.py')
+});
+
+
 
 document.getElementById("dataset_dir_cls").onclick = function () {
     //向主进程main.js发送消息,确定要打开图像分类训练集存放目录的文件夹
     ipcRenderer.send('open_dataset_dir_cls', '');
 }
 
-document.getElementById('test_img_dir_cls').onclick = function(){
-    ipcRenderer.send('open_test_img_dir_cls','');
+document.getElementById('test_img_dir_cls').onclick = function () {
+    ipcRenderer.send('open_test_img_dir_cls', '');
 }
 
 ipcRenderer.on('update_dataset_dir_cls', function (event, arg) {
@@ -61,18 +79,18 @@ xterm_cls.loadAddon(new WebLinksAddon());
 xterm_cls.open(document.getElementById('xterm_cls'));
 xterm_cls.onData(data => { ipcRenderer.send('send_data_terminal_cls', data); });
 
-ipcRenderer.on('window-resize',(event,{width,height})=>{
+ipcRenderer.on('window-resize', (event, { width, height }) => {
     // 窗口尺寸变化时，终端尺寸自适应
     //console.log(document.getElementById('xterm_cls'))
     fitAddon_cls.fit()
     // // 获取终端元素  
-    const terminalElement = document.getElementById('xterm_cls');  
+    const terminalElement = document.getElementById('xterm_cls');
 
     // 将宽度缩小到原来的90%  
     terminalElement.style.width = (width * 0.9) + 'px';
 
     // 将终端居中  
-    terminalElement.style.marginLeft = 'auto';  
+    terminalElement.style.marginLeft = 'auto';
     terminalElement.style.marginRight = 'auto';
 
     //训练数据图根据详情窗口大小自适应修改
@@ -83,7 +101,7 @@ ipcRenderer.on('window-resize',(event,{width,height})=>{
         const parentDiv = train_chart.parentElement;
         // console.log(parentDiv)
         let new_width = document.getElementById("model_graph_pane").offsetWidth * 0.72
-        let new_height = new_width/2
+        let new_height = new_width / 2
         train_chart_container.style.width = new_width + 'px';
         train_chart_container.style.height = new_height + 'px';
         parentDiv.style.width = new_width + 'px';
@@ -91,7 +109,7 @@ ipcRenderer.on('window-resize',(event,{width,height})=>{
         // train_chart.width = document.getElementById("model_graph_pane").offsetWidth;
         train_chart.style.width = new_width + 'px';
         // train_chart.height = document.getElementById("model_graph_pane").offsetHeight;
-        train_chart.style.height = new_height  + 'px';
+        train_chart.style.height = new_height + 'px';
         // console.log('model_graph_plane size:', document.getElementById("model_graph_pane").offsetWidth, document.getElementById("model_graph_pane").offsetHeight)
     }
 })
@@ -119,9 +137,9 @@ document.getElementById('test_model_button').addEventListener('click', function 
     let test_dir = document.getElementById('test_img_dir_cls').value
     //当前模型的训练资料路径
     let dir = `${process.cwd()}/out/${current_tab_dir}`
-    test_model(dir,test_dir)
+    test_model(dir, test_dir)
     //更新测试结果到详情窗口中
-    ipcRenderer.send('update_test_result_cls',current_tab_dir)
+    ipcRenderer.send('update_test_result_cls', current_tab_dir)
 });
 
 ipcRenderer.on('update_train_history', function (event, arg) {
@@ -134,10 +152,10 @@ ipcRenderer.on('update_train_history', function (event, arg) {
         let time = d['name'].split('_')[2].replace('-', ':').replace('-', ':')
         if (name == 'classifer') {
             if (d['train_result'] == "success") {
-                html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail("' + d['name'] + '")>'+ current_locales.cls +'</button><a>' + year + ' ' + time + '</a> <button type="button" class="btn-close" aria-label="Close" onclick="del_dir(\'' + d['name'] + '\')"></button></div>'
+                html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail("' + d['name'] + '")>' + current_locales.cls + '</button><a>' + year + ' ' + time + '</a> <button type="button" class="btn-close" aria-label="Close" onclick="del_dir(\'' + d['name'] + '\')"></button></div>'
             }
             else {
-                html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail_err("' + d['name'] + '")>'+current_locales.cls+'</button><a>' + year + ' ' + time + '</a> <button type="button" class="btn-close" aria-label="Close" onclick="del_dir(\'' + d['name'] + '\')"></button></div>'
+                html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail_err("' + d['name'] + '")>' + current_locales.cls + '</button><a>' + year + ' ' + time + '</a> <button type="button" class="btn-close" aria-label="Close" onclick="del_dir(\'' + d['name'] + '\')"></button></div>'
             }
         }
     }
@@ -163,6 +181,7 @@ ipcRenderer.on('show_del_file_succeed', function (event, arg) {
 });
 
 
+
 document.getElementById('start_train_cls').addEventListener('click', function () {
     //按下按钮后开始进行训练
     if (train_situation_cls == false) {
@@ -180,7 +199,9 @@ document.getElementById('start_train_cls').addEventListener('click', function ()
         else {
             fitAddon_cls.fit()
             //开始训练
-            ipcRenderer.send('send_data_terminal_cls', 'py39/python.exe maix_train/train.py -t classifier -dc ' + img + ' -ep ' + epoch + ' -ap ' + alpha + ' -bz ' + batch_size + ' train\r');
+            const command = `${pythonExec} ${trainScript} -t classifier -dc ${img} -ep ${epoch} -ap ${alpha} -bz ${batch_size} train\r`;
+            // 发送开始训练指令  
+            ipcRenderer.send('send_data_terminal_cls', command);
             //设定开始训练状态为进行中
             train_situation_cls = true
             //将状况图标切换成加载图标
@@ -198,7 +219,7 @@ document.getElementById('stop_train_cls').addEventListener('click', function () 
     if (train_situation_cls) {
         ipcRenderer.send('stop_process', '')
         Notiflix.Notify.success(current_locales.train_stopped);
-        
+
         train_situation_cls = false
         document.getElementById('training_situation_cls').innerHTML = "<i class='fa fa-check' style='color:#069b34'></i>"
     }
@@ -217,9 +238,9 @@ ipcRenderer.on('show_train_succeed', function (event, arg) {
 ipcRenderer.on('show_test_succeed', function (event, arg) {
     //收到主进程发出的测试成功信息，进行信息提醒并且更新状态
     //更新测试结果到详情窗口中
-    ipcRenderer.send('update_test_result_cls',current_tab_dir)
+    ipcRenderer.send('update_test_result_cls', current_tab_dir)
     train_situation_cls = false
-    Notiflix.Report.success(current_locales.test_succeed,current_locales.test_succeed_to_test_model_result_look_result, current_locales.confirm)
+    Notiflix.Report.success(current_locales.test_succeed, current_locales.test_succeed_to_test_model_result_look_result, current_locales.confirm)
     document.getElementById('training_situation_cls').innerHTML = "<i class='fa fa-check' style='color:#069b34'></i>"
     document.getElementById('test_situation_cls').innerHTML = "<i class='fa fa-check' style='color:#069b34'></i>"
 });
@@ -311,7 +332,7 @@ function open_model_detail_err(dir) {
     myerrModal.show()
 }
 
-function test_model(dir,test_dir){
+function test_model(dir, test_dir) {
     //测试模型
     if (train_situation_cls == false) {
         //判断测试路径是否有图片
@@ -320,11 +341,11 @@ function test_model(dir,test_dir){
         }
         else {
             ipcRenderer.send('send_data_terminal_cls', 'cls\r'); //清空终端信息
-            ipcRenderer.send('clean_file',`${dir}/test`); //清空存放以前测试图片的文件
+            ipcRenderer.send('clean_file', `${dir}/test`); //清空存放以前测试图片的文件
             fitAddon_cls.fit()
-            //PS C:\Users\chanw\Desktop\威智相关\产品研发\软件开发\VESIBIT_AI_TOOL> py39/python.exe .\maix_train\train\classifier\predict_batch.py --dir C:\Users\chanw\Desktop\威智相
             //开始测试图片
-            ipcRenderer.send('send_data_terminal_cls', 'py39/python.exe .\\maix_train\\train\\classifier\\predict_test.py --dir '+ dir + ' --img_dir ' + test_dir + '\r');
+            const command = `${pythonExec} ${testScript} --dir ${dir} --img_dir ${test_dir}\r`;
+            ipcRenderer.send('send_data_terminal_cls', command)
             //设定状态为进行中
             train_situation_cls = true
             //将状态图标设为加载图标
@@ -451,16 +472,16 @@ ipcRenderer.on('show_test_result_img', function (event, arg) {
     let imgPath = data['dir']
     imgPath = path.normalize(imgPath)
     imgPath = imgPath.replace(/\\/g, '/');
-    for (let f of data['list']) {  
-        html += '<div style="padding:20px; cursor: pointer;" onclick="open_image('+"\'" + imgPath + '/' + f +"\'"+ ')\"">' +  
-                '<img class="rounded mx-auto d-block" style="width: 120px;height: 100%;" src="' + imgPath + '/' + f + '" alt="' + f + '">' +  
-                '</div>';  
+    for (let f of data['list']) {
+        html += '<div style="padding:20px; cursor: pointer;" onclick="open_image(' + "\'" + imgPath + '/' + f + "\'" + ')\"">' +
+            '<img class="rounded mx-auto d-block" style="width: 120px;height: 100%;" src="' + imgPath + '/' + f + '" alt="' + f + '">' +
+            '</div>';
     }
     html += "</div>"
     document.getElementById('test_result_wrap').innerHTML = html
 });
 
-function open_image(imagePath){
+function open_image(imagePath) {
     ipcRenderer.send('open_image', imagePath);
 }
 
@@ -478,7 +499,7 @@ ipcRenderer.on('show_export_reuslt_failed', function (event, arg) {
 
 ipcRenderer.on('show_train_graph', function (event, arg) {
     document.getElementById('model_train_graph_tab').innerHTML = current_locales.model_train_graph_tab
-    html = '<img src="' + arg + '" style="width:50%" class="rounded float-start" alt="'+ current_locales.confusion_mx +'">'
+    html = '<img src="' + arg + '" style="width:50%" class="rounded float-start" alt="' + current_locales.confusion_mx + '">'
     document.getElementById('mximg').innerHTML = html
 });
 

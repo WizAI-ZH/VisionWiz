@@ -7,6 +7,21 @@ const path = require('path');
 let train_situation_yolo = false
 let current_tab_dir
 
+//定义python路径和运行脚本变量
+let pythonExec
+let trainScript
+let testScript
+
+//发送获取应用根目录指令
+ipcRenderer.send('get_app_path');
+
+ipcRenderer.on('get_app_path_reply', (event, appPath) => {
+    // 获取 python.exe 和 train.py 的路径  
+    pythonExec = path.join(appPath, 'py39', 'python.exe');
+    trainScript = path.join(appPath, 'maix_train', 'train.py');
+    testScript = path.join(appPath, 'maix_train', 'train', 'detector', 'predict_test.py');
+});
+
 document.getElementById("dataset_dir_yolo").onclick = function () {
     //向主进程main.js发送消息,确定要打开目标检测训练集存放目录的文件夹
     ipcRenderer.send('open_dataset_dir_yolo', '');
@@ -207,7 +222,8 @@ document.getElementById('start_train_yolo').addEventListener('click', function (
         else {
             fitAddon_yolo.fit()
             //开始训练
-            ipcRenderer.send('send_data_terminal_yolo', 'py39/python.exe maix_train/train.py -t detector -di ' + img + ' -dx ' + xml + ' -ep ' + epoch + ' -ap ' + alpha + ' -bz ' + batch_size + ' train\r');
+            const command = `${pythonExec} ${trainScript} -t detector -di ${img} -dx ${xml} -ep ${epoch} -ap ${alpha} -bz ${batch_size} train\r`;
+            ipcRenderer.send('send_data_terminal_yolo', command)
             //设定开始训练状态为进行中
             train_situation_yolo = true
             //将状况图标切换成加载图标
@@ -342,9 +358,9 @@ function test_model(dir, test_dir) {
             ipcRenderer.send('send_data_terminal_yolo', 'cls\r'); //清空终端信息
             ipcRenderer.send('clean_file', `${dir}/test`); //清空存放以前测试图片的文件
             fitAddon_yolo.fit()
-            //PS C:\Users\chanw\Desktop\威智相关\产品研发\软件开发\VESIBIT_AI_TOOL> py39/python.exe .\maix_train\train\classifier\predict_batch.py --dir C:\Users\chanw\Desktop\威智相
             //开始测试图片
-            ipcRenderer.send('send_data_terminal_yolo', 'py39/python.exe .\\maix_train\\train\\detector\\predict_test.py --dir ' + dir + ' --img_dir ' + test_dir + '\r');
+            const command = `${pythonExec} ${testScript} --dir ${dir} --img_dir ${test_dir}\r`;
+            ipcRenderer.send('send_data_terminal_yolo', command)
             //设定状态为进行中
             train_situation_yolo = true
             //将状态图标设为加载图标

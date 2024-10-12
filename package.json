@@ -3,33 +3,45 @@
   "version": "1.0.0",
   "description": "威智的AI工具",
   "main": "main.js",
-  "build": {
-    "appId": "com.WizAiTool.2024101101",
-    "productName": "WizAiTool",
-    "files": [
-      "maix_train/**/*",
-      "py39/**/*",
-      "out/**/*"
-    ],
-    "win": {
-      "icon": "icons/visionwiz_logo.ico",
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "ia32",
-            "x64"
-          ],
-          "options": {
-            "oneClick": false,
-            "perMachine": true,
-            "createDesktopShortcut": true,
-            "createStartMenuShortcut": true
-          }
-        }
-      ]
-    },
-    "electronVersion": "29.4.6"
+  "build": {  
+    "appId": "com.WizAiTool.2024101101",  
+    "productName": "WizAiTool",  
+    "files": [  
+      "maix_train/**/*",  
+      "py39/**/*",  
+      "static/**/*",  
+      "tools/**/*",  
+      "utils/**/*",  
+      "icons/**/*",  
+      "main.js",
+      "loading.html",
+      "mainpage.html",
+      "preload.js",
+      "windowManger.js",
+      "menu.js",
+      "eventManager.js",
+      {
+        "from": "out",
+        "to": "out",
+        "filter": ["**/*"]
+      }  
+    ],  
+    "win": {  
+      "icon": "icons/visionwiz_logo.ico",  
+      "target": [  
+        {  
+          "target": "nsis"
+        }  
+      ]  
+    },  
+    "nsis": {  
+      "oneClick": false,               
+      "perMachine": true,             
+      "createDesktopShortcut": true,   
+      "createStartMenuShortcut": true
+    },  
+    "electronVersion": "29.4.6",
+    "asar": true  
   },
   "scripts": {
     "test": "vesi_test",
