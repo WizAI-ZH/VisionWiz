@@ -6,6 +6,11 @@
   "build":{
     "appId": "com.WizAiTool.2024101101",
     "productName": "WizAiTool",
+    "files":[
+      "maix_train/**/*",  
+      "py39/**/*", 
+      "out/**/*"
+    ],
     "win":{
       "icon":"icons/visionwiz_logo.ico",
       "target": "nsis"

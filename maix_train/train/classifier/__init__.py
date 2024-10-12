@@ -79,13 +79,15 @@ class Classifier(Train_Base):
                 self.user_progress_callback = user_progress_callback
 
             def on_epoch_begin(self, epoch, logs=None):
+                print('')
                 self.logger.i("第 {} 轮训练开始。Epoch {} start.".format(epoch, epoch))
 
 
             def on_epoch_end(self, epoch, logs=None):
+                print('')
                 self.logger.i("第 {} 轮训练结束：{}。Epoch {} end: {}.".format(epoch, logs, epoch, logs))
                 if self.user_progress_callback:
-                    self.user_progress_callback((epoch + 1) / self.epochs * 100, "train epoch end")
+                    self.user_progress_callback((epoch + 1) / self.epochs * 100, "训练轮次结束。train epoch end.")
 
             def on_train_begin(self, logs=None):
                 self.logger.i("训练开始。Train start")
