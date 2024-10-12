@@ -58,9 +58,9 @@ def main(dir):
 
     # Print class labels and indices
     print('')
-    print('类名（class names）: ', classes)
+    print('类名(class names): ', classes)
     n_classes = len(classes)
-    print('类别数量（number of classes）: ', n_classes)
+    print('类别数量(number of classes): ', n_classes)
     print('')
     emodel_path=os.path.join(dir,'mx.tflite.h5')
     info_dir=os.path.join(dir,'info.json')
@@ -91,10 +91,10 @@ def main(dir):
             output_path = os.path.join(ewrite_dname,i)
             images = images.convert('RGB')
             images.save(output_path)
-            print(f"图片（Image）: {i}              （标签）Label: {classes[int(op)]}")  # 打印结果  
+            print(f"图片(Image): {i}              (标签)Label: {classes[int(op)]}")  # 打印结果  
         except Exception as e:
             traceback.print_exc()
-            print(f"图片（Image）: {i}              错误（Error）: {str(e)}")  # 打印错误信息  
+            print(f"图片(Image): {i}              错误(Error): {str(e)}")  # 打印错误信息  
     return True
     
 

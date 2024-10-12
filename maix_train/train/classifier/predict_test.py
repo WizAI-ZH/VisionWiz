@@ -62,9 +62,9 @@ def main(dir, custom_img_dir):
     classes = labels  # 定义类名列表  
 
     # 打印类名和索引  
-    print('\n类名（class names）:', classes)  
+    print('\n类名(class names):', classes)  
     n_classes = len(classes)  # 计算类别数量  
-    print('类别数量（number of classes）:', n_classes, '\n')  
+    print('类别数量(number of classes):', n_classes, '\n')  
 
     # 定义模型路径和信息文件路径  
     emodel_path = os.path.join(dir, 'mx.tflite.h5')  
@@ -75,7 +75,7 @@ def main(dir, custom_img_dir):
         info = json.loads(f.read())  # 加载 JSON 格式的模型信息  
     alpha = float(info['alpha'])  # 提取 alpha 参数  
 
-    # 移动网络模型的迁移学习实现（冻结卷积层和全连接分类器）  
+    # 移动网络模型的迁移学习实现(冻结卷积层和全连接分类器)  
     ebase_model = tf.keras.applications.mobilenet.MobileNet(  
         alpha=alpha,  
         depth_multiplier=1,  
@@ -114,10 +114,10 @@ def main(dir, custom_img_dir):
             output_path = os.path.join(ewrite_dname, i)  # 定义输出路径  
             images = images.convert('RGB')  # 将图像转换为 RGB 格式  
             images.save(output_path)  # 保存标注后的图像  
-            print(f"图片（Image）: {i}              （标签）Label: {classes[int(op)]}")  # 打印结果  
+            print(f"图片(Image): {i}              (标签)Label: {classes[int(op)]}")  # 打印结果  
         except Exception as e:  
             traceback.print_exc()  # 打印异常堆栈跟踪  
-            print(f"图片（Image）: {i}              错误（Error）: {str(e)}")  # 打印错误信息  
+            print(f"图片(Image): {i}              错误(Error): {str(e)}")  # 打印错误信息  
     print("Test succeed!")
     print("测试完成!")
     return True  # 返回成功标志  

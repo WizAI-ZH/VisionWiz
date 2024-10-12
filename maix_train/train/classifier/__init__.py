@@ -85,7 +85,7 @@ class Classifier(Train_Base):
 
             def on_epoch_end(self, epoch, logs=None):
                 print('')
-                self.logger.i("第 {} 轮训练结束：{}。Epoch {} end: {}.".format(epoch, logs, epoch, logs))
+                self.logger.i("第 {} 轮训练结束( {} Epoch end)：{}".format(epoch, epoch, logs))
                 if self.user_progress_callback:
                     self.user_progress_callback((epoch + 1) / self.epochs * 100, "训练轮次结束。train epoch end.")
 
@@ -117,7 +117,7 @@ class Classifier(Train_Base):
                     batch_size = 5
                     ):
         weights=os.path.join(curr_file_dir, "weights", weights)
-        self.log.i("标签列表（labels）:{}".format(self.labels))
+        self.log.i("标签列表(labels):{}".format(self.labels))
         self.log.d("数据集路径:{}".format(self.datasets_dir))
         
         from mobilenet_sipeed import mobilenet
@@ -413,7 +413,7 @@ class Classifier(Train_Base):
         print(labels,"---------")
         for label in labels:
             if not isascii(label):
-                return False, "类名（标签）不应包含特殊字符 | Class name (label) should not contain special letters"
+                return False, "类名(标签)不应包含特殊字符 | Class name (label) should not contain special letters"
             # check image number
             files = os.listdir(os.path.join(self.datasets_dir, label))
             if len(files) < min_images_num:
@@ -440,7 +440,7 @@ class Classifier(Train_Base):
 
 def train_on_progress(progress, msg):
     print("\n==============")
-    print("进度（progress）:{}%, 信息（msg）:{}".format(progress, msg))
+    print("进度(progress):{}%, 信息(msg):{}".format(progress, msg))
     print("==============")
 
 def test_main(datasets_zip, model_path, report_path, use_cpu=False):
@@ -457,7 +457,7 @@ def test_main(datasets_zip, model_path, report_path, use_cpu=False):
             return 1
         log.i("没有 GPU，将使用 [CPU]。No GPU, will use [CPU].")  
     else:
-        log.i("选择 GPU: {}。Selected GPU: {}".format(gpu, gpu))
+        log.i("选择的GPU(Selected GPU): {}".format(gpu))
     classifier = Classifier(datasets_zip=datasets_zip, logger=log)
     classifier.train(epochs=2, progress_cb=train_on_progress)
     classifier.report(report_path)

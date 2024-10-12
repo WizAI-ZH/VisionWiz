@@ -139,10 +139,10 @@ def _create_callbacks(save_best_weights_path, other_callbacks=[]):
                         if self.monitor_op(current, self.best):
                             if self.verbose > 0:
                                 if self.monitor == 'loss':
-                                    monitor_val = '误差率（loss)'
+                                    monitor_val = '误差率(loss)'
                                 else:
                                     monitor_val = self.monitor
-                                print('\n第%d轮(Epoch-%d): %s 从(from) %0.5f 改进到(improve to) %0.5f，保存模型到（save model to) %s' %   
+                                print('\n第%d轮(Epoch-%d): %s 从(from) %0.5f 改进到(improve to) %0.5f，保存模型到(save model to) %s' %   
                                         (epoch + 1, epoch + 1, monitor_val, self.best, current, filepath))
                             self.best = current
                             if self.save_weights_only:

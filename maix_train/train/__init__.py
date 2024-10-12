@@ -134,22 +134,22 @@ class Train():
             shutil.rmtree(self.temp_dir)
 
     def __on_progress(self, percent, msg):  # flag: progress
-        self.log.i(f"进度（progress）: {percent}%, {msg}")
+        self.log.i(f"进度(progress): {percent}%, {msg}")
         
 
     def __on_success(self, result_url, warn):
-        self.log.i(f"完成（success）: 输出路径（out_dir）: {result_url}")
+        self.log.i(f"完成(success): 输出路径(out_dir): {result_url}")
         if warn:
-            self.log.w(f"警告（warnings）:\n {warn}")
+            self.log.w(f"警告(warnings):\n {warn}")
 
     def __on_fail(self, reson, msg, warn):
-        self.log.e(f"失败（failed）: {reson}, {msg}")
+        self.log.e(f"失败(failed): {reson}, {msg}")
         if warn:
-            self.log.w(f"警告（warnings）:\n {warn}")
+            self.log.w(f"警告(warnings):\n {warn}")
 
     def __on_train_progress(self, percent, msg):  # flag: progress
         percent = percent * 0.97 + 1
-        self.log.i(f"进度（progress）: {percent}%, {msg}")
+        self.log.i(f"进度(progress): {percent}%, {msg}")
 
     def train(self):
         warning_msg = ""
@@ -166,7 +166,7 @@ class Train():
                 msg = info[1]
                 self.__on_fail(reason, msg, warning_msg)
             else:
-                self.__on_fail(TrainFailReason.ERROR_INTERNAL, "训练错误（train error）:{}".format(e), warning_msg)
+                self.__on_fail(TrainFailReason.ERROR_INTERNAL, "训练错误(train error):{}".format(e), warning_msg)
             return False
 
     def train_process(self, log):
@@ -174,15 +174,15 @@ class Train():
             raise Exception if error occurred, a tuple: (TrainFailReason, error_message)
             @return result url
         '''
-        self.__on_progress(0, "开始（start）")  # flag: progress
-        self.__on_progress(1, "开始训练（start train）")  # flag: progress
+        self.__on_progress(0, "开始(start)")  # flag: progress
+        self.__on_progress(1, "开始训练(start train)")  # flag: progress
 
         if self.train_type == TrainType.CLASSIFIER:
             obj, prefix = self.classifier_train(log=log)
         elif self.train_type == TrainType.DETECTOR:
             obj, prefix = self.detector_train(log=log)
         else:
-            raise Exception(("错误的训练类型（error train type, not suport）"))
+            raise Exception(("错误的训练类型(error train type, not suport)"))
 
         # check warnings
         result_warning_msg = ""
@@ -200,7 +200,7 @@ class Train():
                 f.write(result_warning_msg)
 
         # pack zip
-        log.i("打包结果到压缩包中（pack result to zip file）")
+        log.i("打包结果到压缩包中(pack result to zip file)")
         time_now = datetime.now().strftime("%Y_%m_%d__%H_%M")
         result_dir_name = "{}".format(prefix)  # detector_result
         result_zip_name = "{}.zip".format(result_dir_name)  # detector_result.zip
@@ -216,26 +216,26 @@ class Train():
             # self.zip_dir(root_dir, result_zip)
             self.zip_dir(os.path.join(root_dir, result_dir_name), result_zip)
         except Exception:
-            log.e("压缩失败（zip result fail）")
-            raise Exception((TrainFailReason.ERROR_INTERNAL, "压缩错误（zip result error）"))
+            log.e("压缩失败(zip result fail)")
+            raise Exception((TrainFailReason.ERROR_INTERNAL, "压缩错误(zip result error)"))
 
         # progress 99%
-        self.__on_progress(99, "压缩完成（pack ok）")  # flag: progress
+        self.__on_progress(99, "压缩完成(pack ok)")  # flag: progress
 
         # complete
-        self.__on_progress(100, "任务完成（task complete）")  # flag: progress
-        log.i("任务完成，结果生成在（OK, task complete, result uri）: {}".format(result_zip))
+        self.__on_progress(100, "任务完成(task complete)")  # flag: progress
+        log.i("任务完成，结果生成在(OK, task complete, result uri): {}".format(result_zip))
         return result_zip, result_warning_msg
 
     def classifier_train(self, log):
         # 检测 GPU 可用,选择一个可用的 GPU 使用
         try:
-            gpu = gpu_utils.select_gpu(memory_require=config.classifier_train_gpu_mem_require, tf_gpu_mem_growth=False)
+            gpu = gpu_utils.select_gpu(memory_require=config.classifier_train_gpu_mem_require, tf_gpu_mem_growth=False,logger=self.log)
         except Exception:
             gpu = None
         if gpu is None:
             if not config.allow_cpu:
-                log.e("没有可用的GPU（no free GPU）")
+                log.e("没有可用的GPU(no free GPU)")
                 raise Exception(  
                     (TrainFailReason.ERROR_NODE_BUSY, "节点没有足够的GPU或GPU内存，并且不支持CPU训练。Node has insufficient GPU or GPU memory and does not support CPU training.")  
                 )
@@ -302,7 +302,7 @@ class Train():
     def detector_train(self, log):
         # 检测 GPU 可用,选择一个可用的 GPU 使用
         try:
-            gpu = gpu_utils.select_gpu(memory_require=config.detector_train_gpu_mem_require, tf_gpu_mem_growth=False)
+            gpu = gpu_utils.select_gpu(memory_require=config.detector_train_gpu_mem_require, tf_gpu_mem_growth=False,logger=self.log)
         except Exception:
             gpu = None
         if gpu is None:
@@ -313,9 +313,9 @@ class Train():
                 )  
             log.i("没有 GPU，将使用 [CPU]。No GPU, will use [CPU].")  
         else:
-            log.i("选择 GPU: {}。Selected GPU: {}".format(gpu, gpu))
+            log.i("选择的GPU(Selected GPU): {}".format(gpu))
         # 启动训练
-        print("-" * 10 + "训练开始前（before train start） " + "-" * 10)
+        # print("-" * 10 + "训练开始前(before train start) " + "-" * 10)
         
         try:
             detector = Detector(input_shape=(224, 224, 3),

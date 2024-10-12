@@ -53,7 +53,7 @@ def main():
         'alpha':args.alpha,
         'batch_size':args.batch_size,
     }
-    print('训练参数信息（Train info）:'+os.path.join(save_dir,'info.json'))
+    print('训练参数信息(Train info):'+os.path.join(save_dir,'info.json'))
     file = open(os.path.join(save_dir,'info.json'),'w', encoding='utf-8')
     json.dump(info, file)
     file.close()

@@ -154,7 +154,7 @@ def MobileNet(input_shape=None,
     backend, layers, models, keras_utils = get_submodules_from_kwargs(kwargs)
 
     if not (weights in {'imagenet', None} or os.path.exists(weights)):
-        raise ValueError('`weights` 参数应为 `None`（随机初始化）、`imagenet`（在 ImageNet 上预训练），'  
+        raise ValueError('`weights` 参数应为 `None`(随机初始化)、`imagenet`(在 ImageNet 上预训练)，'  
                  '或要加载的权重文件的路径。The `weights` argument should be either `None` (random initialization), '  
                  '`imagenet` (pre-training on ImageNet), or the path to the weights file to be loaded.')
 

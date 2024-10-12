@@ -87,8 +87,8 @@ class Detector(Train_Base):
             raise Exception("没有提供数据集参数。No datasets args.")
         # print("-" * 10 + "before self._load_datasets" + "-" * 10)
         # parse datasets
-        print(f"训练集路径（Train dataset path）: {self.datasets_img_dir}")
-        print(f"训练标签路径（Train annotations path）: {self.datasets_xml_dir}")
+        print(f"训练集路径(Train dataset path): {self.datasets_img_dir}")
+        print(f"训练标签路径(Train annotations path): {self.datasets_xml_dir}")
         ok, msg, self.labels, classes_data_counts, datasets_x, datasets_y = self._load_datasets(self.datasets_img_dir,self.datasets_xml_dir )
         # print("-" * 10 + "after self._load_datasets" + "-" * 10)
         if not ok:
@@ -118,7 +118,7 @@ class Detector(Train_Base):
 
             def on_epoch_end(self, epoch, logs=None):
                 print('')
-                self.logger.i("第 {} 轮训练结束：{}。Epoch {} end: {}.".format(epoch, logs, epoch, logs))
+                self.logger.i("第 {} 轮训练结束( {} Epoch end)：{}".format(epoch, epoch, logs))
                 if self.user_progress_callback:
                     self.user_progress_callback((epoch + 1) / self.epochs * 100, "训练轮次结束。Train epoch end.")
 
@@ -159,11 +159,11 @@ class Detector(Train_Base):
             for bbox in items:
                 bboxes.append(( (bbox[2] - bbox[0])/w, (bbox[3] - bbox[1])/h ))
         bboxes = np.array(bboxes)
-        self.log.i(f"边界框数量（Bboxes num）: {len(bboxes)}, 第一个边界框（First bbox）: {bboxes[0]}")  
+        self.log.i(f"边界框数量(Bboxes num): {len(bboxes)}, 第一个边界框(First bbox): {bboxes[0]}")  
         out = kmeans.kmeans(bboxes, k=clusters)  
         iou = kmeans.avg_iou(bboxes, out) * 100  
         self.log.i("边界框准确率(IOU): {:.2f}% | Bbox accuracy (IOU): {:.2f}%".format(iou, iou))  
-        self.log.i("边界框（Bound boxes）: {}".format(  
+        self.log.i("边界框(Bound boxes): {}".format(  
             ",".join("({:f},{:.2f})".format(item[0] * w, item[1] * h) for item in out)
         ))
         for i, wh in enumerate(out):
@@ -173,7 +173,7 @@ class Detector(Train_Base):
         #anchors=[28.0, 49.99, 53, 82.99, 95.71, 106.0, 129.0 ,152.85, 198.57, 247.14]
         self.log.i(f"anchors: {anchors}")
         ratios = np.around(out[:, 0] / out[:, 1], decimals=2).tolist()
-        self.log.i("宽高比（w/h ratios）: {}".format(sorted(ratios)))
+        self.log.i("宽高比(w/h ratios): {}".format(sorted(ratios)))
         
         return anchors
 
@@ -771,14 +771,14 @@ class Detector(Train_Base):
                 if os.path.exists(img_path):
                     img = np.array(Image.open(img_path), dtype='uint8')
                 else:
-                    result = f"解码 XML 失败（Decode XML failed) {xml_path}，无法找到图像(cannot find image): {result['path']}"
+                    result = f"解码 XML 失败(Decode XML failed) {xml_path}，无法找到图像(cannot find image): {result['path']}"
                     self.on_warning_message(result)
                     continue
             # load bndboxes
             y = []
             for bbox in result['bboxes']:
                 if not bbox[4] in labels:
-                    f"解码 XML 失败（Decode XML failed) {xml_path}，无法找到图像(cannot find image): {result['path']}"
+                    f"解码 XML 失败(Decode XML failed) {xml_path}，无法找到图像(cannot find image): {result['path']}"
                     self.on_warning_message(result)
                     continue
                 label_idx = labels.index(bbox[4])
@@ -829,7 +829,7 @@ class Detector(Train_Base):
             return False, err_msg
         for label in labels:
             if not isascii(label):
-                return False, "标签错误：类名（标签）不应包含特殊字符 | Labels error: class name (label) should not contain special letters"
+                return False, "标签错误：类名(标签)不应包含特殊字符 | Labels error: class name (label) should not contain special letters"
         return True, "ok"
 
     def _is_datasets_valid(self, labels, classes_dataset_count, one_class_min_images_num=100, one_class_max_images_num=2000):
@@ -851,7 +851,7 @@ class Detector(Train_Base):
 
 def train_on_progress(progress, msg):
     print("\n==============")
-    print("进度（progress）:{}%, 信息（msg）:{}".format(progress, msg))
+    print("进度(progress):{}%, 信息(msg):{}".format(progress, msg))
     print("==============")
 
 def test_main(datasets_zip, model_path, report_path, log, use_cpu=False):
@@ -869,7 +869,7 @@ def test_main(datasets_zip, model_path, report_path, log, use_cpu=False):
             return 1
         log.i("没有 GPU，将使用 [CPU]。No GPU, will use [CPU].")  
     else:
-        log.i("选择 GPU: {}。Selected GPU: {}".format(gpu, gpu))
+        log.i("选择的GPU(Selected GPU): {}".format(gpu))
     detector = Detector(input_shape=(224, 224, 3), datasets_zip=datasets_zip, logger=log, one_class_min_images_num=2)
     detector.train(epochs=2,
                     progress_cb=train_on_progress,
@@ -882,11 +882,11 @@ def test_main(datasets_zip, model_path, report_path, log, use_cpu=False):
     detector.get_sample_images(5, "out/sample_images")
     print("--------result---------")
     print("anchors: {}".format(detector.anchors))
-    print("标签列表（labels）:{}".format(detector.labels))
+    print("标签列表(labels):{}".format(detector.labels))
     print("-----------------------")
     if len(detector.warning_msg) > 0:
         print("---------------------")
-        print("警告信息（warining messages）:")
+        print("警告信息(warining messages):")
         for msg in detector.warning_msg:
             print(msg)
         print("---------------------")
@@ -918,7 +918,7 @@ if __name__ == "__main__":
         print("============")
     except Exception as e:
         print("============")
-        print("错误（error）:")
+        print("错误(error):")
         print(f"      {e}")
         import traceback
         traceback.print_exc()

@@ -68,7 +68,7 @@ class YOLO(object):
 
     def load_weights(self, weight_path, by_name=False):
         if os.path.exists(weight_path):
-            print("正在加载预训练权重文件（Loading pre-trained weights in）", weight_path)
+            print("正在加载预训练权重文件(Loading pre-trained weights in)", weight_path)
             self._yolo_network.load_weights(weight_path, by_name=by_name)
         else:
             print("加载预训练权重失败。请确保权重文件路径正确。| Fail to load pre-trained weights. Make sure weight file path.")
