@@ -7,12 +7,20 @@
 const { BrowserWindow, ipcMain } = require('electron');  
 const path = require('path');  
 
+const titlename = {
+  en: "Make-Sense",
+  zh: "慧标",
+  zht: "慧標"
+}
+
 function createMakeSenseWindow(language) {  
   // 创建 make-sense 窗口  
   const makeSenseWindow = new BrowserWindow({  
     width: 1200,  
     height: 800,  
     autoHideMenuBar: true,
+    icon: './icons/make-sense-ico.png', //程序的图标
+    title: titlename[language],
     webPreferences: {  
       nodeIntegration: true, 
       contextIsolation: false,

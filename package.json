@@ -1,11 +1,21 @@
 {
-  "name": "vesibit_ai_tool",
+  "name": "WizAiTool",
   "version": "1.0.0",
   "description": "威智的AI工具",
   "main": "main.js",
+  "build":{
+    "appId": "com.WizAiTool.2024101101",
+    "productName": "WizAiTool",
+    "win":{
+      "icon":"icons/visionwiz_logo.ico",
+      "target": "nsis"
+    },
+    "electronVersion": "29.4.6"
+  },
   "scripts": {
     "test": "vesi_test",
-    "build": "electron .",
+    "build": "electron-builder",
+    "postinstall": "electron-builder install-app-deps",
     "start": "electron .",
     "start2": "nodemon --watch main.js --exec npm run build",
     "rebuild-nodepty": "electron-rebuild -f -w node-pty",
@@ -28,6 +38,7 @@
     "@popperjs/core": "^2.11.8",
     "bootstrap": "^5.3.3",
     "echarts": "^5.5.1",
+    "electron": "^29.4.6",
     "electron-builder": "^24.13.3",
     "electron-rebuild": "^3.2.9",
     "font-awesome": "^4.7.0",
@@ -43,9 +54,6 @@
     "@popperjs/core": "^2.11.8",
     "bootstrap": "^5.3.3",
     "echarts": "^5.5.1",
-    "electron": "29.4.6",
-    "electron-builder": "^24.13.3",
-    "electron-rebuild": "^3.2.9",
     "electron-store": "^8.1.0",
     "font-awesome": "^4.7.0",
     "imageinfo": "^1.0.4",
@@ -54,7 +62,6 @@
     "optiscroll": "^3.2.1",
     "popper.js": "^1.16.1",
     "silly-datetime": "^0.1.2",
-    "vesibit_ai_tool": "file:",
     "xterm": "^5.3.0",
     "xterm-addon-fit": "^0.8.0",
     "xterm-addon-web-links": "^0.9.0"

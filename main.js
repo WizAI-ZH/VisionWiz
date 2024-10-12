@@ -14,6 +14,7 @@ const Store = require('electron-store');
 const { sendMessageToView, sendMessageToAllViews } = require('./utils/ipc_commu')
 const { findFilesWithSubstring, delDirRecurse, delDirContents } = require('./utils/file_process')
 const languageManager = require('./utils/language-manager')
+
 // Store setup  
 const store = new Store();
 read_config() //读取本地数据

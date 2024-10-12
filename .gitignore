@@ -9,11 +9,15 @@ get-electron-abi.js
 #生成文件
 /build/
 /out/
+/dist/
 
 #依赖库
 /py39/
 /node_modules/
 /maix_train/
+
+#安装包
+/packages/
 #有修改/添加过的内容
 !maix_train/train/detector/predict_test.py
 !maix_train/train/detector/test.py
@@ -21,6 +25,7 @@ get-electron-abi.js
 
 #开发文件
 Wiz_AI_tool.code-workspace
+crypto_file.js
 
 #旧文件 
 index-old.html
@@ -53,3 +58,4 @@ make-sense/dist/
 
 
 
+package copy.json
