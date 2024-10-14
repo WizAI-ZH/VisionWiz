@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "威智的AI工具",
   "main": "main.js",
+  "config":{
+    "forge": "./forge.config.js"
+  },
   "build": {
     "appId": "com.WizAiTool.2024101101",
     "productName": "WizAiTool",
@@ -55,7 +58,7 @@
     "rebuild-nodepty": "electron-rebuild -f -w node-pty",
     "rebuild-rob": "electron-rebuild -f -w robotjs",
     "package": "electron-forge package",
-    "make": "electron-forge make"
+    "make": "electron-forge make --out dist"
   },
   "keywords": [
     "AI",

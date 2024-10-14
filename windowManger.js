@@ -19,7 +19,7 @@ function createMakeSenseWindow(language) {
     width: 1200,  
     height: 800,  
     autoHideMenuBar: true,
-    icon: './icons/make-sense-ico.png', //程序的图标
+    icon: path.join(__dirname,'icons','make-sense-ico.png'), //程序的图标
     title: titlename[language],
     webPreferences: {  
       nodeIntegration: true, 

@@ -35,7 +35,7 @@ const createWindow = () => {
   childWindow = new BrowserWindow({
     frame: false,
     transparent: true,
-    icon: './icons/VESIBIT.ico',
+    icon: path.join(__dirname,'icons','VESIBIT.ico'),
   })
   // Create the browser window.
   mainWindow = new BrowserWindow({
@@ -47,7 +47,7 @@ const createWindow = () => {
     show: false,
     autoHideMenuBar: false,
     title: "威智慧眼V1.0", //程序窗口名字
-    icon: './icons/VESIBIT.ico', //程序的图标
+    icon: path.join(__dirname,'icons','VESIBIT.ico'), //程序的图标
     frame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -67,7 +67,7 @@ const createWindow = () => {
     show: false,
     autoHideMenuBar: false,
     title: "威智慧眼V1.0", //程序窗口名字
-    icon: './icons/VESIBIT.ico', //程序的图标
+    icon: path.join(__dirname,'icons','VESIBIT.ico'), //程序的图标
     frame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -81,7 +81,7 @@ const createWindow = () => {
     show: false,
     autoHideMenuBar: false,
     title: "威智慧眼V1.0", //程序窗口名字
-    icon: './icons/VESIBIT.ico', //程序的图标
+    icon: path.join(__dirname,'icons','VESIBIT.ico'), //程序的图标
     frame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -95,7 +95,7 @@ const createWindow = () => {
     show: false,
     autoHideMenuBar: false,
     title: "威智慧眼V1.0", //程序窗口名字
-    icon: './icons/VESIBIT.ico', //程序的图标
+    icon: path.join(__dirname,'icons','VESIBIT.ico'), //程序的图标
     frame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -109,7 +109,7 @@ const createWindow = () => {
     show: false,
     autoHideMenuBar: false,
     title: "威智慧眼V1.0", //程序窗口名字
-    icon: './icons/VESIBIT.ico', //程序的图标
+    icon: path.join(__dirname,'icons','VESIBIT.ico'), //程序的图标
     frame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

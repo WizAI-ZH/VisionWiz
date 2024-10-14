@@ -9,13 +9,14 @@ let locales = {}; // 存储当前语言的文本
 console.log('language-manager loaded')
 
 function loadLocale(language) {  
-    const localePath = path.join('locales', `${language}.json`);  
-    try {  
+    const localePath = path.join(__dirname,'..', 'locales', `${language}.json`);
+    
+    try{  
         const data = fs.readFileSync(localePath, 'utf8');  
         locales = JSON.parse(data);  
     } catch (err) {  
         console.error(`Error loading locale file: ${err}`);  
-    }  
+    }
 }  
 
 function updateLocales(language) {  
