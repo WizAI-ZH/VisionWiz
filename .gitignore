@@ -18,6 +18,10 @@ get-electron-abi.js
 
 #安装包
 /packages/
+
+#安装配置文件
+forge.config.js
+
 #有修改/添加过的内容
 !maix_train/train/detector/predict_test.py
 !maix_train/train/detector/test.py
@@ -55,7 +59,3 @@ make-sense/dist/
 .env.development.local
 .env.test.local
 .env.production.local
-
-
-
-package copy.json

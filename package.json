@@ -3,16 +3,16 @@
   "version": "1.0.0",
   "description": "威智的AI工具",
   "main": "main.js",
-  "build": {  
-    "appId": "com.WizAiTool.2024101101",  
-    "productName": "WizAiTool",  
-    "files": [  
-      "maix_train/**/*",  
-      "py39/**/*",  
-      "static/**/*",  
-      "tools/**/*",  
-      "utils/**/*",  
-      "icons/**/*",  
+  "build": {
+    "appId": "com.WizAiTool.2024101101",
+    "productName": "WizAiTool",
+    "files": [
+      "maix_train/**/*",
+      "py39/**/*",
+      "static/**/*",
+      "tools/**/*",
+      "utils/**/*",
+      "icons/**/*",
       "main.js",
       "loading.html",
       "mainpage.html",
@@ -23,37 +23,39 @@
       {
         "from": "out",
         "to": "out",
-        "filter": ["**/*"]
-      }  
-    ],  
-    "win": {  
-      "icon": "icons/visionwiz_logo.ico",  
-      "target": [  
-        {  
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "icon": "icons/visionwiz_logo.ico",
+      "target": [
+        {
           "target": "nsis"
-        }  
-      ]  
-    },  
-    "nsis": {  
-      "oneClick": false,               
-      "perMachine": true,             
-      "createDesktopShortcut": true,   
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "allowToChangeInstallationDirectory": true,
       "allowElevation": true
-    },  
+    },
     "electronVersion": "29.4.6",
-    "asar": true  
+    "asar": true
   },
   "scripts": {
     "test": "vesi_test",
-    "build": "electron-builder",
-    "postinstall": "electron-builder install-app-deps",
+    "start-forge": "electron-forge start",
     "start": "electron .",
     "start2": "nodemon --watch main.js --exec npm run build",
     "rebuild-nodepty": "electron-rebuild -f -w node-pty",
     "rebuild-rob": "electron-rebuild -f -w robotjs",
-    "package": "electron-packager . --platform=win32 --arch=x64 --electron-version=32.0.1 --icon=./icons/VESIBIT.ico"
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "keywords": [
     "AI",
@@ -68,11 +70,18 @@
   "author": "曹振威",
   "license": "GPL-3.0-or-late",
   "devDependencies": {
+    "@electron-forge/cli": "^7.5.0",
+    "@electron-forge/maker-deb": "^7.5.0",
+    "@electron-forge/maker-rpm": "^7.5.0",
+    "@electron-forge/maker-squirrel": "^7.5.0",
+    "@electron-forge/maker-zip": "^7.5.0",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.5.0",
+    "@electron-forge/plugin-fuses": "^7.5.0",
+    "@electron/fuses": "^1.8.0",
     "@popperjs/core": "^2.11.8",
     "bootstrap": "^5.3.3",
     "echarts": "^5.5.1",
     "electron": "^29.4.6",
-    "electron-builder": "^24.13.3",
     "electron-rebuild": "^3.2.9",
     "font-awesome": "^4.7.0",
     "imageinfo": "^1.0.4",
@@ -87,6 +96,7 @@
     "@popperjs/core": "^2.11.8",
     "bootstrap": "^5.3.3",
     "echarts": "^5.5.1",
+    "electron-squirrel-startup": "^1.0.1",
     "electron-store": "^8.1.0",
     "font-awesome": "^4.7.0",
     "imageinfo": "^1.0.4",
