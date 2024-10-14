@@ -3,6 +3,7 @@ const { FitAddon } = require('xterm-addon-fit');
 const { WebLinksAddon } = require('xterm-addon-web-links');
 const echarts = require('echarts');
 const path = require('path');
+const { error } = require('console');
 
 
 
@@ -146,19 +147,26 @@ ipcRenderer.on('update_train_history', function (event, arg) {
     //更新并显示训练记录
     let html = ''
     //console.log(arg)
+
     for (let d of arg) {
-        let name = d['name'].split('_')[0]
-        let year = d['name'].split('_')[1]
-        let time = d['name'].split('_')[2].replace('-', ':').replace('-', ':')
-        if (name == 'classifer') {
-            if (d['train_result'] == "success") {
-                html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail("' + d['name'] + '")>' + current_locales.cls + '</button><a>' + year + ' ' + time + '</a> <button type="button" class="btn-close" aria-label="Close" onclick="del_dir(\'' + d['name'] + '\')"></button></div>'
+        try {
+            let name = d['name'].split('_')[0]
+            let year = d['name'].split('_')[1]
+            let time = d['name'].split('_')[2].replace('-', ':').replace('-', ':')
+            if (name == 'classifer') {
+                if (d['train_result'] == "success") {
+                    html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail("' + d['name'] + '")>' + current_locales.cls + '</button><a>' + year + ' ' + time + '</a> <button type="button" class="btn-close" aria-label="Close" onclick="del_dir(\'' + d['name'] + '\')"></button></div>'
+                }
+                else {
+                    html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail_err("' + d['name'] + '")>' + current_locales.cls + '</button><a>' + year + ' ' + time + '</a> <button type="button" class="btn-close" aria-label="Close" onclick="del_dir(\'' + d['name'] + '\')"></button></div>'
+                }
             }
-            else {
-                html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail_err("' + d['name'] + '")>' + current_locales.cls + '</button><a>' + year + ' ' + time + '</a> <button type="button" class="btn-close" aria-label="Close" onclick="del_dir(\'' + d['name'] + '\')"></button></div>'
-            }
+        } catch (error) {
+            console.log("An error occurred while processing the data from "+ d["name"] +":", error);
         }
     }
+
+
     document.getElementById('train_history_list_cls').innerHTML = html
 });
 

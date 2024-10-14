@@ -109,7 +109,7 @@ ipcRenderer.on('window-resize', (event, { width, height }) => {
         const parentDiv = train_chart.parentElement;
         // console.log(parentDiv)
         let new_width = document.getElementById("model_graph_pane").offsetWidth * 0.72
-        let new_height = new_width/2
+        let new_height = new_width / 2
         train_chart_container.style.width = new_width + 'px';
         train_chart_container.style.height = new_height + 'px';
         parentDiv.style.width = new_width + 'px';
@@ -117,7 +117,7 @@ ipcRenderer.on('window-resize', (event, { width, height }) => {
         // train_chart.width = document.getElementById("model_graph_pane").offsetWidth;
         train_chart.style.width = new_width + 'px';
         // train_chart.height = document.getElementById("model_graph_pane").offsetHeight;
-        train_chart.style.height = new_height  + 'px';
+        train_chart.style.height = new_height + 'px';
         // console.log('model_graph_plane size:', document.getElementById("model_graph_pane").offsetWidth, document.getElementById("model_graph_pane").offsetHeight)
     }
 })
@@ -166,19 +166,25 @@ ipcRenderer.on('update_train_history', function (event, arg) {
     //更新并显示训练记录
     let html = ''
     console.log(arg)
+
     for (let d of arg) {
-        let name = d['name'].split('_')[0]
-        let year = d['name'].split('_')[1]
-        let time = d['name'].split('_')[2].replace('-', ':').replace('-', ':')
-        if (name == 'yolo') {
-            if (d['train_result'] == "success") {
-                html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail("' + d['name'] + '")>' + current_locales.target_detection + '</button><a>' + year + ' ' + time + '</a> <button type="button" class="btn-close" aria-label="Close" onclick="del_dir(\'' + d['name'] + '\')"></button></div>'
+        try {
+            let name = d['name'].split('_')[0]
+            let year = d['name'].split('_')[1]
+            let time = d['name'].split('_')[2].replace('-', ':').replace('-', ':')
+            if (name == 'yolo') {
+                if (d['train_result'] == "success") {
+                    html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail("' + d['name'] + '")>' + current_locales.target_detection + '</button><a>' + year + ' ' + time + '</a> <button type="button" class="btn-close" aria-label="Close" onclick="del_dir(\'' + d['name'] + '\')"></button></div>'
+                }
+                else {
+                    html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail_err("' + d['name'] + '")>' + current_locales.target_detection + '</button><a>' + year + ' ' + time + '</a> <button type="button" class="btn-close" aria-label="Close" onclick="del_dir(\'' + d['name'] + '\')"></button></div>'
+                }
             }
-            else {
-                html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail_err("' + d['name'] + '")>' + current_locales.target_detection + '</button><a>' + year + ' ' + time + '</a> <button type="button" class="btn-close" aria-label="Close" onclick="del_dir(\'' + d['name'] + '\')"></button></div>'
-            }
+        } catch (error) {
+            console.log("An error occurred while processing the data from "+ d["name"] +":", error);
         }
     }
+
     document.getElementById('train_history_list_yolo').innerHTML = html
 });
 
