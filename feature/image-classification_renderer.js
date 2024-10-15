@@ -137,7 +137,7 @@ document.getElementById('test_model_button').addEventListener('click', function 
     //获取前端的测试图片路径
     let test_dir = document.getElementById('test_img_dir_cls').value
     //当前模型的训练资料路径
-    let dir = `${process.cwd()}/out/${current_tab_dir}`
+    let dir = `${process.cwd()}/trainOutput/${current_tab_dir}`
     test_model(dir, test_dir)
     //更新测试结果到详情窗口中
     ipcRenderer.send('update_test_result_cls', current_tab_dir)

@@ -14,6 +14,7 @@ const Store = require('electron-store');
 const { sendMessageToView, sendMessageToAllViews } = require('./utils/ipc_commu')
 const { findFilesWithSubstring, delDirRecurse, delDirContents } = require('./utils/file_process')
 const languageManager = require('./utils/language-manager')
+const path_utils =require('./utils/path_utils')
 
 // Store setup  
 const store = new Store();
@@ -263,7 +264,7 @@ ipcMain.on('open_image', (event, imagePath) => {
 
 //获取当前app根目录
 ipcMain.on('get_app_path', (event) => {  
-  event.reply('get_app_path_reply', app.getAppPath());  
+  event.reply('get_app_path_reply', path_utils.getAppResourcePath('.','resources'));  
 });  
 
 //以下是工具调用相关进程函数
@@ -503,12 +504,17 @@ ipcMain.on('stop_process', function (event, arg) {
 })
 
 ipcMain.on('update_train_history_list', function (event, arg) {
+  const outDir = path.join(process.cwd(),'trainOutput')
+  if (!fs.existsSync(outDir)) {  
+    fs.mkdirSync(outDir, { recursive: true });  
+  } 
   //读取并更新训练记录列表
-  fs.readdir('out', function (err, stats) {
+  fs.readdir('trainOutput', function (err, stats) {
     const flist = new Array()
+
     for (f of stats) {
       //如果文件夹中有success文件，则代码训练成功并且训练成功
-      let checkDir = fs.existsSync('out/' + f + '/success');
+      let checkDir = fs.existsSync('trainOutput/' + f + '/success');
       if (checkDir) {
         op = { 'name': f, 'train_result': 'success' }
       }
@@ -523,7 +529,7 @@ ipcMain.on('update_train_history_list', function (event, arg) {
 })
 
 ipcMain.on('open_dir', function (event, arg) {
-  const dirPath = path.join(process.cwd(), 'out', arg);
+  const dirPath = path.join(process.cwd(), 'trainOutput', arg);
   // 检查目录是否存在  
   fs.access(dirPath, fs.constants.F_OK, (err) => {
     if (err) {
@@ -541,10 +547,10 @@ ipcMain.on('open_dir', function (event, arg) {
 
 ipcMain.on('del_dir', function (event, arg) {
   //收到删除文件夹指令后进行文件夹及其内部所有内容的删除
-  delDirRecurse(process.cwd() + '/out/' + arg)
+  delDirRecurse(process.cwd() + '/trainOutput/' + arg)
   //更新删除后的记录列表
-  sendMessageToView(mainWindow_views, 'imgCls', 'show_del_file_succeed', process.cwd() + '/out/' + arg)
-  sendMessageToView(mainWindow_views, 'objectDetection', 'show_del_file_succeed', process.cwd() + '/out/' + arg)
+  sendMessageToView(mainWindow_views, 'imgCls', 'show_del_file_succeed', process.cwd() + '/trainOutput/' + arg)
+  sendMessageToView(mainWindow_views, 'objectDetection', 'show_del_file_succeed', process.cwd() + '/trainOutput/' + arg)
 })
 
 ipcMain.on('clean_file',function(event,dir){
@@ -561,7 +567,7 @@ ipcMain.on('readimgdir', function (event, arg) {
 ipcMain.on('update_test_result_cls',function(event,current_tab_dir){
   //更新测试结果到详情窗口中
   let baseDir = process.cwd();
-  let dir = `out/${current_tab_dir}`
+  let dir = `trainOutput/${current_tab_dir}`
   let imgList = read_img_dir(`${dir}/test`);
   sendMessageToView(mainWindow_views, 'imgCls','show_test_result_img',{ 'dir': `${baseDir}/${dir}/test`, 'list': imgList })
 })
@@ -569,7 +575,7 @@ ipcMain.on('update_test_result_cls',function(event,current_tab_dir){
 ipcMain.on('update_test_result_yolo',function (event,current_tab_dir){
   //更新测试结果到详情窗口中
   let baseDir = process.cwd();
-  let dir = `out/${current_tab_dir}`
+  let dir = `trainOutput/${current_tab_dir}`
   let imgList = read_img_dir(`${dir}/test`);
   sendMessageToView(mainWindow_views, 'objectDetection','show_test_result_img',{ 'dir': `${baseDir}/${dir}/test`, 'list': imgList })
 })
@@ -712,7 +718,7 @@ ipcMain.on('config_data_aug_yolo', function (event, arg) {
 
 ipcMain.on('read_model_detail_and_show', function (event, arg) {
   //读取并显示当前选择的模型训练详情
-  const dir = `out/${arg}`;
+  const dir = `trainOutput/${arg}`;
   const modelInfoPath = `${dir}/info.json`;
   const trainLogPath = `${dir}/train_log.log`;
   const baseDir = process.cwd();
@@ -776,7 +782,7 @@ ipcMain.on('read_model_detail_and_show', function (event, arg) {
 
 ipcMain.on('read_model_detail_and_show_err', function (event, arg) {
   //读取并显示当前选择的模型(训练失败的)训练详情
-  const dir = `out/${arg}`;
+  const dir = `trainOutput/${arg}`;
   const modelInfoPath = `${dir}/info.json`;
   const trainLogPath = `${dir}/train_log.log`;
   // Helper function to read file and handle errors  
@@ -815,7 +821,7 @@ ipcMain.on('export_model', function (event, arg) {
       if (!result.canceled) {
         console.log('Export to:' + result.filePaths);
         if (arg.split("_")[0] == 'classifer') {
-          file_dir = process.cwd() + '/out/' + arg + '/classifier_result.zip'
+          file_dir = process.cwd() + '/trainOutput/' + arg + '/classifier_result.zip'
           save_dir = result.filePath
           fs.cp(file_dir, save_dir, (err) => {
             if (err) {
@@ -826,7 +832,7 @@ ipcMain.on('export_model', function (event, arg) {
             }
           });
         } else {
-          file_dir = process.cwd() + '/out/' + arg + '/detector_result.zip'
+          file_dir = process.cwd() + '/trainOutput/' + arg + '/detector_result.zip'
           save_dir = result.filePath
           fs.cp(file_dir, save_dir, (err) => {
             if (err) {
