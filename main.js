@@ -226,6 +226,12 @@ app.whenReady().then(() => {
   globalShortcut.register('Control+Shift+I',()=>{
     mainWindow_views[getCurrentView()].webContents.openDevTools({ mode: 'detach' });
   })
+  globalShortcut.register('F5',()=>{
+    var current_view = getCurrentView()
+    if (current_view=='Wizhome'){
+      mainWindow_views[current_view].webContents.reload();
+    }
+  })
   app.on('activate', () => {
     // 在 macOS 系统内, 如果没有已开启的应用窗口
     // 点击托盘图标时通常会重新创建一个新窗口
