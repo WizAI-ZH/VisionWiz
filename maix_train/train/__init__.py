@@ -87,6 +87,9 @@ class Train():
         self.result_report_img_path = os.path.join(self.result_dir, "report.jpg")
 
         model_name = self.get_main_folder_name(dataset_img_dir if train_type==TrainType.DETECTOR else datasets_cls_dir) + '_' +self.extract_after_out(out_dir)  # 提取out_dir中的文件名以及img_dir的父文件名合并成最终的模型名字
+        # print('model_name= '+model_name)
+        # print('get_main_folder_name= '+ self.get_main_folder_name(dataset_img_dir if train_type==TrainType.DETECTOR else datasets_cls_dir))
+        # print('self.extract_after_out(out_dir)= ' + self.extract_after_out(out_dir))
         self.result_kmodel_path = os.path.join(self.result_dir, model_name+".kmodel")
         self.result_labels_path = os.path.join(self.result_dir, model_name+"_labels.txt")
         self.result_anchors_path = os.path.join(self.result_dir, model_name+"_anchors.txt")
@@ -96,21 +99,22 @@ class Train():
         self.best_h5_model_path = os.path.join(self.temp_dir, "mx_best.h5")
         self.log = Logger(file_path=self.log_file_path)
 
-    # 提取out_dir中 \out\ 后的部分
+    # 提取out_dir中 \trainOutput\ 后的部分
     def extract_after_out(self,save_dir):
         # 获取 save_dir 的目录部分
         base_dir = os.path.basename(os.path.normpath(save_dir))
-
-        # 找到 'out' 目录的位置
-        out_dir_index = save_dir.find('out')
+        out_dir_name = 'trainOutput'
+        # 找到 'trainOutput' 目录的位置
+        out_dir_index = save_dir.find(out_dir_name)
+        # out_dir_index = save_dir.find('out')
 
         import re
         if out_dir_index == -1:
-            # 'out' 目录没有在路径中找到
+            # 'trainOutput' 目录没有在路径中找到
             return None
         else:
-            # 提取 \out\ 后的部分
-            extracted_part = save_dir[out_dir_index + 4:].strip(os.sep)
+            # 提取 \trainOutput\ 后的部分
+            extracted_part = save_dir[out_dir_index + len(out_dir_name)+1:].strip(os.sep)
             pattern = r'_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_'
 
             refined_part = re.sub(pattern, '_', extracted_part)
@@ -204,14 +208,14 @@ class Train():
         time_now = datetime.now().strftime("%Y_%m_%d__%H_%M")
         result_dir_name = "{}".format(prefix)  # detector_result
         result_zip_name = "{}.zip".format(result_dir_name)  # detector_result.zip
-        # self.temp_dir == .../Mx-yolo/out/yolo_20XX_../
+        # self.temp_dir == .../Mx-yolo/train_output/yolo_20XX_../
         # self.result_dir == self.temp_dir + "/result"
         result_dir = os.path.join(os.path.dirname(self.result_dir), result_dir_name)
         os.rename(self.result_dir, result_dir)
         root_dir = os.path.join(self.temp_dir, "result_root_dir")
         os.mkdir(root_dir)
         shutil.move(result_dir, root_dir)  # 移动 result 文件夹, 到一个 root_dir下,用以压缩
-        result_zip = os.path.join(self.temp_dir, result_zip_name) # .../Mx-yolo/out/yolo_20XX_../detector_result.zip
+        result_zip = os.path.join(self.temp_dir, result_zip_name) # .../Mx-yolo/train_output/yolo_20XX_../detector_result.zip
         try:
             # self.zip_dir(root_dir, result_zip)
             self.zip_dir(os.path.join(root_dir, result_dir_name), result_zip)

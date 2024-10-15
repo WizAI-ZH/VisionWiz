@@ -88,13 +88,13 @@ class Net_Test:
 if __name__ == "__main__":
     # classes = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "mouse", "microbit", "ruler", "cat", "peer", "ship", "apple", "car", "pan", "dog", "umbrella", "airplane", "clock", "grape", "cup", "left", "right", "front", "stop", "back"]
     # anchors = [[2.44, 2.25], [5.03, 4.91], [3.5, 3.53], [4.16, 3.94], [2.97, 2.84]]
-    # param_path = "train_output/yolov2_slim/weights/epoch_460.pth"
+    # param_path = "out/yolov2_slim/weights/epoch_460.pth"
     # test_dir = "datasets/cards/cap/left"
 
 
     classes = ["right", "left", "back", "front", "others"]
     anchors = [[1.87, 5.32], [1.62, 3.28], [1.75, 3.78], [1.33, 3.66], [1.5, 4.51]]
-    param_path = "train_output/lobster_5classes/yolov2_slim/weights/epoch_15.pth"
+    param_path = "out/lobster_5classes/yolov2_slim/weights/epoch_15.pth"
     test_dir = "datasets/lobster_5classes"
     is_val_data = True
 
@@ -128,7 +128,7 @@ if __name__ == "__main__":
         if not result:
             break
         img, boxes, probs, inds = result
-        out_jpg = "train_output/test.jpg"
+        out_jpg = "out/test.jpg"
         test.show(img, boxes, probs, inds, save_path=out_jpg)
         input(f"[{count}] see {out_jpg}, press any key to continue")
         count += 1

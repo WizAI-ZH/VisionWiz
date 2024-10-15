@@ -9,6 +9,7 @@ import train.classifier.predict_batch as clsstest
 
 
 def main():
+    default_output_dir_name = 'trainOutput'
     supported_types = ["classifier", "detector"]
     curr_dir = os.path.abspath(os.path.dirname(__file__))
     parser = argparse.ArgumentParser(description="train model", usage='''
@@ -26,25 +27,23 @@ def main():
     parser.add_argument("-ap", "--alpha", type=str, help="train_epochs", default='0.75')
     parser.add_argument("-bz", "--batch_size", type=str, help="batch_size", default='8')
     parser.add_argument("-c", "--config", type=str, help="config file", default=os.path.join(curr_dir, "train", "config.py"))
-    parser.add_argument("-o", "--out", type=str, help="out directory", default=os.path.join(curr_dir, "out"))
     parser.add_argument("cmd", help="command", choices=["train", "init"])
     args = parser.parse_args()
     timess = time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime()) 
     # 去掉 alpha 的小数点
     alpha_no_dot = str(args.alpha).replace('.', '')
-
     # 动态生成的训练参数数据
     train_param_data = '_epoch{}_alpha{}_bz{}'.format(args.train_epochs, alpha_no_dot, args.batch_size)
     if args.type == "classifier":
-        save_dir=os.path.join(os.getcwd(),'out\\'+'classifer_'+timess+train_param_data)
+        save_dir=os.path.join(os.getcwd(),default_output_dir_name,'classifer_'+timess+train_param_data)
         if os.path.exists(save_dir):
-            save_dir=os.path.join(os.getcwd(),'out\\'+'classifer_'+timess+train_param_data)
+            save_dir=os.path.join(os.getcwd(),default_output_dir_name,'classifer_'+timess+train_param_data)
         else:
             os.makedirs(save_dir)
     else:
-        save_dir=os.path.join(os.getcwd(),'out\\'+'yolo_'+timess+train_param_data)
+        save_dir=os.path.join(os.getcwd(),default_output_dir_name,'yolo_'+timess+train_param_data)
         if os.path.exists(save_dir):
-            save_dir=os.path.join(os.getcwd(),'out\\'+'yolo_'+timess+train_param_data)
+            save_dir=os.path.join(os.getcwd(),default_output_dir_name,'yolo_'+timess+train_param_data)
         else:
             os.makedirs(save_dir)
     info={

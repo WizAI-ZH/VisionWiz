@@ -304,6 +304,8 @@ class Classifier(Train_Base):
             self.model.save(h5_path)
         if tflite_path:
             self.log.i("将模型保存为 .tflite 文件 | Save model as .tflite file")
+            self.log.i(tflite_path)
+            print('-'*30)
             if not tflite_path.endswith(".tflite"):
                 if os.path.isdir(tflite_path):
                     tflite_path = os.path.join(tflite_path, "classifier.tflite")
@@ -314,6 +316,9 @@ class Classifier(Train_Base):
             tflite_model = converter.convert()
             with open (tflite_path, "wb") as f:
                 f.write(tflite_model)
+            print('tflite_model 转换成功')
+            print('-'*30)
+
 
     def infer(self, input):
         pass

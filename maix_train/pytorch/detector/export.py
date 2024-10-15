@@ -6,7 +6,7 @@ import torch
 import numpy as np
 import os
 
-def torch_to_onnx(net, input_shape, out_name="train_output/model.onnx", input_names=["input0"], output_names=["output0"], device="cpu"):
+def torch_to_onnx(net, input_shape, out_name="out/model.onnx", input_names=["input0"], output_names=["output0"], device="cpu"):
     batch_size = 1
     if len(input_shape) == 3:
         x = torch.randn(batch_size, input_shape[0], input_shape[1], input_shape[2], dtype=torch.float32).to(device)
@@ -15,10 +15,10 @@ def torch_to_onnx(net, input_shape, out_name="train_output/model.onnx", input_na
     else:
         raise Exception("not support input shape")
     print("input shape:", x.shape)
-    # torch.onnx._export(net, x, "train_output/conv0.onnx", export_params=True)
+    # torch.onnx._export(net, x, "out/conv0.onnx", export_params=True)
     torch.onnx.export(net, x, out_name, export_params=True, input_names = input_names, output_names=output_names)
 
-def onnx_to_ncnn(input_shape, onnx="train_output/model.onnx", ncnn_param="train_output/conv0.param", ncnn_bin = "train_output/conv0.bin"):
+def onnx_to_ncnn(input_shape, onnx="out/model.onnx", ncnn_param="out/conv0.param", ncnn_bin = "out/conv0.bin"):
     # onnx2ncnn tool compiled from ncnn/tools/onnx, and in the buld dir
     cmd = f"onnx2ncnn {onnx} {ncnn_param} {ncnn_bin}"
     os.system(cmd)
@@ -33,7 +33,7 @@ def onnx_to_ncnn(input_shape, onnx="train_output/model.onnx", ncnn_param="train_
         f.write(content)
 
 def ncnn_to_awnn(input_size, ncnn_param, ncnn_bin, quantize_images_path, mean = (127.5, 127.5, 127.5), norm = (0.0078125, 0.0078125, 0.0078125),
-                 threads = 8, temp_dir = "train_output/temp",
+                 threads = 8, temp_dir = "out/temp",
                  awnn_param = None,
                  awnn_bin = None,
                  awnn_tools_cmd = "awnntools"):
@@ -56,7 +56,7 @@ def ncnn_to_awnn(input_size, ncnn_param, ncnn_bin, quantize_images_path, mean = 
     cmd = f'{cmd1} && {cmd2} && {cmd3}'
     print(f"please execute cmd mannually:\n{cmd}")
 
-def gen_input(input_shape, input_img=None, out_img_name="train_output/img.jpg", out_bin_name="train_output/input_data.bin", norm_int8=False):
+def gen_input(input_shape, input_img=None, out_img_name="out/img.jpg", out_bin_name="out/input_data.bin", norm_int8=False):
     from PIL import Image
     if not input_img:
         input_img = (255, 0, 0)
@@ -122,23 +122,23 @@ if __name__ == "__main__":
         #### config ####
         dataset_name = "cards2"
         classes = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "mouse", "microbit", "ruler", "cat", "peer", "ship", "apple", "car", "pan", "dog", "umbrella", "airplane", "clock", "grape", "cup", "left", "right", "front", "stop", "back"]
-        param_path = "train_output/yolov2_slim/weights/epoch_460.pth"
+        param_path = "out/yolov2_slim/weights/epoch_460.pth"
 
         dataset_name = "lobster_5classes"
         classes = ["right", "left", "back", "front", "others"]
-        param_path = "train_output/weights_save/lobster_5class_epoch_460.pth"
+        param_path = "out/weights_save/lobster_5class_epoch_460.pth"
 
         is_val_dataset = True
         input_shape = (3, 224, 224)
 
         dataset_path = f"datasets/{dataset_name}"
         generate_images_from_val_images = True
-        awnn_quantize_images_path = f"train_output/quantize_images/{dataset_name}"
+        awnn_quantize_images_path = f"out/quantize_images/{dataset_name}"
         device = "cpu"
         max_sample_image_num = 500
         #### config end ####
 
-        export_dir = f"train_output/export/{dataset_name}" 
+        export_dir = f"out/export/{dataset_name}" 
         onnx_path = os.path.join(export_dir, f"{dataset_name}.onnx")
         ncnn_param_path = os.path.join(export_dir, f"{dataset_name}.param")
         ncnn_bin_path   = os.path.join(export_dir, f"{dataset_name}.bin")

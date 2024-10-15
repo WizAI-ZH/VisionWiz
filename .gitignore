@@ -10,7 +10,7 @@ get-electron-abi.js
 /build/
 /out/
 /dist/
-/train_output/
+/trainOutput/
 
 #依赖库
 /py39/

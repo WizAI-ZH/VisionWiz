@@ -58,7 +58,7 @@
     "rebuild-nodepty": "electron-rebuild -f -w node-pty",
     "rebuild-rob": "electron-rebuild -f -w robotjs",
     "package": "electron-forge package",
-    "make": "electron-forge make --out dist"
+    "make": "electron-forge make"
   },
   "keywords": [
     "AI",
