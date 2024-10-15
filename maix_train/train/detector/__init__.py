@@ -374,7 +374,6 @@ class Detector(Train_Base):
         #     tflite_model = converter.convert()
         #     with open (tflite_path, "wb") as f:
         #         f.write(tflite_model)
-        print("-"*70)
 
     def infer(self, input):
         pass

@@ -145,6 +145,7 @@ class Train():
         self.log.i(f"完成(success): 输出路径(out_dir): {result_url}")
         if warn:
             self.log.w(f"警告(warnings):\n {warn}")
+        print("-"*70)
 
     def __on_fail(self, reson, msg, warn):
         self.log.e(f"失败(failed): {reson}, {msg}")

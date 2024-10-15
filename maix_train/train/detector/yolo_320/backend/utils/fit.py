@@ -146,7 +146,8 @@ def _print_time(process_time):
         print("训练用时{:d} 秒 | {:d}-seconds to train".format(int(process_time), int(process_time)))
     else:
         print("训练用时{:d} 分钟 | {:d}-mins to train".format(int(process_time / 60), int(process_time / 60)))
-
+    print("-"*70)
+    
 def save_model(model, h5_path, tflite_path=None):
     print("保存 .h5 权重文件到: | save .h5 weights file to: {}".format(h5_path))
     model.save(h5_path, overwrite=True, include_optimizer=False)
@@ -167,7 +168,6 @@ def save_model(model, h5_path, tflite_path=None):
         tfmodel = converter.convert()
         with open (tflite_path , "wb") as f:
             f.write(tfmodel)
-    print("-"*70)
 
 def _create_callbacks(save_best_weights_path, other_callbacks=[]):
     from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
