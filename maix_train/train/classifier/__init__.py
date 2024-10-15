@@ -117,8 +117,10 @@ class Classifier(Train_Base):
                     batch_size = 5
                     ):
         weights=os.path.join(curr_file_dir, "weights", weights)
+        print('='*70)
         self.log.i("标签列表(labels):{}".format(self.labels))
-        self.log.d("数据集路径:{}".format(self.datasets_dir))
+        self.log.d("数据集路径(dataset path):{}".format(self.datasets_dir))
+        print('='*70)
         
         from mobilenet_sipeed import mobilenet
         import tensorflow as tf
@@ -415,7 +417,6 @@ class Classifier(Train_Base):
         if len(labels) > max_classes_num:
             err_msg = "数据集类别过多或目录错误，限制：{} 类别 | Datasets too much class or directory error, limit: {} classes".format(max_classes_num, max_classes_num)
             return False, err_msg
-        print(labels,"---------")
         for label in labels:
             if not isascii(label):
                 return False, "类名(标签)不应包含特殊字符 | Class name (label) should not contain special letters"

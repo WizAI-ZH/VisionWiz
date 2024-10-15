@@ -16,7 +16,14 @@ const { findFilesWithSubstring, delDirRecurse, delDirContents } = require('./uti
 const languageManager = require('./utils/language-manager')
 const path_utils =require('./utils/path_utils')
 
-// Store setup  
+//判断是否打包
+if (app.isPackaged) {
+  process.env.NODE_ENV = 'production';
+}else{
+  process.env.NODE_ENV = 'development';
+}
+
+// 本地数据  
 const store = new Store();
 read_config() //读取本地数据
 languageManager.updateLocales(get_store_value('current_lang')||'zh')

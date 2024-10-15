@@ -91,12 +91,12 @@ def main(file_dirs):
         write_dname.mkdir(parents=True)
 
     img_dir = curr_dir / 'out' / file_dirs / 'sample_images'
-
+    print(f"测试模型文件路径(Model Testing file path)： {img_dir}")
     for filename in os.listdir(img_dir):
         img_path = img_dir / filename
         img_fname = filename
 
-        print(f"处理文件(Processing file): {img_fname}，文件路径(file path): {img_path}")
+        print(f"处理文件(Processing file): {img_fname}")
         
         # 使用 imageio 读取图像
         try:

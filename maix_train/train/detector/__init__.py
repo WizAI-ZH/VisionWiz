@@ -123,6 +123,7 @@ class Detector(Train_Base):
                     self.user_progress_callback((epoch + 1) / self.epochs * 100, "训练轮次结束。Train epoch end.")
 
             def on_train_begin(self, logs=None):
+                print("="*70)
                 self.logger.i("训练开始。Train start")
                 if self.user_progress_callback:
                     self.user_progress_callback(0, "训练开始。Train start")
@@ -174,7 +175,7 @@ class Detector(Train_Base):
         self.log.i(f"anchors: {anchors}")
         ratios = np.around(out[:, 0] / out[:, 1], decimals=2).tolist()
         self.log.i("宽高比(w/h ratios): {}".format(sorted(ratios)))
-        
+        print('='*70)
         return anchors
 
     def train(self, epochs= 100,
@@ -192,9 +193,11 @@ class Detector(Train_Base):
         import tensorflow as tf
         from yolo.frontend import create_yolo
         weights=os.path.join(curr_file_dir, "weights", weights)
+        print('='*70)
         self.log.i("train, labels:{}".format(self.labels))
-        self.log.d("train, datasets image dir:{}".format(self.datasets_img_dir))
-        self.log.d("train, datasets xml dir:{}".format(self.datasets_xml_dir))
+        self.log.d("数据集路径(datasets image dir):{}".format(self.datasets_img_dir))
+        self.log.d("数据集标注文件路径(datasets xml dir):{}".format(self.datasets_xml_dir))
+        
         # param check
         # TODO: check more param
         if len(self.labels) == 1:
@@ -205,7 +208,6 @@ class Detector(Train_Base):
         # create yolo model
         strip_size = 32 if min(self.input_shape[:2])%32 == 0 else 16
         # get anchors
-        print(self.input_shape)
         self.anchors = self._get_anchors(self.datasets_y, self.input_shape[:2], strip_size = strip_size)
         # create network
         yolo = create_yolo(
