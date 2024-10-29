@@ -207,7 +207,7 @@ document.getElementById('start_train_cls').addEventListener('click', function ()
         else {
             fitAddon_cls.fit()
             //开始训练
-            const command = `${pythonExec} ${trainScript} -t classifier -dc ${img} -ep ${epoch} -ap ${alpha} -bz ${batch_size} train\r`;
+            const command = `& "${pythonExec}" "${trainScript}" -t classifier -dc "${img}" -ep ${epoch} -ap ${alpha} -bz ${batch_size} train\r`;
             // 发送开始训练指令  
             ipcRenderer.send('send_data_terminal_cls', command);
             //设定开始训练状态为进行中
@@ -352,7 +352,7 @@ function test_model(dir, test_dir) {
             ipcRenderer.send('clean_file', `${dir}/test`); //清空存放以前测试图片的文件
             fitAddon_cls.fit()
             //开始测试图片
-            const command = `${pythonExec} ${testScript} --dir ${dir} --img_dir ${test_dir}\r`;
+            const command = `& "${pythonExec}" "${testScript}" --dir "${dir}" --img_dir "${test_dir}"\r`;
             ipcRenderer.send('send_data_terminal_cls', command)
             //设定状态为进行中
             train_situation_cls = true
