@@ -10,6 +10,7 @@
 import pynvml
 import os
 import multiprocessing
+import tensorflow as tf
 
 class GPU_info:
     def __init__(self, id=-1, name="", mem_free=0, mem_total=0):
@@ -28,13 +29,15 @@ def is_gpu_exist(create_sub_process=True):
             pynvml.nvmlInit()
             gpu_num = pynvml.nvmlDeviceGetCount()
             pynvml.nvmlShutdown()
-            import tensorflow as tf
+            
             gpus = tf.config.experimental.list_physical_devices('GPU')
-            del tf
+            
             if gpu_num > 0 and len(gpus) > 0:
                 return True
         except Exception:
             pass
+        finally:
+            pynvml.nvmlShutdown()
         return False
     def func(is_exits):
         is_exits.value = func0()
@@ -53,9 +56,9 @@ def func0(memory_require=128*1024*1024, tf_gpu_mem_growth=False, logger=None, co
         pynvml.nvmlInit()
         gpu_num = pynvml.nvmlDeviceGetCount()
         # check nvidia driver
-        import tensorflow as tf
+        
         gpus = tf.config.experimental.list_physical_devices('GPU')
-        del tf
+        
         if gpu_num <= 0 or len(gpus) <= 0:
             pynvml.nvmlShutdown()
             if len(gpus) <= 0 and gpu_num > 0:
@@ -85,9 +88,9 @@ def func0(memory_require=128*1024*1024, tf_gpu_mem_growth=False, logger=None, co
             if info.free >= memory_require:
                 gpu = GPU_info(id = i, name = gpu_name, mem_free = info.free, mem_total = info.total)
                 os.environ["CUDA_VISIBLE_DEVICES"] = str(i)
-                import tensorflow as tf
+                
                 tf.config.experimental.set_memory_growth(gpus[i], True)
-                del tf
+                
                 break
         pynvml.nvmlShutdown()
     except Exception as e:
@@ -96,6 +99,8 @@ def func0(memory_require=128*1024*1024, tf_gpu_mem_growth=False, logger=None, co
             logger.i(msg)
         if console:
             print(msg)
+    finally:
+        pynvml.nvmlShutdown()
     return gpu
 
 def func(memory_require=128*1024*1024, tf_gpu_mem_growth=False, logger=None, console=True, pipe=None):
@@ -103,7 +108,7 @@ def func(memory_require=128*1024*1024, tf_gpu_mem_growth=False, logger=None, con
     pipe.send(gpu)
 
 
-def select_gpu(memory_require=128*1024*1024, tf_gpu_mem_growth=False, logger=None, console=True, create_sub_process=True):
+def select_gpu(memory_require=128*1024*1024, tf_gpu_mem_growth=False, logger=None, console=True, create_sub_process=False):
     if not create_sub_process:
         return func0(memory_require, tf_gpu_mem_growth, logger, console)
     else:
