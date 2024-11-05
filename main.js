@@ -8,28 +8,29 @@ const { exec, spawn } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const dns = require('dns');
 const process = require('process');
 const image = require('imageinfo');
 const Store = require('electron-store');
 const { sendMessageToView, sendMessageToAllViews } = require('./utils/ipc_commu')
 const { findFilesWithSubstring, delDirRecurse, delDirContents } = require('./utils/file_process')
 const languageManager = require('./utils/language-manager')
-const path_utils =require('./utils/path_utils')
+const path_utils = require('./utils/path_utils')
 
 //判断是否打包
 if (app.isPackaged) {
   process.env.NODE_ENV = 'production';
-}else{
+} else {
   process.env.NODE_ENV = 'development';
 }
 
 // 本地数据  
 const store = new Store();
 read_config() //读取本地数据
-languageManager.updateLocales(get_store_value('current_lang')||'zh')
+languageManager.updateLocales(get_store_value('current_lang') || 'zh')
 let current_locales = languageManager.getLocales();
 
- 
+
 let cmd = process.platform === 'win32' ? 'tasklist' : 'ps aux';
 const rex = new RegExp('pattern');
 const setupWindowManager = require('./windowManger')
@@ -43,7 +44,7 @@ const createWindow = () => {
   childWindow = new BrowserWindow({
     frame: false,
     transparent: true,
-    icon: path.join(__dirname,'icons','VESIBIT.ico'),
+    icon: path.join(__dirname, 'icons', 'VESIBIT.ico'),
   })
   // Create the browser window.
   mainWindow = new BrowserWindow({
@@ -55,7 +56,7 @@ const createWindow = () => {
     show: false,
     autoHideMenuBar: false,
     title: "威智慧眼V1.0", //程序窗口名字
-    icon: path.join(__dirname,'icons','VESIBIT.ico'), //程序的图标
+    icon: path.join(__dirname, 'icons', 'VESIBIT.ico'), //程序的图标
     frame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -75,7 +76,7 @@ const createWindow = () => {
     show: false,
     autoHideMenuBar: false,
     title: "威智慧眼V1.0", //程序窗口名字
-    icon: path.join(__dirname,'icons','VESIBIT.ico'), //程序的图标
+    icon: path.join(__dirname, 'icons', 'VESIBIT.ico'), //程序的图标
     frame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -89,7 +90,7 @@ const createWindow = () => {
     show: false,
     autoHideMenuBar: false,
     title: "威智慧眼V1.0", //程序窗口名字
-    icon: path.join(__dirname,'icons','VESIBIT.ico'), //程序的图标
+    icon: path.join(__dirname, 'icons', 'VESIBIT.ico'), //程序的图标
     frame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -103,7 +104,7 @@ const createWindow = () => {
     show: false,
     autoHideMenuBar: false,
     title: "威智慧眼V1.0", //程序窗口名字
-    icon: path.join(__dirname,'icons','VESIBIT.ico'), //程序的图标
+    icon: path.join(__dirname, 'icons', 'VESIBIT.ico'), //程序的图标
     frame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -117,7 +118,7 @@ const createWindow = () => {
     show: false,
     autoHideMenuBar: false,
     title: "威智慧眼V1.0", //程序窗口名字
-    icon: path.join(__dirname,'icons','VESIBIT.ico'), //程序的图标
+    icon: path.join(__dirname, 'icons', 'VESIBIT.ico'), //程序的图标
     frame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -126,40 +127,74 @@ const createWindow = () => {
     }
   });
 
-  mainWindow.addBrowserView(mainWindow_views['Wizhome']);
-  mainWindow_views['Wizhome'].setBounds({ x: 0, y: 0, width: 800, height: 600 });
+  // mainWindow.addBrowserView(mainWindow_views['Wizhome']);
+  // mainWindow_views['Wizhome'].setBounds({ x: 0, y: 0, width: 800, height: 600 });
 
+  
   // 加载不同的页面到不同的 BrowserView  
-  const loadViews = () => {
-    return Promise.all([
-      mainWindow_views['Wizhome'].webContents.loadURL('https://vesibit.yuque.com/r/organizations/homepage').then(() => {
-        console.log('Wizhome loaded');
-      }).catch(err => {
-        console.error('Failed to load Wizhome:', err);
-      }),
+  const loadViews = async () => {  
+    try {  
+      await Promise.all([  
+        loadHtmlWithOnlineCheck('Wizhome', 'https://vesibit.yuque.com/r/organizations/homepage', './feature/offline.html'),  
+        loadFileWithFallback('dataCollect', './feature/data-collection.html'),  
+        loadFileWithFallback('objectDetection', './feature/target-detection.html'),  
+        loadFileWithFallback('imgCls', './feature/image-classification.html'),
+      ]);  
+       
+    } catch (err) {  
+      console.error('Error loading views:', err);  
+    }  
+  };  
 
-      mainWindow_views['dataCollect'].webContents.loadFile(path.join(__dirname, './feature/data-collection.html')).then(() => {
-        console.log('dataCollection loaded');
-      }).catch(err => {
-        console.error('Failed to load dataCollection:', err);
-      }),
+  const checkInternetConnection = () => {  
+    // return new Promise((resolve) => {  
+    //   dns.resolve('www.google.com', (err) => {  
+    //     if (err) {  
+    //       resolve(false); // No internet  
+    //     } else {  
+    //       resolve(true); // Internet available  
+    //     }  
+    //   });  
+    // });  
+    return fetch('https://www.google.com', { method: 'HEAD', mode: 'no-cors' })  
+    .then(() => true)  
+    .catch(() => false); 
+  };  
 
-      mainWindow_views['objectDetection'].webContents.loadFile(path.join(__dirname, './feature/target-detection.html')).then(() => {
-        console.log('objectDetection loaded');
-      }).catch(err => {
-        console.error('Failed to load objectDetection:', err);
-      }),
-
-      mainWindow_views['imgCls'].webContents.loadFile(path.join(__dirname, './feature/image-classification.html')).then(() => {
-        console.log('imgCls loaded');
-      }).catch(err => {
-        console.error('Failed to load imgCls:', err);
-      }),
-    ]);
+  const loadHtmlWithOnlineCheck = (viewName, urlLink, offlineFilePath) =>{
+    // 根据网络情况加载主页
+    const isOnline = checkInternetConnection();  
+    console.log('isOnline?', isOnline);  
+    if (isOnline) {  
+      try {  
+        mainWindow_views[viewName].webContents.loadURL(urlLink);  
+        console.log(`${viewName} loaded`);  
+      } catch (err) {  
+        console.error(`Failed to load ${viewName}:`, err);  
+      }  
+    } else {  
+      console.log('Network unavailable, loading Offline.');  
+      loadFileWithFallback(viewName, offlineFilePath);  
+    }  
+  };  
+  
+  const loadFileWithFallback = (viewName, filePath) => {
+    // mainWindow.addBrowserView(mainWindow_views[viewName]);
+    // mainWindow_views[viewName].setBounds({ x: 0, y: 0, width: mainWindow.getBounds().width, height: mainWindow.getBounds().height });
+    // mainWindow_views[viewName].webContents.openDevTools({ mode: 'detach' })
+    //加载页面并返回回应消息
+    return mainWindow_views[viewName].webContents.loadFile(path.join(__dirname, filePath))
+      .then(() => {
+        console.log(`${viewName} loaded from file`);
+      })
+      .catch(err => {
+        console.error(`Failed to load ${viewName} from file:`, err);
+      });
   };
 
 
   loadViews().then(() => {
+    console.log('All views loaded'); 
     mainWindow.addBrowserView(mainWindow_views['Wizhome']);
     mainWindow_views['Wizhome'].setBounds({ x: 0, y: 0, width: mainWindow.getBounds().width, height: mainWindow.getBounds().height });
     // mainWindow_views['Wizhome'].webContents.openDevTools({ mode: 'detach' })
@@ -174,7 +209,7 @@ const createWindow = () => {
   setAppMenu(mainWindow, mainWindow_views, get_store_value('current_lang') || 'zh')
   console.log('finished setAppMenu')
 
-  mainWindow.once('ready-to-show',()=>{
+  mainWindow.once('ready-to-show', () => {
     mainWindow.maximize();
   })
 
@@ -183,7 +218,7 @@ const createWindow = () => {
     mainWindow = null
   })
 
-  const handleResize = ()=>{
+  const handleResize = () => {
     const [width, height] = mainWindow.getSize();
     // console.log('resize to width:',width,'height:',height)
     mainWindow_views[getCurrentView()].setBounds({ x: 0, y: 0, width, height });
@@ -193,8 +228,8 @@ const createWindow = () => {
 
   //主窗口事件处理
   mainWindow.on('resize', handleResize);
-  mainWindow.on('maximize', handleResize);  
-  mainWindow.on('unmaximize', handleResize);  
+  mainWindow.on('maximize', handleResize);
+  mainWindow.on('unmaximize', handleResize);
 
   // 打开开发工具
   // mainWindow.webContents.openDevTools()
@@ -223,12 +258,12 @@ ipcMain.handle('set-language', async (event, language) => {
 // 部分 API 在 ready 事件触发后才能使用。
 app.whenReady().then(() => {
   createWindow()
-  globalShortcut.register('Control+Shift+I',()=>{
+  globalShortcut.register('Control+Shift+I', () => {
     mainWindow_views[getCurrentView()].webContents.openDevTools({ mode: 'detach' });
   })
-  globalShortcut.register('F5',()=>{
+  globalShortcut.register('F5', () => {
     var current_view = getCurrentView()
-    if (current_view=='Wizhome'){
+    if (current_view == 'Wizhome') {
       mainWindow_views[current_view].webContents.reload();
     }
   })
@@ -265,26 +300,28 @@ function timeout(ms) {
 }
 
 //使用系统默认图片查看器打开图片
-ipcMain.on('open_image', (event, imagePath) => {  
-  const fullPath = path.normalize(imagePath);    
+ipcMain.on('open_image', (event, imagePath) => {
+  const fullPath = path.normalize(imagePath);
   console.log(fullPath)
-  exec(`start "" "${fullPath}"`, (error) => {  
-      if (error) {  
-          console.error('Error opening image:', error);  
-      }  
-  });  
-});  
+  exec(`start "" "${fullPath}"`, (error) => {
+    if (error) {
+      console.error('Error opening image:', error);
+    }
+  });
+});
 
 //获取当前app根目录
-ipcMain.on('get_app_path', (event) => {  
-  event.reply('get_app_path_reply', path_utils.getAppResourcePath('.','resources'));  
-});  
+ipcMain.on('get_app_path', (event,viewName) => {
+  // event.reply('get_app_path_reply', path_utils.getAppResourcePath('.', 'resources'));
+  sendMessageToView(mainWindow_views,viewName,'get_app_path_reply', path_utils.getAppResourcePath('.', 'resources'))
+  console.log(viewName,'reply finished')
+});
 
 //以下是工具调用相关进程函数
-ipcMain.on('open_make_sense', () => {  
+ipcMain.on('open_make_sense', () => {
   //打开make-sense软件，并且设定make-sense语言
-  setupWindowManager.createMakeSenseWindow(get_store_value('current_lang'));  
-});  
+  setupWindowManager.createMakeSenseWindow(get_store_value('current_lang'));
+});
 
 ipcMain.on('openfile', function (event, arg) {
   //打开窗口选择要保存拍摄图片的文件夹
@@ -517,10 +554,10 @@ ipcMain.on('stop_process', function (event, arg) {
 })
 
 ipcMain.on('update_train_history_list', function (event, arg) {
-  const outDir = path.join(process.cwd(),'trainOutput')
-  if (!fs.existsSync(outDir)) {  
-    fs.mkdirSync(outDir, { recursive: true });  
-  } 
+  const outDir = path.join(process.cwd(), 'trainOutput')
+  if (!fs.existsSync(outDir)) {
+    fs.mkdirSync(outDir, { recursive: true });
+  }
   //读取并更新训练记录列表
   fs.readdir('trainOutput', function (err, stats) {
     const flist = new Array()
@@ -566,7 +603,7 @@ ipcMain.on('del_dir', function (event, arg) {
   sendMessageToView(mainWindow_views, 'objectDetection', 'show_del_file_succeed', process.cwd() + '/trainOutput/' + arg)
 })
 
-ipcMain.on('clean_file',function(event,dir){
+ipcMain.on('clean_file', function (event, dir) {
   //删除dir目录内的所有内容
   delDirContents(dir)
 })
@@ -577,20 +614,20 @@ ipcMain.on('readimgdir', function (event, arg) {
   sendMessageToView(mainWindow_views, 'dataCollect', 'readimgdir', img_list)
 })
 
-ipcMain.on('update_test_result_cls',function(event,current_tab_dir){
+ipcMain.on('update_test_result_cls', function (event, current_tab_dir) {
   //更新测试结果到详情窗口中
   let baseDir = process.cwd();
   let dir = `trainOutput/${current_tab_dir}`
   let imgList = read_img_dir(`${dir}/test`);
-  sendMessageToView(mainWindow_views, 'imgCls','show_test_result_img',{ 'dir': `${baseDir}/${dir}/test`, 'list': imgList })
+  sendMessageToView(mainWindow_views, 'imgCls', 'show_test_result_img', { 'dir': `${baseDir}/${dir}/test`, 'list': imgList })
 })
 
-ipcMain.on('update_test_result_yolo',function (event,current_tab_dir){
+ipcMain.on('update_test_result_yolo', function (event, current_tab_dir) {
   //更新测试结果到详情窗口中
   let baseDir = process.cwd();
   let dir = `trainOutput/${current_tab_dir}`
   let imgList = read_img_dir(`${dir}/test`);
-  sendMessageToView(mainWindow_views, 'objectDetection','show_test_result_img',{ 'dir': `${baseDir}/${dir}/test`, 'list': imgList })
+  sendMessageToView(mainWindow_views, 'objectDetection', 'show_test_result_img', { 'dir': `${baseDir}/${dir}/test`, 'list': imgList })
 })
 
 
@@ -761,7 +798,7 @@ ipcMain.on('read_model_detail_and_show', function (event, arg) {
       sendMessageToView(mainWindow_views, viewChannel, 'update_model_labels', [labelData]);
     });
 
-    if(!isClassifier){
+    if (!isClassifier) {
       //如果模型是目标检测，则再读取anchors参数
       const anchorsFileName = findFilesWithSubstring(resultDir, 'anchors.txt')
       const anchorsFilePath = `${resultDir}/${anchorsFileName}`
@@ -770,7 +807,7 @@ ipcMain.on('read_model_detail_and_show', function (event, arg) {
       });
     }
 
-    
+
 
     const trainDataPath = `${resultDir}/train_data.json`;
     readFileWithHandling(trainDataPath, (trainData) => {

@@ -62,7 +62,7 @@ function changeLanguage(language, browserWindow, views) {
 
 
 function switchView(mainWindow, views, viewName) {
-    console.log(views)
+    // console.log(views)
     if (views[viewName]) {
         mainWindow.setBrowserView(views[viewName]);
         currentView = viewName;

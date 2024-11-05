@@ -16,13 +16,14 @@ let trainScript
 let testScript
 
 //发送获取应用根目录指令
-ipcRenderer.send('get_app_path');
+ipcRenderer.send('get_app_path','imgCls');
 
 ipcRenderer.on('get_app_path_reply', (event, appPath) => {
     // 获取 python.exe 和 train.py 的路径  
     pythonExec = path.join(appPath, 'py39', 'python.exe');
     trainScript = path.join(appPath, 'maix_train', 'train.py');
     testScript = path.join(appPath, 'maix_train', 'train', 'classifier', 'predict_test.py')
+
 });
 
 

@@ -13,7 +13,7 @@ let trainScript
 let testScript
 
 //发送获取应用根目录指令
-ipcRenderer.send('get_app_path');
+ipcRenderer.send('get_app_path','objectDetection');
 
 ipcRenderer.on('get_app_path_reply', (event, appPath) => {
     // 获取 python.exe 和 train.py 的路径  

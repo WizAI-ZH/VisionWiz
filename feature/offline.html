@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline Notification</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1b1b1b;
+            color: #00ffcc;
+        }
+        .container {
+            text-align: center;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.7);
+        }
+        h1 {
+            margin-bottom: 20px;
+            font-weight: normal;
+            font-size: 28px;
+            text-shadow: 0 0 5px #00ffcc;
+        }
+        p {
+            margin-top: 0;
+            font-size: 16px;
+        }
+        .image-container {
+            margin-top: 20px;
+            border: 2px dashed #00ffcc;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>无网络连接（No Internet Connection）</h1>
+        <p>如想查看主页，请检查你的网络并按F5刷新（If you want to view the homepage, please check your network and press F5 to refresh）</p>
+        <div class="image-container">
+            <img src="../icons/disconnect.png" alt="Placeholder for Network Status" />
+        </div>
+    </div>
+</body>
+</html>

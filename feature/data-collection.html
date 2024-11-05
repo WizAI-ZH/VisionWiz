@@ -10,122 +10,153 @@
   </body>
 </html> -->
 
-<!DOCTYPE html>  
-<html lang="en">  
+<!DOCTYPE html>
+<html lang="en">
+
 <head>
-    <link rel="stylesheet" type="text/css" href="../static/css/style.css">
-    <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="../node_modules/font-awesome/css/font-awesome.min.css">
-    <link rel="stylesheet" href="../node_modules/optiscroll/dist/optiscroll.css">
-    <link rel="stylesheet" href="../static/css/preview.css">
-    <link rel="stylesheet" href="../static/css/notiflix-1.3.0.min.css">
-    <link rel="stylesheet" href="../node_modules/xterm/css/xterm.css">
-    <meta charset="UTF-8">
-    <!-- <title>Data Collection</title>   -->
-</head>  
-<body>  
-	
-    <!-- <button onclick="startTask()">Start Task</button> -->
-      <div style='padding-top:0px'>
-		  <style>  
-			  #descript_data_collect {  
-				background-color: #f0f8ff; /* 设置背景颜色 (淡蓝色) */  
-				padding: 0px;             /* 设置内边距，给文字和边框之间留出空间 */  
-				border-radius: 8px;        /* 设置圆角 */  
-				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 设置轻微的阴影 */  
-				text-align: center;        /* 文本居中对齐 */  
-				width: 90%;                /* 可根据需要调整宽度 */  
-				margin: auto;              /* 居中 */  
-			  }  
-		 </style> 
-		  <div style='display: flex; align-items: center; justify-content: center;'> <p id="descript_data_collect" align="center">在此可通过摄像头进行数据采集，可以设定当前拍摄目标名字、图片保存路径</p></div>
-	  	<style>  
-  .container {  
-    display: flex;               /* 使用 flexbox 布局 */  
-    justify-content: center;     /* 水平置中 */  
-    align-items: center;         /* 垂直置中 (如果需要对齐到中间) */  
-    padding: 20px;               /* 可选：为容器添加内边距 */  
-  }  
+  <link rel="stylesheet" type="text/css" href="../static/css/style.css">
+  <link rel="stylesheet" type="text/css" href="../static/css/font-awesome.css">
+  <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../node_modules/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="../node_modules/optiscroll/dist/optiscroll.css">
+  <link rel="stylesheet" href="../static/css/preview.css">
+  <link rel="stylesheet" href="../static/css/notiflix-1.3.0.min.css">
+  <link rel="stylesheet" href="../node_modules/xterm/css/xterm.css">
+  <meta charset="UTF-8">
+  <!-- <title>Data Collection</title>   -->
+</head>
 
-  .form-floating {  
-    width: 200px;                /* 设置每个 .form-floating div 的宽度 */  
-    margin: 0 10px;              /* 左右外边距，用于分隔两个元素 */  
-  }  
+<body>
 
-  .form-control {  
-    width: 100%;                 /* 使输入框适应其父容器的宽度 */  
-    height: 40px;                /* 适当调整高度 */  
-  }  
-</style>  
+  <!-- <button onclick="startTask()">Start Task</button> -->
+  <div style='padding-top:0px'>
+    <style>
+      #descript_data_collect {
+        background-color: #f0f8ff;
+        /* 设置背景颜色 (淡蓝色) */
+        padding: 0px;
+        /* 设置内边距，给文字和边框之间留出空间 */
+        border-radius: 8px;
+        /* 设置圆角 */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        /* 设置轻微的阴影 */
+        text-align: center;
+        /* 文本居中对齐 */
+        width: 90%;
+        /* 可根据需要调整宽度 */
+        margin: auto;
+        /* 居中 */
+      }
+    </style>
+    <div style='display: flex; align-items: center; justify-content: center;'>
+      <p id="descript_data_collect" align="center">在此可通过摄像头进行数据采集，可以设定当前拍摄目标名字、图片保存路径</p>
+    </div>
+    <style>
+      .container {
+        display: flex;
+        /* 使用 flexbox 布局 */
+        justify-content: center;
+        /* 水平置中 */
+        align-items: center;
+        /* 垂直置中 (如果需要对齐到中间) */
+        padding: 20px;
+        /* 可选：为容器添加内边距 */
+      }
 
-		<div class="container" style="display: flex; justify-content: center; align-items: center; padding: 20px; margin-top: 10px;">  
-	  <div style="background: linear-gradient(135deg, #f0f4f8, #d9e2ec); border-radius: 20px; padding: 20px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); display: flex; gap: 20px; width: fit-content;">  
-		<div class="form-floating" style="width: 300px;">  
-		  <input class="form-control" id="classname" style="border: none; box-shadow: none; border-radius: 10px;">  
-		  <label id="class_name" for="classname">种类名称</label>  
-		</div>  
-		<div class="form-floating" style="width: 300px;">  
-		  <input class="form-control" id="sender" style="border: none; box-shadow: none; border-radius: 10px;">  
-		  <label id="save_dir" for="sender">保存文件夹</label>  
-		</div>  
-	  </div>  
-	</div>
-<!--		<div style='display: flex;align-items: center;justify-content: center;padding: 20px;'> </div>-->
-        <div style='display: flex; justify-content: center; align-items: center; padding-bottom: 20px;'>  
-<!--    <video id="video" width="640" height="480" style='background-color: black; border-radius: 20px;' autoplay></video>  -->
-			
-		  <video id="video" width="640" height="480" style="background-color: #000; border-radius: 20px; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); border: 5px solid #fff; position: relative; overflow: hidden;" autoplay>  
-</video>
-		
-          <div style="display: flex; flex-direction: column; align-items: center; margin-left: 20px; gap: 15px;">  
-    <div class="dropdown">  
-        <a id='cbtn' style="background: linear-gradient(135deg, #6dd5ed, #2193b0); color: white; border: none; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); padding: 10px 20px; border-radius: 8px;" class="btn btn-danger dropdown-toggle btn-sm" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">  
-            选择要连接的摄像头  
-        </a>  
-        <ul class="dropdown-menu" id='cam_list'>  
-            <!--<li><a class="dropdown-item" href="#">Action</a></li>-->  
-        </ul>  
-    </div>  
-    <button type="button" id='img_capture' class="btn btn-primary btn-lg btn-primary" style="width: 100px; height: 100px; border-radius: 50%; border: 2px solid #007bff; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); font-size: 16px; display: flex; align-items: center; justify-content: center;">  
-        拍摄  
-    </button>  
-    <button type="button" id='img_history' class="btn btn-secondary btn-lg" data-bs-toggle="modal" data-bs-target="#ImgModal" style="background-color: #6c757d; color: white; border: 2px solid #6c757d; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); padding: 10px 20px; font-size: 16px;">  
-        拍摄记录  
-    </button>  
-</div>  
-</div>  
-<canvas id="canvas" width="640" height="480" style="display:none; margin:0 auto;"></canvas>
-          </div>
-<a id='cam'></a>
-      </div>
+      .form-floating {
+        width: 200px;
+        /* 设置每个 .form-floating div 的宽度 */
+        margin: 0 10px;
+        /* 左右外边距，用于分隔两个元素 */
+      }
 
-    <!--拍摄记录窗口，当点击后会显示拍摄记录-->
-    <div class="modal fade" id="ImgModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h1 class="modal-title fs-5" id="imgModalLabel">拍摄记录</h1>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body" id='imglist'>
-            
-          </div>
-          <div class="modal-footer">
-            <button id="quit" type="button" class="btn btn-secondary" data-bs-dismiss="modal">退出</button>
-          </div>
+      .form-control {
+        width: 100%;
+        /* 使输入框适应其父容器的宽度 */
+        height: 40px;
+        /* 适当调整高度 */
+      }
+    </style>
+
+    <div class="container"
+      style="display: flex; justify-content: center; align-items: center; padding: 20px; margin-top: 10px;">
+      <div
+        style="background: linear-gradient(135deg, #f0f4f8, #d9e2ec); border-radius: 20px; padding: 20px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); display: flex; gap: 20px; width: fit-content;">
+        <div class="form-floating" style="width: 300px;">
+          <input class="form-control" id="classname" style="border: none; box-shadow: none; border-radius: 10px;">
+          <label id="class_name" for="classname">种类名称</label>
+        </div>
+        <div class="form-floating" style="width: 300px;">
+          <input class="form-control" id="sender" style="border: none; box-shadow: none; border-radius: 10px;">
+          <label id="save_dir" for="sender">保存文件夹</label>
         </div>
       </div>
     </div>
-    <script src="../utils/language-html.js"></script>
-    <script type="text/javascript" src="../static/js/jquery-1.11.0.min.js"></script>
-    <script>try {$ = jQuery = module.exports;} catch(e) {}</script>
-    <script type="text/javascript" src="../static/js/jquery-tab.js"></script>
-    <script type="text/javascript" src="../static/js/notiflix-notify-aio-3.2.6.min.js"></script>
-    <script type="text/javascript" src="../static/js/notiflix-report-aio-3.2.6.min.js"></script>
-    <script type="text/javascript" src="../node_modules\@popperjs\core\dist\umd\popper.js"></script>
-    <script type="text/javascript" src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../node_modules\optiscroll\dist\jquery.optiscroll.js"></script>
-    <script type="text/javascript" src="../static/js/blockly_main.js"></script>
-    <script type="text/javascript" src="data-collection_renderer.js"></script> 
+    <!--		<div style='display: flex;align-items: center;justify-content: center;padding: 20px;'> </div>-->
+    <div style='display: flex; justify-content: center; align-items: center; padding-bottom: 20px;'>
+      <!--    <video id="video" width="640" height="480" style='background-color: black; border-radius: 20px;' autoplay></video>  -->
+
+      <video id="video" width="640" height="480"
+        style="background-color: #000; border-radius: 20px; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); border: 5px solid #fff; position: relative; overflow: hidden;"
+        autoplay>
+      </video>
+
+      <div style="display: flex; flex-direction: column; align-items: center; margin-left: 20px; gap: 15px;">
+        <div class="dropdown">
+          <a id='cbtn'
+            style="background: linear-gradient(135deg, #6dd5ed, #2193b0); color: white; border: none; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); padding: 10px 20px; border-radius: 8px;"
+            class="btn btn-danger dropdown-toggle btn-sm" href="#" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            选择要连接的摄像头
+          </a>
+          <ul class="dropdown-menu" id='cam_list'>
+            <!--<li><a class="dropdown-item" href="#">Action</a></li>-->
+          </ul>
+        </div>
+        <button type="button" id='img_capture' class="btn btn-primary btn-lg btn-primary"
+          style="width: 100px; height: 100px; border-radius: 50%; border: 2px solid #007bff; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); font-size: 16px; display: flex; align-items: center; justify-content: center;">
+          拍摄
+        </button>
+        <button type="button" id='img_history' class="btn btn-secondary btn-lg" data-bs-toggle="modal"
+          data-bs-target="#ImgModal"
+          style="background-color: #6c757d; color: white; border: 2px solid #6c757d; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); padding: 10px 20px; font-size: 16px;">
+          拍摄记录
+        </button>
+      </div>
+    </div>
+    <canvas id="canvas" width="640" height="480" style="display:none; margin:0 auto;"></canvas>
+  </div>
+  <a id='cam'></a>
+  </div>
+
+  <!--拍摄记录窗口，当点击后会显示拍摄记录-->
+  <div class="modal fade" id="ImgModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="imgModalLabel">拍摄记录</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id='imglist'>
+
+        </div>
+        <div class="modal-footer">
+          <button id="quit" type="button" class="btn btn-secondary" data-bs-dismiss="modal">退出</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="../utils/language-html.js"></script>
+  <script type="text/javascript" src="../static/js/jquery-1.11.0.min.js"></script>
+  <script>try { $ = jQuery = module.exports; } catch (e) { }</script>
+  <script type="text/javascript" src="../static/js/jquery-tab.js"></script>
+  <script type="text/javascript" src="../static/js/notiflix-notify-aio-3.2.6.min.js"></script>
+  <script type="text/javascript" src="../static/js/notiflix-report-aio-3.2.6.min.js"></script>
+  <script type="text/javascript" src="../node_modules\@popperjs\core\dist\umd\popper.js"></script>
+  <script type="text/javascript" src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="../node_modules\optiscroll\dist\jquery.optiscroll.js"></script>
+  <script type="text/javascript" src="../static/js/blockly_main.js"></script>
+  <script type="text/javascript" src="data-collection_renderer.js"></script>
 </body>
+
 </html>
