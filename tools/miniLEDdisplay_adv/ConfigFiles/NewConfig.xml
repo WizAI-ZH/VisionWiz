@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<l12badge author="dcs" date="2011-5-23" language="chinese" path="languages">
+  <commport>COM3</commport>
+  <topoffset>0</topoffset>
+  <brightness>0</brightness>
+  <previewlen>80</previewlen>
+  <messageset count="8">
+    <message name="message1" text1=" " text="">
+      <font name="宋体" size="12" bold="False" italic="False">
+      </font>
+      <mode direction="0" flash="False" movespeed="4" brightness="0" looplamp="False">
+      </mode>
+    </message>
+    <message name="message2" text1=" " text="">
+      <font name="宋体" size="12" bold="False" italic="False">
+      </font>
+      <mode direction="0" flash="False" movespeed="4" brightness="0" looplamp="False">
+      </mode>
+    </message>
+    <message name="message3" text1=" " text="">
+      <font name="宋体" size="12" bold="False" italic="False">
+      </font>
+      <mode direction="0" flash="False" movespeed="4" brightness="0" looplamp="False">
+      </mode>
+    </message>
+    <message name="message4" text1=" " text="">
+      <font name="宋体" size="12" bold="False" italic="False">
+      </font>
+      <mode direction="0" flash="False" movespeed="4" brightness="0" looplamp="False">
+      </mode>
+    </message>
+    <message name="message5" text1=" " text="">
+      <font name="宋体" size="12" bold="False" italic="False">
+      </font>
+      <mode direction="0" flash="False" movespeed="4" brightness="0" looplamp="False">
+      </mode>
+    </message>
+    <message name="message6" text1=" " text="">
+      <font name="宋体" size="12" bold="False" italic="False">
+      </font>
+      <mode direction="0" flash="False" movespeed="4" brightness="0" looplamp="False">
+      </mode>
+    </message>
+    <message name="message7" text1=" " text="">
+      <font name="宋体" size="12" bold="False" italic="False">
+      </font>
+      <mode direction="0" flash="False" movespeed="4" brightness="0" looplamp="False">
+      </mode>
+    </message>
+    <message name="message8" text1=" " text="">
+      <font name="宋体" size="12" bold="False" italic="False">
+      </font>
+      <mode direction="0" flash="False" movespeed="4" brightness="0" looplamp="False">
+      </mode>
+    </message>
+  </messageset>
+  <language>
+    <lan filetxt="CHS">简体中文</lan>
+    <lan filetxt="CHT">繁體中文</lan>
+    <lan filetxt="JPN">日文</lan>
+   <lan filetxt="KOR">한국의</lan>
+   <lan filetxt="ENU">English</lan>
+   <lan filetxt="ARA">ara</lan>
+    <lan filetxt="FRE">fre</lan>
+   <lan filetxt="POR">por</lan>
+   <lan filetxt="SPA">ara</lan>
+  </language>
+  <cardtype>0</cardtype>
+  <style>1</style>
+  <grid>1</grid>
+  <prevHeight>11</prevHeight>
+</l12badge>

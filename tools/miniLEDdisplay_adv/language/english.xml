@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!--定义系统所用语言库-->
+<bmpbadge lan="english" author="dcs" date="2019-10-2">
+
+  <form name="mainform" text= "BMP Badge LED V9.34">
+    <Menu>
+      <item id="file" type="0">File(&amp;F)</item>
+	  <item id="new" type="0">New(&amp;N)</item>
+          <item id="open" type="0">Open(&amp;O)</item>
+          <item id="save" type="0">Save(&amp;S)</item>
+	  <item id="saveas" type="0">Save AS</item>
+          <item id="exit" type="0">Exit(&amp;E)</item>
+     <item id="config" type="0">Config(&amp;C)</item>
+          <item id="option" type="0">Option(&amp;O)</item>
+          <item id="language" type="0">Language(&amp;U)</item>
+      <item id="help" type="0">Help(&amp;H)</item>
+          <item id="about" type="0">About</item>
+		   <item id="helpdoc" type="0">Help Document</item>
+	<item type="0" id="send_menu">Send(&amp;S)</item> 
+		  <item type="0" id="ignaddr">Ignore Address</item> 
+		  <item type="0" id="wraddr">Write Address</item> 
+		  <item type="0" id="sendaddr">Follow Address</item>
+		  <item type="0" id="sendaddr">(New)Send Address</item>
+	<item type="0" id="skin">Skin(&amp;K)</item> 
+    </Menu>
+
+    <Group name="messagepreview" text="Message PreView" type="0">
+      <item id ="lb_select" type="0">Select</item>
+      <item id ="lb_fall" type="0">Fall</item>
+      <item id ="lb_message" type="0">Message</item>
+      <item id ="lb_speed" type="0">Speed</item>
+      <item id ="lb_showmode" type="0">ShowMode</item>
+      <item id ="lb_flash" type="0">Flash</item>
+      <item id ="lb_lamp" type="0">Lamp</item>
+      <item id ="lb_font" type="0">Font</item>
+      <item id ="btn_font" type="0">Auto</item>
+       <item id ="btn_font" type="3">Manual</item> 
+
+      <item id ="btn_font_yes" type="0">OK</item>
+      <item id ="btn_font_no" type="0">Cancel</item>
+      
+        <item id="cb_showmode0" type="1">
+        <subitem id="0">Left</subitem>
+        <subitem id="1">Right</subitem>
+        <subitem id="2">Up</subitem>
+        <subitem id="3">Down</subitem>
+        <subitem id="4">Freeze</subitem>
+        <subitem id="5">Animation</subitem>
+        <subitem id="6">Piling</subitem>
+        <subitem id="7">Splite</subitem>
+        <subitem id="8">Laser</subitem>
+        <subitem id="9">Smoth</subitem>
+        <subitem id="10">Rotate</subitem>
+      </item>
+      	<item id ="font" type="0">Font</item>
+	<item id ="size" type="0">Size</item>
+	<item id ="ck_Italic" type="0">Italic</item>
+	<item id ="ck_Bold" type="0">Bold</item>
+	<item id ="Btn_Preview" type="0">Preview</item>
+	<item id ="Btn_Preview" type="3">Stop</item>
+	<item id ="Btn_UpPasteText" type="0">Upload text</item>
+	<item id ="Btn_ClearImage" type="0">Clear Image</item>
+	<item id ="Btn_LoadPic" type="0">Load Image</item>
+	<item id ="Btn_SavePic" type="0">Save Image</item>
+	<item id ="TopOff" type="0">TopOff</item>
+	<item id ="lb_port" type="0">Serials</item>
+	<item id ="lb_brightness" type="0">Bright</item>
+	<item id ="Btn_Send" type="0">Send</item>
+	<item id ="Btn_Exit" type="0">Exit</item>
+	<item id ="btnSendAddress" type="0">Send Address</item>
+	<item id ="btnUsbSend" type="0">Send</item>
+	<item id ="lb_Used" type="0">Used(All)</item>
+	<item id ="lb_filepath" type="0">FilePath</item>
+	<item id ="rb_auto" type="0">Auto</item>
+	<item id ="rb_manual" type="0">Manual</item>
+    </Group>
+
+      
+     <ToolStripList name="toolstriplist" text="ToolsBar Tip" >
+      <item id ="New" type="0">Create a New Docuemnt</item>
+      <item id ="Open" type="0">Open a Document</item>
+      <item id ="Save" type="0">Save Document</item>
+      <item id ="Button1" type="2">split</item>
+      <item id ="Button2" type="0">User Defined Icon</item>
+      <item id ="Button3" type="0">User Defined Icon</item>
+      <item id ="Button4" type="0">User Defined Icon</item>
+      <item id ="Button5" type="0">User Defined Icon</item>
+      <item id ="Button6" type="0">User Defined Icon</item>
+      <item id ="Button7" type="0">User Defined Icon</item>
+      <item id ="Button8" type="0">User Defined Icon</item>
+      <item id ="Button9" type="0">User Defined Icon</item>
+      <item id ="Button10" type="0">User Defined Icon</item>
+      <item id ="Button11" type="0">User Defined Icon</item>
+      <item id ="Button12" type="0">User Defined Icon</item>
+      <item id ="Button13" type="0">User Defined Icon</item>
+      <item id ="Button14" type="0">User Defined Icon</item>
+      <item id ="Button15" type="0">User Defined Icon</item>
+      <item id ="Button16" type="0">User Defined Icon</item>
+      <item id ="Button17" type="0">User Defined Icon</item>
+
+    </ToolStripList>
+
+  </form>
+  <option name="OptionForm" text= "Options">
+ 	<OptionGroup name="prevgroup" text="Prve Setup" type="0">
+		<item id ="previewwidth" type="0">PrevWidth</item>
+		<item id ="previewheight" type="0">PrevHeight</item>
+		<item id ="ck_Grid" type="0">Show Grid</item>
+		<item id ="style" type="0">Style</item>
+      	 	 <item id="stylelist" type="1">
+       			<subitem id="0">Circle</subitem>
+        		<subitem id="1">Rectangle</subitem>
+      		</item>
+	</OptionGroup>
+	<OptionGroup name="typeGroup" text="Card type Setup" type="0">
+				<item id ="rb_badge_11" type="0">Mono 11 pixels</item>
+		<item id ="rb_badge_12" type="0">Mono 12 pixels</item>
+		<item id ="rb_badge_16" type="0">Mono 16 pixels</item>
+		<item id ="rb_badge_rgb_12" type="0">RGB 12 pixels</item>
+		<item id ="rb_badge_rgb_16" type="0">RGB 16 pixels</item>
+		<item id ="btn_save" type="0">OK</item>
+		<item id ="btn_cancel" type="0">Cancel</item>
+		<item id ="ck_SendAddress" type="0">Send Address</item>
+	</OptionGroup>
+
+  </option>
+
+
+</bmpbadge>

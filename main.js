@@ -140,32 +140,24 @@ const createWindow = () => {
         loadFileWithFallback('objectDetection', './feature/target-detection.html'),  
         loadFileWithFallback('imgCls', './feature/image-classification.html'),
       ]);  
-       
     } catch (err) {  
       console.error('Error loading views:', err);  
     }  
   };  
 
-  const checkInternetConnection = () => {  
-    // return new Promise((resolve) => {  
-    //   dns.resolve('www.google.com', (err) => {  
-    //     if (err) {  
-    //       resolve(false); // No internet  
-    //     } else {  
-    //       resolve(true); // Internet available  
-    //     }  
-    //   });  
-    // });  
-    return fetch('https://www.google.com', { method: 'HEAD', mode: 'no-cors' })  
-    .then(() => true)  
-    .catch(() => false); 
-  };  
+  const checkInternetConnection = () => {
+    return new Promise((resolve) => {
+      dns.resolve('www.google.com', (err) => {
+        resolve(!err); // Resolve true if no error, false otherwise
+      });
+    });
+  };
 
-  const loadHtmlWithOnlineCheck = (viewName, urlLink, offlineFilePath) =>{
+  const loadHtmlWithOnlineCheck = async (viewName, urlLink, offlineFilePath) =>{
     // 根据网络情况加载主页
-    const isOnline = checkInternetConnection();  
-    console.log('isOnline?', isOnline);  
-    if (isOnline) {  
+    const isOnline = await checkInternetConnection();
+    console.log(`isOnline = ${isOnline}`)
+    if (isOnline) {
       try {  
         mainWindow_views[viewName].webContents.loadURL(urlLink);  
         console.log(`${viewName} loaded`);  

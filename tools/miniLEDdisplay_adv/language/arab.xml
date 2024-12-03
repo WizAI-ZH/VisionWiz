@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!--定义系统所用语言库-->
+<bmpbadge lan="arab" author="dcs" date="2019-10-2">
+
+  <form name="mainform" text= "الشاشة الصغيرة LED (متعددة الأغراض) V9.34">
+   <Menu>
+      <item id="file" type="0">ملف(&amp;F)</item>
+	  <item id="new" type="0">جديد(&amp;N)</item>
+          <item id="open" type="0">فتح(&amp;O)</item>
+          <item id="save" type="0">حفظ(&amp;S)</item>
+	  <item id="saveas" type="0">حفظ الي</item>
+          <item id="exit" type="0">خروج(&amp;E)</item>
+      <item id="config" type="0">تكوين(&amp;C)</item>
+          <item id="option" type="0">اختيار(&amp;O)</item>
+          <item id="language" type="0">اللغت(&amp;U)</item>
+    <item id="help" type="0">مساعدة(&amp;H)</item>
+          <item id="about" type="0">حول</item>
+		  <item id="helpdoc" type="0">وثائق المساعدة</item>
+      <item type="0" id="send_menu">ارسال(&amp;S)</item> 
+		  <item type="0" id="ignaddr">تجاهل عنوان لإرسال</item> 
+		  <item type="0" id="wraddr">كتابة عنوان</item> 
+		  <item type="0" id="sendaddr">ارسال وفقا لعنوان</item>
+		  <item type="0" id="sendaddr">ارسال وفقا لعنوان(جديد)</item>
+	  <item type="0" id="skin">بشرة(&amp;K)</item> 
+    </Menu>
+
+      <Group name="messagepreview" text="معاينة رسالة" type="0">
+      <item id ="lb_select" type="0"> اختيار</item>
+      <item id ="lb_fall" type="0">كلمة مقلوبة  </item>
+      <item id ="lb_message" type="0">رسالة</item>
+      <item id ="lb_speed" type="0">سرعة</item>
+      <item id ="lb_showmode" type="0">نموذج العرض</item>
+      <item id ="lb_flash" type="0">فلاش</item>
+      <item id ="lb_lamp" type="0">سرادق</item>
+      <item id ="lb_font" type="0">الخطوط</item>
+      <item id ="btn_font" type="0">تلقائي</item>
+      <item id ="btn_font" type="3">يدوي</item> 
+
+      <item id ="btn_font_yes" type="0">تأكيد</item>
+      <item id ="btn_font_no" type="0">إلغاء</item>
+     
+      <item id="cb_showmode0" type="1">
+        <subitem id="0">الي يسار</subitem>
+        <subitem id="1">الي يمين</subitem>
+        <subitem id="2">الي فوق</subitem>
+        <subitem id="3">الي تحت</subitem>
+        <subitem id="4">ثابت</subitem>
+        <subitem id="5">حيوية</subitem>
+        <subitem id="6">ندفة الثلج</subitem>
+		    <subitem id="7">صورة</subitem>
+        <subitem id="8">ليزر</subitem>
+		    <subitem id="9">التغيير التدريجي</subitem>
+		    <subitem id="10">تدوير</subitem>
+		</item>
+      	<item id ="font" type="0">الخطوط</item>
+	<item id ="size" type="0">حجم</item>
+	<item id ="ck_Italic" type="0">انحراف</item>
+	<item id ="ck_Bold" type="0">جريء</item>
+	<item id ="Btn_Preview" type="0">معاينة</item>
+	<item id ="Btn_Preview" type="3">توقف</item>
+	<item id ="Btn_UpPasteText" type="0">تحميل</item>
+	<item id ="Btn_ClearImage" type="0">إزالة</item>
+	<item id ="Btn_LoadPic" type="0">تحميل الصور</item>
+	<item id ="Btn_SavePic" type="0">حفظ الصور</item>
+	<item id ="TopOff" type="0">تحويل</item>
+	<item id ="lb_port" type="0">واجهة</item>
+	<item id ="lb_brightness" type="0">سطوع</item>
+	<item id ="Btn_Send" type="0">ارسال</item>
+	<item id ="Btn_Exit" type="0">خروج</item>
+	<item id ="btnSendAddress" type="0">عنوان الارسال</item>
+	<item id ="btnUsbSend" type="0">ارسال</item>
+	<item id ="lb_Used" type="0">حجم قابل للارسال</item>
+	<item id ="lb_filepath" type="0">ملف</item>
+	<item id ="rb_auto" type="0">تلقائي</item>
+	<item id ="rb_manual" type="0">يدوي</item>
+    </Group>
+
+      
+     
+    <ToolStripList name="toolstriplist" text="تنبيه الرسائل لشريط الأدوات" >
+      <item id ="New" type="0">جديد</item>
+      <item id ="Open" type="0">فتح</item>
+      <item id ="Save" type="0">حفظ</item>
+      <item id ="Button1" type="2">فاصل</item>
+      <item id ="Button2" type="0">--أيقونة0</item>
+      <item id ="Button3" type="0">--أيقونة</item>
+      <item id ="Button4" type="0">--أيقونة</item>
+      <item id ="Button5" type="0">--أيقونة</item>
+      <item id ="Button6" type="0">--أيقونة</item>
+      <item id ="Button7" type="0">--أيقونة</item>
+      <item id ="Button8" type="0">--أيقونة</item>
+      <item id ="Button9" type="0">--أيقونة</item>
+      <item id ="Button10" type="0">--أيقونة</item>
+      <item id ="Button11" type="0">--أيقونة</item>
+      <item id ="Button12" type="0">--أيقونة</item>
+      <item id ="Button13" type="0">--أيقونة</item>
+      <item id ="Button14" type="0">--أيقونة</item>
+      <item id ="Button15" type="0">--أيقونة</item>
+      <item id ="Button16" type="0">--أيقونة</item>
+      <item id ="Button17" type="0">إدراج أيقونة قلب</item>
+      
+    </ToolStripList>
+
+  </form>
+  <option name="OptionForm" text= "إعدادات">
+ 	<OptionGroup name="prevgroup" text="إعدادات المعاينة" type="0">
+		<item id ="previewwidth" type="0">عرض المعاينة</item>
+		<item id ="previewheight" type="0">ارتفاع المعاينة</item>
+		<item id ="ck_Grid" type="0">عرض الشبكة</item>
+		<item id ="style" type="0">نموذج</item>
+      	 	<item id="stylelist" type="1">
+       			<subitem id="0">مستديرة</subitem>
+        		<subitem id="1">مربعة</subitem>
+      		</item>
+	</OptionGroup>
+	<OptionGroup name="typeGroup" text="إعدادات نوع" type="0">
+		<item id ="rb_badge_11" type="0">أحادية اللون11 نقطية</item>
+		<item id ="rb_badge_12" type="0">أحادية اللون12 نقطية</item>
+		<item id ="rb_badge_16" type="0">أحادية اللون16 نقطية</item>
+		<item id ="rb_badge_rgb_12" type="0">غني بالألوان12 نقطية</item>
+		<item id ="rb_badge_rgb_16" type="0">غني بالألوان16 نقطية</item>
+		<item id ="btn_save" type="0">تأكيد</item>
+		<item id ="btn_cancel" type="0">إلغاء</item>
+		<item id ="ck_SendAddress" type="0">عنوان الارسال</item>
+	</OptionGroup>
+
+  </option>
+
+</bmpbadge>

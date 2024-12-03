@@ -1,0 +1,132 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!--定义系统所用语言库-->
+<bmpbadge lan="chinese (traditional)" author="dcs" date="2019-10-2">
+
+  <form name="mainform" text= "迷你LED顯示屏(多功能) V9.34">
+    <Menu>
+      <item id="file" type="0">文件(&amp;F)</item>
+	  <item id="new" type="0">新建(&amp;N)</item>
+          <item id="open" type="0">打開(&amp;O)</item>
+          <item id="save" type="0">保存(&amp;S)</item>
+	  <item id="saveas" type="0">另存為</item>
+          <item id="exit" type="0">退出(&amp;E)</item>
+      <item id="config" type="0">配置(&amp;C)</item>
+          <item id="option" type="0">選項(&amp;O)</item>
+          <item id="language" type="0">語言(&amp;U)</item>
+      <item id="help" type="0">幫助(&amp;H)</item>
+          <item id="about" type="0">關于</item>
+		  <item id="helpdoc" type="0">帮助文档</item>
+	<item type="0" id="send_menu">发送(&amp;S)</item> 
+		  <item type="0" id="ignaddr">忽略地址发送</item> 
+		  <item type="0" id="wraddr">写地址</item> 
+		  <item type="0" id="sendaddr">按地址发送</item>
+		  <item type="0" id="sendaddr">(新)按地址发送</item>
+	<item type="0" id="skin">皮肤(&amp;K)</item> 
+    </Menu>
+
+    <Group name="messagepreview" text="信息預覽" type="0">
+      <item id ="lb_select" type="0">選擇</item>
+      <item id ="lb_fall" type="0">倒字</item>
+      <item id ="lb_message" type="0">消 息</item>
+      <item id ="lb_speed" type="0">速率</item>
+      <item id ="lb_showmode" type="0">樣式</item>
+      <item id ="lb_flash" type="0">閃爍</item>
+      <item id ="lb_lamp" type="0">跑馬燈</item>
+      <item id ="lb_font" type="0">字體</item>
+       <item id ="btn_font" type="0">自動</item>
+      <item id ="btn_font" type="3">手動</item> 
+
+      <item id ="btn_font_yes" type="0">確認</item>
+      <item id ="btn_font_no" type="0">取消</item>
+
+
+      <item id="cb_showmode0" type="1">
+        <subitem id="0">向左</subitem>
+        <subitem id="1">向右</subitem>
+        <subitem id="2">向上</subitem>
+        <subitem id="3">向下</subitem>
+        <subitem id="4">靜止</subitem>
+        <subitem id="5">动画</subitem>
+        <subitem id="6">时间</subitem>
+        <subitem id="7">雪花</subitem>
+		<subitem id="8">画卷</subitem>
+		<subitem id="9">渐变</subitem>
+		<subitem id="10">旋转</subitem>
+      </item>
+      	<item id ="font" type="0">字體</item>
+	<item id ="size" type="0">大小</item>
+	<item id ="ck_Italic" type="0">斜體</item>
+	<item id ="ck_Bold" type="0">粗體</item>
+	<item id ="Btn_Preview" type="0">預覽</item>
+	<item id ="Btn_Preview" type="3">停止</item>
+	<item id ="Btn_UpPasteText" type="0">上傳</item>
+	<item id ="Btn_ClearImage" type="0">清除</item>
+	<item id ="Btn_LoadPic" type="0">載入圖像</item>
+	<item id ="Btn_SavePic" type="0">保存圖像</item>
+	<item id ="TopOff" type="0">切換</item>
+	<item id ="lb_port" type="0">端口</item>
+	<item id ="lb_brightness" type="0">亮度</item>
+	<item id ="Btn_Send" type="0">發送</item>
+	<item id ="Btn_Exit" type="0">退出</item>
+	<item id ="btnSendAddress" type="0">发送地址</item>
+	<item id ="btnUsbSend" type="0">发送</item>
+	<item id ="lb_Used" type="0">可發送容量</item>
+	<item id ="lb_filepath" type="0">文件</item>
+	<item id ="rb_auto" type="0">自動</item>
+	<item id ="rb_manual" type="0">手動</item>
+    </Group>
+
+   
+
+
+
+    <ToolStripList name="toolstriplist" text="工具條信息提示" >
+      <item id ="New" type="0">新建</item>
+      <item id ="Open" type="0">打開</item>
+      <item id ="Save" type="0">保存</item>
+      <item id ="Button1" type="2">分隔符</item>
+      <item id ="Button2" type="0">--圖標</item>
+      <item id ="Button3" type="0">--圖標</item>
+      <item id ="Button4" type="0">--圖標</item>
+      <item id ="Button5" type="0">--圖標</item>
+      <item id ="Button6" type="0">--圖標</item>
+      <item id ="Button7" type="0">--圖標</item>
+      <item id ="Button8" type="0">--圖標</item>
+      <item id ="Button9" type="0">--圖標</item>
+      <item id ="Button10" type="0">--圖標</item>
+      <item id ="Button11" type="0">--圖標</item>
+      <item id ="Button12" type="0">--圖標</item>
+      <item id ="Button13" type="0">--圖標</item>
+      <item id ="Button14" type="0">--圖標</item>
+      <item id ="Button15" type="0">--圖標</item>
+      <item id ="Button16" type="0">--圖標</item>
+      <item id ="Button17" type="0">--圖標</item>
+
+     </ToolStripList>
+
+  </form>
+  <option name="OptionForm" text= "設置">
+ 	<OptionGroup name="prevgroup" text="預覽設置" type="0">
+		<item id ="previewwidth" type="0">預覽寬度</item>
+		<item id ="previewheight" type="0">預覽高度</item>
+		<item id ="ck_Grid" type="0">顯示網格</item>
+		<item id ="style" type="0">樣式</item>
+      	 	<item id="stylelist" type="1">
+       			<subitem id="0">圓形</subitem>
+        		<subitem id="1">方形</subitem>
+      		</item>
+	</OptionGroup>
+	<OptionGroup name="typeGroup" text="類型設置" type="0">
+		<item id ="rb_badge_11" type="0">單色11點陣</item>
+		<item id ="rb_badge_12" type="0">單色12點陣</item>
+		<item id ="rb_badge_16" type="0">單色16點陣</item>
+		<item id ="rb_badge_rgb_12" type="0">七彩12點陣</item>
+		<item id ="rb_badge_rgb_16" type="0">七彩16點陣</item>
+		<item id ="btn_save" type="0">確認</item>
+		<item id ="btn_cancel" type="0">取消</item>
+		<item id ="ck_SendAddress" type="0">发送地址</item>
+	</OptionGroup>
+
+  </option>
+
+</bmpbadge>
