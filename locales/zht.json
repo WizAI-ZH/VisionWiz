@@ -117,6 +117,19 @@
     "camera_opened": "攝影機已打開。",
     "camera_open_failed": "攝影機開啟失敗，請檢查攝影機是否可用！",
     "camera_disconnected": "攝影機已斷開。",
-    "connect_camera": "連接攝影機"
+    "connect_camera": "連接攝影機",
+    "title_name_toolset": "工具集",
+    "toolname_mini_led_editor": "LED燈牌編輯器(LED Sign Editor)",
+    "tooldescript_mini_led_editor": "修改LED燈牌內容和顯示效果,支援顯示圖示和自訂圖案",
+    "btn_open_mini_led_editor": "打開軟件",
+    "btn_open_learn_mini_led_editor": "了解更多",
+    "toolname_wiz_resizer": "威智圖改(Wiz Resizer)",
+    "tooldescript_wiz_resizer": "支援批量修改圖片尺寸並自動填充到滿足比例要求",
+    "btn_open_wiz_resizer": "打開軟件",
+    "btn_open_learn_wiz_resizer": "了解更多",
+    "toolname_make_sense": "慧標(Make-Sense)",
+    "tooldescript_make_sense": "一款圖像標注工具,支援目標檢測資料集的標注，標注區域支援矩形、點、線、多邊形，並且支持多種匯出格式",
+    "btn_open_make_sense": "打開軟件",
+    "btn_open_learn_make_sense": "了解更多"
 }
 

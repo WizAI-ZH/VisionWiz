@@ -126,6 +126,21 @@ const createWindow = () => {
       contextIsolation: false,
     }
   });
+  mainWindow_views['toolSet'] = new BrowserView({
+    resizable: true,
+    transparent: false,
+    show: false,
+    autoHideMenuBar: false,
+    title: "威智慧眼V1.0", //程序窗口名字
+    icon: path.join(__dirname, 'icons', 'VESIBIT.ico'), //程序的图标
+    frame: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: true,
+      contextIsolation: false,
+    }
+  });
+
 
   // mainWindow.addBrowserView(mainWindow_views['Wizhome']);
   // mainWindow_views['Wizhome'].setBounds({ x: 0, y: 0, width: 800, height: 600 });
@@ -139,6 +154,7 @@ const createWindow = () => {
         loadFileWithFallback('dataCollect', './feature/data-collection.html'),  
         loadFileWithFallback('objectDetection', './feature/target-detection.html'),  
         loadFileWithFallback('imgCls', './feature/image-classification.html'),
+        loadFileWithFallback('toolSet', './feature/tool-set.html'),
       ]);  
     } catch (err) {  
       console.error('Error loading views:', err);  
@@ -302,6 +318,22 @@ ipcMain.on('open_image', (event, imagePath) => {
   });
 });
 
+ipcMain.on('open_tool', function (event, arg) {  
+  const toolPath = path.resolve(__dirname, 'tools', arg + '.exe'); // 转换为绝对路径  
+  const toolDir = path.dirname(toolPath); // 获取工具所在目录  
+  console.log('Tool Path:', toolPath);  
+
+  // 启动子进程  
+  const childSpawn = spawn(toolPath, [], {  
+    cwd: toolDir, // 设置工作目录  
+  });  
+
+  // 捕获错误  
+  childSpawn.on('error', (err) => {  
+    console.error('Failed to start process:', err);  
+  });  
+});
+
 //获取当前app根目录
 ipcMain.on('get_app_path', (event,viewName) => {
   // event.reply('get_app_path_reply', path_utils.getAppResourcePath('.', 'resources'));
@@ -310,6 +342,43 @@ ipcMain.on('get_app_path', (event,viewName) => {
 });
 
 //以下是工具调用相关进程函数
+ipcMain.on('open_website', (event, arg) => {  
+  if (!arg || typeof arg !== 'string') {  
+    console.error('Invalid URL:', arg);  
+    return;  
+  }  
+
+  console.log('Opening website:', arg);  
+
+  // 根据操作系统选择命令  
+  const platform = process.platform;  
+  let command;  
+
+  if (platform === 'win32') {  
+    // Windows 使用 'start'  
+    command = 'start';  
+  } else if (platform === 'darwin') {  
+    // macOS 使用 'open'  
+    command = 'open';  
+  } else {  
+    // Linux 使用 'xdg-open'  
+    command = 'xdg-open';  
+  }  
+
+  // 使用 spawn 调用系统命令  
+  const child = spawn(command, [arg], { shell: true });  
+
+  // 捕获错误  
+  child.on('error', (err) => {  
+    console.error('Failed to open website:', err);  
+  });  
+
+  child.on('close', (code) => {  
+    console.log(`Child process exited with code ${code}`);  
+  });  
+});
+
+
 ipcMain.on('open_make_sense', () => {
   //打开make-sense软件，并且设定make-sense语言
   setupWindowManager.createMakeSenseWindow(get_store_value('current_lang'));

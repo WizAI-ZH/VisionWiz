@@ -117,5 +117,18 @@
     "camera_opened": "The camera has been opened.",
     "camera_open_failed": "Failed to open the camera, please check if the camera is available!",
     "camera_disconnected": "The camera has been disconnected.",
-    "connect_camera": "Connect the camera"
+    "connect_camera": "Connect camera",
+    "title_name_toolset": "Toolset",
+    "toolname_mini_led_editor": "LED Sign Editor",
+    "tooldescript_mini_led_editor": "Modify the content and display effects of LED signs, supports displaying icons and custom patterns",
+    "btn_open_mini_led_editor": "Open Software",
+    "btn_open_learn_mini_led_editor": "Learn More",
+    "toolname_wiz_resizer": "Wiz Resizer",
+    "tooldescript_wiz_resizer": "Supports batch resizing of images and automatically fills to meet aspect ratio requirements",
+    "btn_open_wiz_resizer": "Open Software",
+    "btn_open_learn_wiz_resizer": "Learn More",
+    "toolname_make_sense": "Make-Sense",
+    "tooldescript_make_sense": "An image annotation tool that supports labeling for object detection datasets, with annotation areas supporting rectangles, points, lines, and polygons, and supports various export formats",
+    "btn_open_make_sense": "Open Software",
+    "btn_open_learn_make_sense": "Learn More"
 }

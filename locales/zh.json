@@ -117,7 +117,22 @@
     "camera_opened": "摄像头已打开。",
     "camera_open_failed": "摄像头开启失败，请检查摄像头是否可用！",
     "camera_disconnected": "摄像头已断开。",
-    "connect_camera": "连接摄像头"
+    "connect_camera": "连接摄像头",
+    "title_name_toolset": "工具集",
+    "toolname_mini_led_editor": "LED灯牌编辑器(LED Sign Editor)",
+    "tooldescript_mini_led_editor": "修改LED灯牌内容和显示效果,支持显示图标和自定义图案",
+    "btn_open_mini_led_editor": "打开软件",
+    "btn_open_learn_mini_led_editor": "了解更多",
+    "toolname_wiz_resizer": "威智图改(Wiz Resizer)",
+    "tooldescript_wiz_resizer": "支持批量修改图片尺寸并自动填充到满足比例要求",
+    "btn_open_wiz_resizer": "打开软件",
+    "btn_open_learn_wiz_resizer": "了解更多",
+    "toolname_make_sense": "慧标(Make-Sense)",
+    "tooldescript_make_sense": "一款图像标注工具,支持目标检测数据集的标注，标注区域支持矩形、点、线、多边形，并且支持多种导出格式",
+    "btn_open_make_sense": "打开软件",
+    "btn_open_learn_make_sense": "了解更多"
+
+
 
 
 

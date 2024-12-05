@@ -75,10 +75,6 @@ function getCurrentView() {
     return currentView;
 }
 
-function showDevTools(viewName){
-    
-}
-
 // 动态生成菜单模板函数  
 const menuTemplate = (browserWindow, views) => [
     {
@@ -122,6 +118,10 @@ const menuTemplate = (browserWindow, views) => [
     {
         label: languages[currentLanguage].menu.image_classification,
         click: () => switchView(browserWindow, views, 'imgCls')
+    },
+    {
+        label: languages[currentLanguage].menu.tool_set,
+        click: () => switchView(browserWindow, views, 'toolSet')
     }
 ];
 
