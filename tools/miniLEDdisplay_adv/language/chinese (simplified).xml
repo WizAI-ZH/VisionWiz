@@ -1,44 +1,44 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!--定义系统所用语言库-->
 <bmpbadge lan="chinese (simplified)" author="dcs" date="2019-10-2">
 
-  <form name="mainform" text= "迷你LED显示屏(多功能) V9.34">
+  <form name="mainform" text="迷你LED显示屏(多功能) V9.34">
     <Menu>
       <item id="file" type="0">文件(&amp;F)</item>
-	  <item id="new" type="0">新建(&amp;N)</item>
-          <item id="open" type="0">打开(&amp;O)</item>
-          <item id="save" type="0">保存(&amp;S)</item>
-	  <item id="saveas" type="0">另存为</item>
-          <item id="exit" type="0">退出(&amp;E)</item>
+      <item id="new" type="0">新建(&amp;N)</item>
+      <item id="open" type="0">打开(&amp;O)</item>
+      <item id="save" type="0">保存(&amp;S)</item>
+      <item id="saveas" type="0">另存为</item>
+      <item id="exit" type="0">退出(&amp;E)</item>
       <item id="config" type="0">配置(&amp;C)</item>
-          <item id="option" type="0">选项(&amp;O)</item>
-          <item id="language" type="0">语言(&amp;U)</item>
+      <item id="option" type="0">选项(&amp;O)</item>
+      <item id="language" type="0">语言(&amp;U)</item>
       <item id="help" type="0">帮助(&amp;H)</item>
-          <item id="about" type="0">关于</item>
-		  <item id="helpdoc" type="0">帮助文档</item>
-      <item type="0" id="send_menu">发送(&amp;S)</item> 
-		  <item type="0" id="ignaddr">忽略地址发送</item> 
-		  <item type="0" id="wraddr">写地址</item> 
-		  <item type="0" id="sendaddr">按地址发送</item>
-		  <item type="0" id="sendaddr">(新)按地址发送</item>
-	  <item type="0" id="skin">皮肤(&amp;K)</item> 
+      <item id="about" type="0">关于</item>
+      <item id="helpdoc" type="0">帮助文档</item>
+      <item type="0" id="send_menu">发送(&amp;S)</item>
+      <item type="0" id="ignaddr">忽略地址发送</item>
+      <item type="0" id="wraddr">写地址</item>
+      <item type="0" id="sendaddr">按地址发送</item>
+      <item type="0" id="sendaddr">(新)按地址发送</item>
+      <item type="0" id="skin">皮肤(&amp;K)</item>
     </Menu>
 
-      <Group name="messagepreview" text="消息预览" type="0">
-      <item id ="lb_select" type="0"> 选择</item>
-      <item id ="lb_fall" type="0">倒字  </item>
-      <item id ="lb_message" type="0">消  息</item>
-      <item id ="lb_speed" type="0">速率</item>
-      <item id ="lb_showmode" type="0">显示模式</item>
-      <item id ="lb_flash" type="0">闪烁</item>
-      <item id ="lb_lamp" type="0">跑马灯</item>
-      <item id ="lb_font" type="0">字体</item>
-      <item id ="btn_font" type="0">自动</item>
-      <item id ="btn_font" type="3">手动</item> 
+    <Group name="messagepreview" text="消息预览" type="0">
+      <item id="lb_select" type="0"> 选择</item>
+      <item id="lb_fall" type="0">倒字 </item>
+      <item id="lb_message" type="0">消 息</item>
+      <item id="lb_speed" type="0">速率</item>
+      <item id="lb_showmode" type="0">显示模式</item>
+      <item id="lb_flash" type="0">闪烁</item>
+      <item id="lb_lamp" type="0">跑马灯</item>
+      <item id="lb_font" type="0">字体</item>
+      <item id="btn_font" type="0">自动</item>
+      <item id="btn_font" type="3">手动</item>
 
-      <item id ="btn_font_yes" type="0">确定</item>
-      <item id ="btn_font_no" type="0">取消</item>
-     
+      <item id="btn_font_yes" type="0">确定</item>
+      <item id="btn_font_no" type="0">取消</item>
+
       <item id="cb_showmode0" type="1">
         <subitem id="0">向左</subitem>
         <subitem id="1">向右</subitem>
@@ -47,82 +47,79 @@
         <subitem id="4">固定</subitem>
         <subitem id="5">动画</subitem>
         <subitem id="6">雪花</subitem>
-		    <subitem id="7">画卷</subitem>
+        <subitem id="7">画卷</subitem>
         <subitem id="8">镭射</subitem>
-		    <subitem id="9">渐变</subitem>
-		    <subitem id="10">旋转</subitem>
-		</item>
-      	<item id ="font" type="0">字体</item>
-	<item id ="size" type="0">大小</item>
-	<item id ="ck_Italic" type="0">斜体</item>
-	<item id ="ck_Bold" type="0">粗体</item>
-	<item id ="Btn_Preview" type="0">预览</item>
-	<item id ="Btn_Preview" type="3">停止</item>
-	<item id ="Btn_UpPasteText" type="0">上传</item>
-	<item id ="Btn_ClearImage" type="0">清除</item>
-	<item id ="Btn_LoadPic" type="0">载入图像</item>
-	<item id ="Btn_SavePic" type="0">保存图像</item>
-	<item id ="TopOff" type="0">切换</item>
-	<item id ="lb_port" type="0">端口</item>
-	<item id ="lb_brightness" type="0">亮度</item>
-	<item id ="Btn_Send" type="0">发送</item>
-	<item id ="Btn_Exit" type="0">退出</item>
-	<item id ="btnSendAddress" type="0">发送地址</item>
-	<item id ="btnUsbSend" type="0">发送</item>
-	<item id ="lb_Used" type="0">可发送容量</item>
-	<item id ="lb_filepath" type="0">文件</item>
-	<item id ="rb_auto" type="0">自动</item>
-	<item id ="rb_manual" type="0">手动</item>
+        <subitem id="9">渐变</subitem>
+        <subitem id="10">旋转</subitem>
+      </item>
+      <item id="font" type="0">字体</item>
+      <item id="size" type="0">大小</item>
+      <item id="ck_Italic" type="0">斜体</item>
+      <item id="ck_Bold" type="0">粗体</item>
+      <item id="Btn_Preview" type="0">预览</item>
+      <item id="Btn_Preview" type="3">停止</item>
+      <item id="Btn_UpPasteText" type="0">上传</item>
+      <item id="Btn_ClearImage" type="0">清除</item>
+      <item id="Btn_LoadPic" type="0">载入图像</item>
+      <item id="Btn_SavePic" type="0">保存图像</item>
+      <item id="TopOff" type="0">切换</item>
+      <item id="lb_port" type="0">端口</item>
+      <item id="lb_brightness" type="0">亮度</item>
+      <item id="Btn_Send" type="0">发送</item>
+      <item id="Btn_Exit" type="0">退出</item>
+      <item id="btnSendAddress" type="0">发送地址</item>
+      <item id="btnUsbSend" type="0">发送</item>
+      <item id="lb_Used" type="0">可发送容量</item>
+      <item id="lb_filepath" type="0">文件</item>
+      <item id="rb_auto" type="0">自动</item>
+      <item id="rb_manual" type="0">手动</item>
     </Group>
 
-      
-     
-    <ToolStripList name="toolstriplist" text="工具条信息提示" >
-      <item id ="New" type="0">新建</item>
-      <item id ="Open" type="0">打开</item>
-      <item id ="Save" type="0">保存</item>
-      <item id ="Button1" type="2">分隔符</item>
-      <item id ="Button2" type="0">--图标0</item>
-      <item id ="Button3" type="0">--图标</item>
-      <item id ="Button4" type="0">--图标</item>
-      <item id ="Button5" type="0">--图标</item>
-      <item id ="Button6" type="0">--图标</item>
-      <item id ="Button7" type="0">--图标</item>
-      <item id ="Button8" type="0">--图标</item>
-      <item id ="Button9" type="0">--图标</item>
-      <item id ="Button10" type="0">--图标</item>
-      <item id ="Button11" type="0">--图标</item>
-      <item id ="Button12" type="0">--图标</item>
-      <item id ="Button13" type="0">--图标</item>
-      <item id ="Button14" type="0">--图标</item>
-      <item id ="Button15" type="0">--图标</item>
-      <item id ="Button16" type="0">--图标</item>
-      <item id ="Button17" type="0">插入心型图标</item>
-      
+
+    <ToolStripList name="toolstriplist" text="工具条信息提示">
+      <item id="New" type="0">新建</item>
+      <item id="Open" type="0">打开</item>
+      <item id="Save" type="0">保存</item>
+      <item id="Button1" type="2">分隔符</item>
+      <item id="Button2" type="0">插入笑脸图标</item>
+      <item id="Button3" type="0">插入点赞图标</item>
+      <item id="Button4" type="0">插入苹果图标</item>
+      <item id="Button5" type="0">插入返回图标</item>
+      <item id="Button6" type="0">插入垃圾桶图标</item>
+      <item id="Button7" type="0">插入邮件图标</item>
+      <item id="Button8" type="0">插入房子图标</item>
+      <item id="Button9" type="0">插入太阳图标</item>
+      <item id="Button10" type="0">插入闪电图标</item>
+      <item id="Button11" type="0">插入时钟图标</item>
+      <item id="Button12" type="0">插入胜利图标</item>
+      <item id="Button13" type="0">插入游戏手柄图标</item>
+      <item id="Button14" type="0">插入笔记本电脑图标</item>
+      <item id="Button15" type="0">插入音乐播放器图标</item>
+      <item id="Button16" type="0">插入心型图标</item>
     </ToolStripList>
 
   </form>
-  <option name="OptionForm" text= "设置">
- 	<OptionGroup name="prevgroup" text="预览设置" type="0">
-		<item id ="previewwidth" type="0">预览宽度</item>
-		<item id ="previewheight" type="0">预览高度</item>
-		<item id ="ck_Grid" type="0">显示网格</item>
-		<item id ="style" type="0">样式</item>
-      	 	<item id="stylelist" type="1">
-       			<subitem id="0">圆形</subitem>
-        		<subitem id="1">方形</subitem>
-      		</item>
-	</OptionGroup>
-	<OptionGroup name="typeGroup" text="类型设置" type="0">
-		<item id ="rb_badge_11" type="0">单色11点阵</item>
-		<item id ="rb_badge_12" type="0">单色12点阵</item>
-		<item id ="rb_badge_16" type="0">单色16点阵</item>
-		<item id ="rb_badge_rgb_12" type="0">七彩12点阵</item>
-		<item id ="rb_badge_rgb_16" type="0">七彩16点阵</item>
-		<item id ="btn_save" type="0">确认</item>
-		<item id ="btn_cancel" type="0">取消</item>
-		<item id ="ck_SendAddress" type="0">发送地址</item>
-	</OptionGroup>
+  <option name="OptionForm" text="设置">
+    <OptionGroup name="prevgroup" text="预览设置" type="0">
+      <item id="previewwidth" type="0">预览宽度</item>
+      <item id="previewheight" type="0">预览高度</item>
+      <item id="ck_Grid" type="0">显示网格</item>
+      <item id="style" type="0">样式</item>
+      <item id="stylelist" type="1">
+        <subitem id="0">圆形</subitem>
+        <subitem id="1">方形</subitem>
+      </item>
+    </OptionGroup>
+    <OptionGroup name="typeGroup" text="类型设置" type="0">
+      <item id="rb_badge_11" type="0">单色11点阵</item>
+      <item id="rb_badge_12" type="0">单色12点阵</item>
+      <item id="rb_badge_16" type="0">单色16点阵</item>
+      <item id="rb_badge_rgb_12" type="0">七彩12点阵</item>
+      <item id="rb_badge_rgb_16" type="0">七彩16点阵</item>
+      <item id="btn_save" type="0">确认</item>
+      <item id="btn_cancel" type="0">取消</item>
+      <item id="ck_SendAddress" type="0">发送地址</item>
+    </OptionGroup>
 
   </option>
 

@@ -119,7 +119,7 @@
     "camera_disconnected": "攝影機已斷開。",
     "connect_camera": "連接攝影機",
     "title_name_toolset": "工具集",
-    "toolname_mini_led_editor": "LED燈牌編輯器(LED Sign Editor)",
+    "toolname_mini_led_editor": "LED燈牌編輯器(BmpBadge)",
     "tooldescript_mini_led_editor": "修改LED燈牌內容和顯示效果,支援顯示圖示和自訂圖案",
     "btn_open_mini_led_editor": "打開軟件",
     "btn_open_learn_mini_led_editor": "了解更多",

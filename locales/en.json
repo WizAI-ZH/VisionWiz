@@ -119,7 +119,7 @@
     "camera_disconnected": "The camera has been disconnected.",
     "connect_camera": "Connect camera",
     "title_name_toolset": "Toolset",
-    "toolname_mini_led_editor": "LED Sign Editor",
+    "toolname_mini_led_editor": "BmpBadge",
     "tooldescript_mini_led_editor": "Modify the content and display effects of LED signs, supports displaying icons and custom patterns",
     "btn_open_mini_led_editor": "Open Software",
     "btn_open_learn_mini_led_editor": "Learn More",

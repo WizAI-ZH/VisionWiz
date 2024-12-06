@@ -57,13 +57,7 @@
   <language>
     <lan filetxt="CHS">简体中文</lan>
     <lan filetxt="CHT">繁體中文</lan>
-    <lan filetxt="JPN">日文</lan>
-    <lan filetxt="KOR">한국의</lan>
     <lan filetxt="ENU">English</lan>
-    <lan filetxt="SPA">Español</lan>
-    <lan filetxt="ARA">العربية</lan>
-    <lan filetxt="FRE">français</lan>
-    <lan filetxt="POR">Portugais</lan>
   </language>
   <cardtype>0</cardtype>
   <style>0</style>

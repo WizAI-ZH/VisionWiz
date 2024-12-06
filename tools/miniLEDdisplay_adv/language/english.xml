@@ -81,22 +81,21 @@
       <item id ="Open" type="0">Open a Document</item>
       <item id ="Save" type="0">Save Document</item>
       <item id ="Button1" type="2">split</item>
-      <item id ="Button2" type="0">User Defined Icon</item>
-      <item id ="Button3" type="0">User Defined Icon</item>
-      <item id ="Button4" type="0">User Defined Icon</item>
-      <item id ="Button5" type="0">User Defined Icon</item>
-      <item id ="Button6" type="0">User Defined Icon</item>
-      <item id ="Button7" type="0">User Defined Icon</item>
-      <item id ="Button8" type="0">User Defined Icon</item>
-      <item id ="Button9" type="0">User Defined Icon</item>
-      <item id ="Button10" type="0">User Defined Icon</item>
-      <item id ="Button11" type="0">User Defined Icon</item>
-      <item id ="Button12" type="0">User Defined Icon</item>
-      <item id ="Button13" type="0">User Defined Icon</item>
-      <item id ="Button14" type="0">User Defined Icon</item>
-      <item id ="Button15" type="0">User Defined Icon</item>
-      <item id ="Button16" type="0">User Defined Icon</item>
-      <item id ="Button17" type="0">User Defined Icon</item>
+      <item id="Button2" type="0">Insert Smiley Icon</item>  
+      <item id="Button3" type="0">Insert Like Icon</item>  
+      <item id="Button4" type="0">Insert Apple Icon</item>  
+      <item id="Button5" type="0">Insert Back Icon</item>  
+      <item id="Button6" type="0">Insert Trash Bin Icon</item>  
+      <item id="Button7" type="0">Insert Mail Icon</item>  
+      <item id="Button8" type="0">Insert House Icon</item>  
+      <item id="Button9" type="0">Insert Sun Icon</item>  
+      <item id="Button10" type="0">Insert Lightning Icon</item>  
+      <item id="Button11" type="0">Insert Clock Icon</item>  
+      <item id="Button12" type="0">Insert Victory Icon</item>  
+      <item id="Button13" type="0">Insert Game Controller Icon</item>  
+      <item id="Button14" type="0">Insert Laptop Icon</item>  
+      <item id="Button15" type="0">Insert Music Player Icon</item>  
+      <item id="Button16" type="0">Insert Heart Icon</item>
 
     </ToolStripList>
 
