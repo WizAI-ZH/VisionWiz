@@ -6,7 +6,7 @@ let currentView = 'Wizhome'
 const languages = {
     en: {
         menu: {
-            language: "Language",
+            language: "🌐Language",
             english: "English",
             chinese_simple: "Chinese(simplified)",
             chinese_traditional: "Chinese(traditional)",
@@ -20,7 +20,7 @@ const languages = {
     },
     zh: {
         menu: {
-            language: "语言",
+            language: "🌐语言",
             english: "英语",
             chinese_simple: "中文简体",
             chinese_traditional: "中文繁體",
@@ -34,7 +34,7 @@ const languages = {
     },
     zht: {
         menu: {
-            language: "語言",
+            language: "🌐語言",
             english: "英語",
             chinese_simple: "中文簡體",
             chinese_traditional: "中文繁體",
