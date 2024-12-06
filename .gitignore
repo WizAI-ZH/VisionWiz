@@ -62,3 +62,4 @@ make-sense/dist/
 .env.test.local
 .env.production.local
 
+package.js

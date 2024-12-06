@@ -55,7 +55,7 @@ const createWindow = () => {
     transparent: false,
     show: false,
     autoHideMenuBar: false,
-    title: "威智慧眼V1.0", //程序窗口名字
+    title: "威智慧眼V1.1", //程序窗口名字
     icon: path.join(__dirname, 'icons', 'VESIBIT.ico'), //程序的图标
     frame: true,
     webPreferences: {
@@ -75,7 +75,7 @@ const createWindow = () => {
     transparent: false,
     show: false,
     autoHideMenuBar: false,
-    title: "威智慧眼V1.0", //程序窗口名字
+    title: "威智慧眼V1.1", //程序窗口名字
     icon: path.join(__dirname, 'icons', 'VESIBIT.ico'), //程序的图标
     frame: true,
     webPreferences: {
@@ -89,7 +89,7 @@ const createWindow = () => {
     transparent: false,
     show: false,
     autoHideMenuBar: false,
-    title: "威智慧眼V1.0", //程序窗口名字
+    title: "威智慧眼V1.1", //程序窗口名字
     icon: path.join(__dirname, 'icons', 'VESIBIT.ico'), //程序的图标
     frame: true,
     webPreferences: {
@@ -103,7 +103,7 @@ const createWindow = () => {
     transparent: false,
     show: false,
     autoHideMenuBar: false,
-    title: "威智慧眼V1.0", //程序窗口名字
+    title: "威智慧眼V1.1", //程序窗口名字
     icon: path.join(__dirname, 'icons', 'VESIBIT.ico'), //程序的图标
     frame: true,
     webPreferences: {
@@ -117,7 +117,7 @@ const createWindow = () => {
     transparent: false,
     show: false,
     autoHideMenuBar: false,
-    title: "威智慧眼V1.0", //程序窗口名字
+    title: "威智慧眼V1.1", //程序窗口名字
     icon: path.join(__dirname, 'icons', 'VESIBIT.ico'), //程序的图标
     frame: true,
     webPreferences: {
@@ -131,7 +131,7 @@ const createWindow = () => {
     transparent: false,
     show: false,
     autoHideMenuBar: false,
-    title: "威智慧眼V1.0", //程序窗口名字
+    title: "威智慧眼V1.1", //程序窗口名字
     icon: path.join(__dirname, 'icons', 'VESIBIT.ico'), //程序的图标
     frame: true,
     webPreferences: {

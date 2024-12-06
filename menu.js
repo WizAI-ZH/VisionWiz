@@ -16,7 +16,7 @@ const languages = {
             image_classification: 'Image Classification',
             tool_set: 'Tookkit',
         },
-        title: 'VisionWiz V1.0'
+        title: 'VisionWiz V1.1'
     },
     zh: {
         menu: {
@@ -30,7 +30,7 @@ const languages = {
             image_classification: '图像分类',
             tool_set: '工具集',
         },
-        title: '威智慧眼V1.0'
+        title: '威智慧眼V1.1'
     },
     zht: {
         menu: {
@@ -44,7 +44,7 @@ const languages = {
             image_classification: '圖像分類',
             tool_set: '工具集',
         },
-        title: '威智慧眼V1.0'
+        title: '威智慧眼V1.1'
     }
 };
 
