@@ -58,6 +58,7 @@
     "rebuild-nodepty": "electron-rebuild -f -w node-pty",
     "rebuild-rob": "electron-rebuild -f -w robotjs",
     "package": "electron-forge package",
+    "package-onekey": "node package.js",
     "make": "electron-forge make"
   },
   "keywords": [
@@ -71,7 +72,7 @@
     "mobile_net"
   ],
   "author": "曹振威",
-  "license": "GPL-3.0-or-late",
+  "license": "GPL-3.0-or-later",
   "devDependencies": {
     "@electron-forge/cli": "^7.5.0",
     "@electron-forge/maker-deb": "^7.5.0",
