@@ -44,7 +44,7 @@ const createWindow = () => {
   childWindow = new BrowserWindow({
     frame: false,
     transparent: true,
-    icon: path.join(__dirname, 'icons', 'VESIBIT.ico'),
+    icon: path.join(__dirname, 'icons', 'visionwiz_logo.ico'),
   })
   // Create the browser window.
   mainWindow = new BrowserWindow({
@@ -56,7 +56,7 @@ const createWindow = () => {
     show: false,
     autoHideMenuBar: false,
     title: "威智慧眼V1.1", //程序窗口名字
-    icon: path.join(__dirname, 'icons', 'VESIBIT.ico'), //程序的图标
+    icon: path.join(__dirname, 'icons', 'visionwiz_logo.ico'), //程序的图标
     frame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -76,7 +76,7 @@ const createWindow = () => {
     show: false,
     autoHideMenuBar: false,
     title: "威智慧眼V1.1", //程序窗口名字
-    icon: path.join(__dirname, 'icons', 'VESIBIT.ico'), //程序的图标
+    icon: path.join(__dirname, 'icons', 'visionwiz_logo.ico'), //程序的图标
     frame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -90,7 +90,7 @@ const createWindow = () => {
     show: false,
     autoHideMenuBar: false,
     title: "威智慧眼V1.1", //程序窗口名字
-    icon: path.join(__dirname, 'icons', 'VESIBIT.ico'), //程序的图标
+    icon: path.join(__dirname, 'icons', 'visionwiz_logo.ico'), //程序的图标
     frame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -104,7 +104,7 @@ const createWindow = () => {
     show: false,
     autoHideMenuBar: false,
     title: "威智慧眼V1.1", //程序窗口名字
-    icon: path.join(__dirname, 'icons', 'VESIBIT.ico'), //程序的图标
+    icon: path.join(__dirname, 'icons', 'visionwiz_logo.ico'), //程序的图标
     frame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -118,7 +118,7 @@ const createWindow = () => {
     show: false,
     autoHideMenuBar: false,
     title: "威智慧眼V1.1", //程序窗口名字
-    icon: path.join(__dirname, 'icons', 'VESIBIT.ico'), //程序的图标
+    icon: path.join(__dirname, 'icons', 'visionwiz_logo.ico'), //程序的图标
     frame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -132,7 +132,7 @@ const createWindow = () => {
     show: false,
     autoHideMenuBar: false,
     title: "威智慧眼V1.1", //程序窗口名字
-    icon: path.join(__dirname, 'icons', 'VESIBIT.ico'), //程序的图标
+    icon: path.join(__dirname, 'icons', 'visionwiz_logo.ico'), //程序的图标
     frame: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -319,7 +319,7 @@ ipcMain.on('open_image', (event, imagePath) => {
 });
 
 ipcMain.on('open_tool', function (event, arg) {  
-  const toolPath = path.resolve(__dirname, 'tools', arg + '.exe'); // 转换为绝对路径  
+  const toolPath = path.resolve(__dirname, 'tools', arg); // 转换为绝对路径  
   const toolDir = path.dirname(toolPath); // 获取工具所在目录  
   console.log('Tool Path:', toolPath);  
 
@@ -332,6 +332,8 @@ ipcMain.on('open_tool', function (event, arg) {
   childSpawn.on('error', (err) => {  
     console.error('Failed to start process:', err);  
   });  
+
+  sendMessageToView(mainWindow_views,'toolSet','reply_open_tool',toolPath)
 });
 
 //获取当前app根目录
@@ -382,6 +384,7 @@ ipcMain.on('open_website', (event, arg) => {
 ipcMain.on('open_make_sense', () => {
   //打开make-sense软件，并且设定make-sense语言
   setupWindowManager.createMakeSenseWindow(get_store_value('current_lang'));
+  
 });
 
 ipcMain.on('openfile', function (event, arg) {
