@@ -130,6 +130,7 @@
     "toolname_make_sense": "慧標(Make-Sense)",
     "tooldescript_make_sense": "一款圖像標注工具,支援目標檢測資料集的標注，標注區域支援矩形、點、線、多邊形，並且支持多種匯出格式",
     "btn_open_make_sense": "打開軟件",
-    "btn_open_learn_make_sense": "了解更多"
+    "btn_open_learn_make_sense": "了解更多",
+    "title_descript_toolset": "提供威智產品相關的工具，以滿足日常產品使用需求"
 }
 

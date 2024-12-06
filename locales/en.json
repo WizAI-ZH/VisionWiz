@@ -130,5 +130,6 @@
     "toolname_make_sense": "Make-Sense",
     "tooldescript_make_sense": "An image annotation tool that supports labeling for object detection datasets, with annotation areas supporting rectangles, points, lines, and polygons, and supports various export formats",
     "btn_open_make_sense": "Open Software",
-    "btn_open_learn_make_sense": "Learn More"
+    "btn_open_learn_make_sense": "Learn More",
+    "title_descript_toolset": "Tools related to WizAI products to meet daily product usage needs"
 }

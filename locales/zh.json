@@ -130,7 +130,8 @@
     "toolname_make_sense": "慧标(Make-Sense)",
     "tooldescript_make_sense": "一款图像标注工具,支持目标检测数据集的标注，标注区域支持矩形、点、线、多边形，并且支持多种导出格式",
     "btn_open_make_sense": "打开软件",
-    "btn_open_learn_make_sense": "了解更多"
+    "btn_open_learn_make_sense": "了解更多",
+    "title_descript_toolset": "提供威智产品关联的工具，满足日常产品使用需求"
 
 
 
