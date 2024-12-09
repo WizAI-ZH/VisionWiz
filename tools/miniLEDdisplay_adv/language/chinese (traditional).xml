@@ -15,13 +15,12 @@
       <item id="language" type="0">語言(&amp;U)</item>
       <item id="help" type="0">幫助(&amp;H)</item>
       <item id="about" type="0">關于</item>
-      <item id="helpdoc" type="0">帮助文档</item>
-      <item type="0" id="send_menu">发送(&amp;S)</item>
-      <item type="0" id="ignaddr">忽略地址发送</item>
-      <item type="0" id="wraddr">写地址</item>
-      <item type="0" id="sendaddr">按地址发送</item>
-      <item type="0" id="sendaddr">(新)按地址发送</item>
-      <item type="0" id="skin">皮膚(&amp;K)</item>
+      <item id="helpdoc" type="0">幫助文件</item>
+      <item type="0" id="send_menu">發送(&amp;S)</item>
+      <item type="0" id="ignaddr">忽略地址發送</item>
+      <item type="0" id="wraddr">寫地址</item>
+      <item type="0" id="sendaddr">按地址發送</item>
+      <item type="0" id="sendaddr">(新)按地址發送</item>
     </Menu>
 
     <Group name="messagepreview" text="信息預覽" type="0">

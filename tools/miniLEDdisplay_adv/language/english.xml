@@ -1,8 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <!--定义系统所用语言库-->
 <bmpbadge lan="english" author="dcs" date="2019-10-2">
-
-  <form name="mainform" text= "BMP Badge LED V9.34">
+  <form name="mainform" text="BmpBadge">
     <Menu>
       <item id="file" type="0">File(&amp;F)</item>
 	  <item id="new" type="0">New(&amp;N)</item>
