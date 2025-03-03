@@ -514,8 +514,16 @@ ipcMain.on('savedir', function (event, arg) {
 })
 
 
-
-let pty = require('node-pty');
+let pty
+if(app.isPackaged)
+{
+  // pty = require(path.resolve(process.cwd(),'resources','app.asar.unpacked', 'node_modules', 'node-pty'))
+  pty = require(path.resolve(__dirname,'node_modules','node-pty'));
+}
+else{
+  // pty = require(path.resolve(__dirname,'node_modules','node-pty'));
+  pty = require(path.resolve(__dirname,'node_modules','node-pty'));
+}
 const { main } = require('@popperjs/core');
 const shell = os.platform() === "win32" ? "powershell.exe" : "bash";
 const ptyProcess_yolo = pty.spawn(shell, [], {

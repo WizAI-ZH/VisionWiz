@@ -9,6 +9,11 @@ body {
 
 .animated-text {  
   animation: fade-in-out 4s ease-in-out infinite; /* 将动画时间延长至4秒 */  
+  user-select: none;  
+  -webkit-user-select: none;  
+  -moz-user-select: none;  
+  -ms-user-select: none;  
+  pointer-events: none; /* 可选，完全禁用鼠标交互 */  
 }  
 
 @keyframes fade-in-out {  
