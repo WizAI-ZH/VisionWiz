@@ -268,6 +268,7 @@ app.whenReady().then(() => {
   createWindow()
   globalShortcut.register('Control+Shift+I', () => {
     mainWindow_views[getCurrentView()].webContents.openDevTools({ mode: 'detach' });
+
   })
   globalShortcut.register('F5', () => {
     var current_view = getCurrentView()
@@ -764,7 +765,7 @@ function read_config() {
     'cls_data_aug': get_store_value('cls_data_aug') || 0,
     'test_img_dir_cls': get_store_value('test_img_dir_cls') || '',
     'test_img_dir_yolo': get_store_value('test_img_dir_yolo') || '',
-    'current_language': get_store_value('current_lang') || 'zh'
+    'current_lang': get_store_value('current_lang') || 'zh'
   }
   ipcMain.on('config', function (event, arg) {
     //用本地数据初始化所有页面的参数数值
