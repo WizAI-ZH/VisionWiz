@@ -16,6 +16,10 @@ const { sendMessageToView, sendMessageToAllViews } = require('./utils/ipc_commu'
 const { findFilesWithSubstring, delDirRecurse, delDirContents } = require('./utils/file_process')
 const languageManager = require('./utils/language-manager')
 const path_utils = require('./utils/path_utils')
+const { initSerialManager, connectPort } = require('./utils/serialManager') 
+const { validateKey } = require('./utils/cryptoService.js')  
+const { SerialPort } = require('serialport')  
+const { ReadlineParser } = require('@serialport/parser-readline') // 新增解析器包  
 
 //判断是否打包
 if (app.isPackaged) {
@@ -23,6 +27,19 @@ if (app.isPackaged) {
 } else {
   process.env.NODE_ENV = 'development';
 }
+
+// 设备热插拔监听  
+SerialPort.list().then(initialPorts => {  
+  let lastPorts = initialPorts  
+  
+  setInterval(async () => {  
+    const currentPorts = await SerialPort.list();  
+    if(currentPorts.length !== lastPorts.length) {  
+      ipcMain.emit('port-list-updated');  
+      lastPorts = currentPorts  
+    }  
+  }, 2000) // 每2秒检测一次  
+}) 
 
 // 本地数据  
 const store = new Store();
@@ -33,12 +50,27 @@ let current_locales = languageManager.getLocales();
 
 let cmd = process.platform === 'win32' ? 'tasklist' : 'ps aux';
 const rex = new RegExp('pattern');
-const setupWindowManager = require('./windowManger')
+const setupWindowManager = require('./windowManger');
 const { setAppMenu, getCurrentView } = require('./menu');
 
 let childWindow
 let mainWindow
 let mainWindow_views = {};
+
+function createAuthWindow(){
+  authWindow = new BrowserWindow({  
+    width: 400,  
+    height: 300,  
+    autoHideMenuBar: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: true,
+      contextIsolation: false,
+    }
+  })
+  authWindow.webContents.openDevTools();
+  authWindow.loadFile('auth.html');
+}
 
 const createWindow = () => {
   childWindow = new BrowserWindow({
@@ -64,8 +96,6 @@ const createWindow = () => {
       contextIsolation: false,
     }
   });
-
-
 
 
   childWindow.loadFile('loading.html')
@@ -174,12 +204,12 @@ const createWindow = () => {
     const isOnline = await checkInternetConnection();
     console.log(`isOnline = ${isOnline}`)
     if (isOnline) {
-      try {  
+      try {
         mainWindow_views[viewName].webContents.loadURL(urlLink);  
-        console.log(`${viewName} loaded`);  
-      } catch (err) {  
+        console.log(`${viewName} loaded`);
+      } catch (err) {
         console.error(`Failed to load ${viewName}:`, err);  
-      }  
+      }
     } else {  
       console.log('Network unavailable, loading Offline.');  
       loadFileWithFallback(viewName, offlineFilePath);  
@@ -206,8 +236,9 @@ const createWindow = () => {
     mainWindow.addBrowserView(mainWindow_views['Wizhome']);
     mainWindow_views['Wizhome'].setBounds({ x: 0, y: 0, width: mainWindow.getBounds().width, height: mainWindow.getBounds().height });
     // mainWindow_views['Wizhome'].webContents.openDevTools({ mode: 'detach' })
+    
     childWindow.destroy();
-    mainWindow.show();
+    // mainWindow.show();
   });
 
   // mainWindow.loadFile('mainpage.html')
@@ -261,26 +292,45 @@ ipcMain.handle('set-language', async (event, language) => {
   // 可以在此添加更新UI的逻辑, 比如发送事件让窗口刷新语言  
 });
 
+// 处理端口列表请求
+ipcMain.handle('get-ports',() => initSerialManager());
+
+// 处理连接请求  
+ipcMain.handle('connect-port', (_, path) => connectPort(path))  
+
+
 // 这段程序将会在 Electron 结束初始化
 // 和创建浏览器窗口的时候调用
 // 部分 API 在 ready 事件触发后才能使用。
 app.whenReady().then(() => {
-  createWindow()
+  createAuthWindow()
+  initSerialManager()
   globalShortcut.register('Control+Shift+I', () => {
-    mainWindow_views[getCurrentView()].webContents.openDevTools({ mode: 'detach' });
+    try{
+      mainWindow_views[getCurrentView()].webContents.openDevTools({ mode: 'detach' });
+    }
+    catch{
+      console.log('Main window not found or not loaded.')
+    }
 
   })
   globalShortcut.register('F5', () => {
-    var current_view = getCurrentView()
-    if (current_view == 'Wizhome') {
-      mainWindow_views[current_view].webContents.reload();
+    try{
+      var current_view = getCurrentView()
+      if (current_view == 'Wizhome') {
+        mainWindow_views[current_view].webContents.reload();
+      }
     }
+    catch{
+      console.log('Main pages not loaded.')
+    }
+
   })
-  app.on('activate', () => {
-    // 在 macOS 系统内, 如果没有已开启的应用窗口
-    // 点击托盘图标时通常会重新创建一个新窗口
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
+  // app.on('activate', () => {
+  //   // 在 macOS 系统内, 如果没有已开启的应用窗口
+  //   // 点击托盘图标时通常会重新创建一个新窗口
+  //   if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  // })
 })
 
 // 除了 macOS 外，当所有窗口都被关闭的时候退出程序。 因此, 通常
@@ -299,14 +349,20 @@ app.on('will-quit', () => {
   console.log('11--->will quit')
   globalShortcut.unregisterAll();
 })
-// 在当前文件中你可以引入所有的主进程代码
-// 也可以拆分成几个文件，然后用 require 导入。
+
+
 
 function timeout(ms) {
   return new Promise((resolve, reject) => {
     setTimeout(resolve, ms, 'done');
   });
 }
+
+
+
+ipcMain.on('auth-success',createWindow)
+
+
 
 //使用系统默认图片查看器打开图片
 ipcMain.on('open_image', (event, imagePath) => {

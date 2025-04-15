@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <template id="portTemplate">
+    <div class="port-option">
+      <span class="com-path"></span>
+      <span class="device-info"></span>
+    </div>
+  </template>
+
+  <script>
+    // 修改设备列表加载逻辑
+    async function refreshPorts() {
+      const ports = await ipcRenderer.invoke("get-ports");
+      const template = document.getElementById("portTemplate");
+
+      if (ports.length === 0) {
+        document.getElementById(
+          "portList"
+        ).innerHTML = `<div class="no-device">⚠️ 未检测到CH340设备，请检查连接</div>`;
+      } else {
+        const fragment = document.createDocumentFragment();
+        ports.forEach((p) => {
+          const clone = template.content.cloneNode(true);
+          clone.querySelector(".com-path").textContent = p.path;
+          clone.querySelector(".device-info").textContent = `${
+            p.manufacturer || "未知厂商"
+          } (${p.serialNumber || "无序列号"})`;
+          fragment.appendChild(clone);
+        });
+        document.getElementById("portList").appendChild(fragment);
+      }
+    }
+  </script>
+
+  <style>
+    .port-option {
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+    }
+    .no-device {
+      color: #ff4444;
+      padding: 12px;
+    }
+  </style>
+
+  <body>
+    <select id="portList"></select>
+    <button id="connectBtn">Connect</button>
+    <div id="status"></div>
+
+    <script>
+      const { ipcRenderer } = require("electron");
+
+      // 增强版设备列表刷新
+      async function refreshPorts() {
+        try {
+          const ports = await ipcRenderer.invoke("get-ports");
+          const select = document.getElementById("portList");
+
+          // 清空现有选项
+          select.innerHTML = "";
+
+          // 动态创建选项
+          ports.forEach((port) => {
+            const option = document.createElement("option");
+            option.value = port.path;
+            option.textContent = `${port.path} (CH340)`;
+            select.appendChild(option);
+          });
+
+          // 无设备提示
+          if (ports.length === 0) {
+            const option = document.createElement("option");
+            option.textContent = "未检测到设备";
+            select.disabled = true;
+            select.appendChild(option);
+          } else {
+            select.disabled = false;
+          }
+        } catch (err) {
+          console.error("刷新设备列表失败:", err);
+        }
+      }
+
+      // 初始化加载 + 自动刷新
+      document.addEventListener("DOMContentLoaded", () => {
+        refreshPorts();
+        // 添加定时刷新
+        setInterval(refreshPorts, 2000);
+      });
+
+      // 连接按钮处理
+      document
+        .getElementById("connectBtn")
+        .addEventListener("click", async () => {
+          const path = document.getElementById("portList").value;
+          try {
+            await ipcRenderer.invoke("connect-port", path);
+            document.getElementById("status").innerHTML = "🔑 正在验证密钥...";
+          } catch (err) {
+            alert(`连接失败: ${err.message}`);
+          }
+        });
+    </script>
+  </body>
+</html>

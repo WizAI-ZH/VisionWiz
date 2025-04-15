@@ -63,3 +63,4 @@ make-sense/dist/
 .env.production.local
 
 package.js
+utils/cryptoService.js
