@@ -1,0 +1,229 @@
+<!DOCTYPE html>  
+<html lang="zh-CN">  
+<head>  
+  <meta charset="UTF-8" />  
+  <title>设备连接 (Device Connection)</title>  
+  <style>  
+    html, body {  
+      width: 100%;  
+      height: 100%;  
+      margin: 0;  
+      padding: 0;  
+      font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;  
+      background: linear-gradient(120deg, #bbd0f5 0%, #fff8e3 100%);  
+      overflow: hidden;  
+    }  
+    body {  
+      width: 100vw;  
+      height: 100vh;  
+      min-width: 0;  
+      min-height: 0;  
+      display: flex;  
+      flex-direction: column;  
+      align-items: center;  
+      justify-content: flex-start;  
+      padding: 0;  
+      box-sizing: border-box;  
+    }  
+    .title-wrap {  
+      width: 100%;  
+      text-align: center;  
+      margin-top: 16px;  
+      margin-bottom: 8px;  
+    }  
+    .title-main {  
+      font-size: 1.1rem;  
+      font-weight: bold;  
+      color: #22345f;  
+      margin-bottom: 0.15em;  
+      letter-spacing: 1px;  
+      line-height:1.3;  
+    }  
+    .title-en {  
+      display: block;  
+      font-size: 0.95rem;  
+      color: #68789c;  
+      font-weight: 400;  
+      letter-spacing: 0.5px;  
+      margin-top: 1px;  
+    }  
+    #connectionPanel {  
+      background: #fff;  
+      border-radius: 14px;  
+      box-shadow: 0 2px 17px 0 #b2cde64d;  
+      padding: 18px 12px 14px 12px;  
+      min-width: 0;  
+      min-height: 0;  
+      width: 92vw;  
+      max-width: 356px;  
+      margin: 0 auto;  
+      display: flex;  
+      flex-direction: column;  
+      align-items: center;  
+      box-sizing: border-box;  
+    }  
+    .label {  
+      font-size: 1rem;  
+      color: #22345f;  
+      font-weight: 600;  
+      margin-bottom: 8px;  
+      letter-spacing: 1px;  
+      display: flex;  
+      align-items: baseline;  
+      justify-content: center;  
+    }  
+    .label .en {  
+      font-size: 0.92em;  
+      color: #8190b0;  
+      font-weight: 400;  
+      margin-left: 5px;  
+    }  
+    select {  
+      border: 1.2px solid #b6caff;  
+      border-radius: 7px;  
+      padding: 5px 15px 5px 8px;  
+      font-size: 0.98rem;  
+      margin-bottom: 10px;  
+      background: #f6f9fe;  
+      color: #273554;  
+      min-width: 130px;  
+      max-width: 200px;  
+      font-weight: 500;  
+      transition: border 0.2s;  
+    }  
+    select:disabled {  
+      background: #f1f2f5;  
+      color: #b0b8c5;  
+      border-color: #e0e3ef;  
+      cursor: not-allowed;  
+      font-weight: 400;  
+    }  
+    .btn-primary, .btn-danger {  
+      padding: 7px 22px;  
+      font-size: 1rem;  
+      border-radius: 7px;  
+      border: none;  
+      font-weight: 500;  
+      margin-right: 0;  
+      box-shadow: 0 1px 5px 0 #b5cfff2d;  
+      transition: box-shadow 0.1s, background 0.15s;  
+      cursor: pointer;  
+      margin-top: 4px;  
+    }  
+    .btn-primary {  
+      background: linear-gradient(90deg,#3377ff,#87c6ff 80%);  
+      color: #fff;  
+    }  
+    .btn-primary .en { color: #e5eefb; margin-left: 4px; }  
+    .btn-primary:hover {  
+      background: linear-gradient(90deg,#245ece 88%,#31baff);  
+    }  
+    .btn-danger {  
+      background: linear-gradient(90deg,#e83a3a,#fa947a 90%);  
+      color: #fff;  
+      margin-left: 12px;  
+    }  
+    .btn-danger .en { color: #fee; margin-left: 4px;}  
+    .btn-danger:hover {  
+      background: linear-gradient(90deg,#df2e36 85%,#fcc4a9 98%);  
+    }  
+    .status-indicator {  
+      margin-top: 10px;  
+      padding: 7px 5px;  
+      font-size: 0.96rem;  
+      background: #f4f6fa;  
+      border: 1.1px solid #e6eafd;  
+      color: #314060;  
+      border-radius: 7px;  
+      min-width: 80%;  
+      max-width: 100%;  
+      box-sizing: border-box;  
+      text-align: center;  
+      box-shadow: 0 1px 6px rgba(0,40,120,0.05);  
+      min-height: 22px;  
+    }  
+  </style>  
+</head>  
+<body>  
+  <div class="title-wrap">  
+    <div class="title-main">请连接识别设备</div>  
+    <span class="title-en">(Please connect identification device)</span>  
+  </div>  
+  <div id="connectionPanel">  
+    <div class="label">  
+      设备列表 <span class="en">(Device List)</span>  
+    </div>  
+    <select id="portList"></select>  
+    <div>  
+      <button id="connectBtn" class="btn-primary">连接 <span class="en">(Connect)</span></button>  
+      <button id="disconnectBtn" class="btn-danger" style="display:none;">断开 <span class="en">(Disconnect)</span></button>  
+    </div>  
+    <div id="status" class="status-indicator"></div>  
+  </div>  
+  <script>  
+    // JS同样逻辑  
+    const { ipcRenderer } = require('electron');  
+    function toggleUI (connected) {  
+      document.getElementById('connectBtn').style.display   = connected ? 'none' : 'inline-block'  
+      document.getElementById('disconnectBtn').style.display= connected ? 'inline-block' : 'none'  
+      document.getElementById('portList').disabled          = connected  
+    }  
+    async function loadPorts () {  
+      try {  
+        const ports = await ipcRenderer.invoke('get-ports') || []  
+        const sel = document.getElementById('portList')  
+        sel.innerHTML = ''  
+        ports.forEach(p => {  
+          const opt = document.createElement('option')  
+          opt.value = p.path  
+          opt.textContent = `${p.path} (CH340)`  
+          sel.appendChild(opt)  
+        })  
+        if (!ports.length) {  
+          const opt = document.createElement('option')  
+          opt.textContent = '未检测到设备 (No device detected)'  
+          sel.appendChild(opt)  
+          sel.disabled = true  
+        } else {  
+          sel.disabled = false  
+        }  
+      } catch (e) {  
+        console.error('刷新设备列表失败 (Failed to refresh device list):', e)  
+      }  
+    }  
+    ipcRenderer.on('auth-success', (_, d) => {
+      console.log('auth.html auth success')  
+      document.getElementById('status').innerHTML =  
+        `✅ 连接成功 (Connect Success)`  
+      toggleUI(true)  
+    })  
+    ipcRenderer.on('disconnected', () => {  
+      document.getElementById('status').innerHTML = '⚠️ 已断开连接 (Disconnected)'  
+      toggleUI(false)  
+    })  
+    document.getElementById('connectBtn').addEventListener('click', async () => {  
+      const path = document.getElementById('portList').value  
+      try {  
+        document.getElementById('status').innerHTML = '🚀 正在连接设备... (Connecting device...)'  
+        await ipcRenderer.invoke('connect-port', path)  
+      } catch (err) {  
+        document.getElementById('status').innerHTML =  
+          `<span style="color:red">❌ 连接失败 (Connect Failed): ${err.message}</span>`  
+        toggleUI(false)  
+      }  
+    })  
+    document.getElementById('disconnectBtn').addEventListener('click', async () => {  
+      try {  
+        await ipcRenderer.invoke('disconnect-port')  
+      } catch (err) {  
+        document.getElementById('status').innerHTML =  
+          `<span style="color:red">❌ 断开失败 (Disconnect Failed): ${err.message}</span>`  
+      }  
+    })  
+    document.addEventListener('DOMContentLoaded', () => {  
+      loadPorts()  
+      setInterval(loadPorts, 2000)  
+    })  
+  </script>  
+</body>  
+</html>  

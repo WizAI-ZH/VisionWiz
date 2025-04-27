@@ -64,3 +64,5 @@ make-sense/dist/
 
 package.js
 utils/cryptoService.js
+authPreload.js
+auth.html

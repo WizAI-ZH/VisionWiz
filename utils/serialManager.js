@@ -1,77 +1,78 @@
-const { SerialPort } = require('serialport')  
-const { validateKey } = require('./cryptoService.js')  
-const { ipcMain } = require('electron')  
-const os = require('os')
-const { ReadlineParser } = require('@serialport/parser-readline') // 新增解析器包  
+const { SerialPort } = require('serialport');  
+const { ipcMain }    = require('electron');  
+const os             = require('os');  
+const AuthService    = require('./cryptoService.js');  
+const delay = ms => new Promise(r => setTimeout(r, ms));  
 
-// CH340标准配置  
-const CH340_CONFIG = {  
-  baudRate: 115200,  
-  dataBits: 8,  
-  stopBits: 1,  
-  parity: 'none',  
-  autoOpen: false  
+let currentAuth = null;  
+
+/* ---------- CH340 端口列表 ---------- */  
+async function refreshPortList() {  
+  const all = await SerialPort.list();  
+  return all.filter(p => p.vendorId === '1A86' && ['7523', '5523'].includes(p.productId));  
 }  
 
-
+/* ---------- Win 驱动检测 ---------- */  
 async function checkWindowsDriver() {  
-  const { execSync } = require('child_process')  
+  if (os.platform() !== 'win32') return true;  
+  const { execSync } = require('child_process');  
   try {  
-    const output = execSync('pnputil /enum-devices /class "Ports"')  
-    return output.includes('CH340')  
-  } catch {  
-    return false  
-  }  
-} 
-
-let currentPort = null  
-
-// 初始化设备列表  
-exports.initSerialManager = async () => {
-  if(os.platform() === 'win32') {  
-    const driverInstalled = await checkWindowsDriver()  
-    if(!driverInstalled) {  
-      console.error('CH340驱动未安装')  
-      throw new Error('请先安装CH340驱动程序')  
-    }  
-  }
-  const allPorts = await SerialPort.list()  
-  console.log('所有检测到设备:', allPorts.map(p => `${p.path} [${p.vendorId}:${p.productId}]`))  
-  
-  const ch340Ports = allPorts.filter(p =>   
-    p.vendorId === '1A86' && ['7523', '5523'].includes(p.productId)  
-  )  
-  
-  console.log('过滤后CH340设备:', ch340Ports)  
-  return ch340Ports
+    const out = execSync('pnputil /enum-devices /class "Ports"');  
+    return out.includes('CH340');  
+  } catch { return false; }  
 }  
 
-// 连接设备  
-exports.connectPort = async (path) => {
-  currentPort = new SerialPort({ path, ...CH340_CONFIG })
-  const crlfDelimiter = Buffer.from([0x0D, 0x0A]) // 明确的CRLF字节序列 
-  const delimiter = '\r\n' // 或从配置读取
-  console.log('crlfDelimiter Type:', typeof crlfDelimiter)  
-  console.log('crlfDelimiter Length:', crlfDelimiter.length)   
-  // 配置数据解析器  
-  const parser = currentPort.pipe(new ReadlineParser({  
-    delimiter: crlfDelimiter,                // 直接使用CRLF字符串  
-    encoding: 'hex',                     // 保持hex编码  
-    includeDelimiter: false
-  }))  
+/* ---------- 复位：拉低 DTR 50 ms，再拉高 ---------- */
+async function hardwareReset(path) {  
+  const temp = new SerialPort({ path, baudRate: 115200, autoOpen: false });  
+  await new Promise((res, rej) => temp.open(err => err ? rej(err) : res()));  
+  await temp.set({ dtr: false, rts: true });  // 拉低 (多见于 K210+CH340)  
+  await delay(50);  
+  await temp.set({ dtr: true });  
+  await delay(1200);                           // 给固件一点启动时间  
+  await new Promise(res => temp.close(res));  
+}
 
-  // 数据接收处理  
-  parser.on('data', async data => {  
-    console.log('Received:', data)  
-    if (await validateKey(data)) {  
-      ipcMain.emit('auth-success')  
-    }  
-  })  
+/* ========== 初始化串口监视器 ========== */  
+exports.initSerialManager = async () => {  
+  if (!(await checkWindowsDriver())) throw new Error('CH340 驱动未安装');  
+  return refreshPortList();  
+};  
 
-  // 错误处理  
-  currentPort.on('error', err => console.error('Port error:', err))  
-  
-  return new Promise((resolve, reject) => {  
-    currentPort.open(err => err ? reject(err) : resolve())  
-  })  
-} 
+exports.connectPort = async path => {  
+  try {  
+    console.log('[RST] hardware reset');  
+    await hardwareReset(path);  
+
+    currentAuth = new AuthService();  
+    await currentAuth.connectPort(path);  
+
+    /* ★ 等待 sendChallenge 结束才返回 ★ */  
+    await currentAuth.sendChallenge()  
+      .then(res => {  
+        console.log('auth-success! ')
+        ipcMain.emit('auth-success', { deviceId: res.deviceId });  
+      })  
+      .catch(err => {  
+        console.log('auth-fail! ')
+        console.log('error: ' + err.message)
+        ipcMain.emit('auth-failure', { error: err.message }); 
+        throw err;                       // 让外层 catch 触发 disconnect  
+      });  
+    return true;                         // 成功才返回 true  
+  } catch (err) { 
+    // exports.disconnectPort();  
+    throw err;                           // 让 UI 层看到失败  
+  }  
+};  
+
+exports.disconnectPort = () => {  
+  if (currentAuth) {  
+    currentAuth.cleanup();  
+    currentAuth = null;  
+  }  
+  ipcMain.emit('disconnected', { status: 'disconnected' });  
+}; 
+
+/* ---------- IPC 主动断开 ---------- */  
+ipcMain.handle('disconnect-port', () => exports.disconnectPort());  
