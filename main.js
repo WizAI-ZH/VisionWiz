@@ -306,7 +306,8 @@ function createAuthWindow() {
     closable:    true,
     frame:    true,
     webPreferences: {
-      preload: path.join(__dirname, "authPreload.js")
+      preload: path.join(__dirname, "authPreload.js"),
+      backgroundThrottling: false
       // nodeIntegration: true,
       // contextIsolation: false,
     },

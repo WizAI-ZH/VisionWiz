@@ -9,6 +9,7 @@ let currentAuth = null;
 /* ---------- CH340 端口列表 ---------- */  
 async function refreshPortList() {  
   const all = await SerialPort.list();  
+  // console.log(all);
   return all.filter(p => p.vendorId === '1A86' && ['7523', '5523'].includes(p.productId));  
 }  
 
@@ -35,7 +36,8 @@ async function hardwareReset(path) {
 
 /* ========== 初始化串口监视器 ========== */  
 exports.initSerialManager = async () => {  
-  if (!(await checkWindowsDriver())) throw new Error('CH340 驱动未安装');  
+  if (!(await checkWindowsDriver())) throw new Error('CH340 驱动未安装'); 
+  // console.log('start refreshPortList') 
   return refreshPortList();  
 };  
 

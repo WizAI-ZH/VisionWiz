@@ -190,6 +190,7 @@
       }
       let is_connected = false;
       let portsCache = null; // ―――★ 保存上一次结果
+      let currentPortPath  = '';          // ★★ 新：记录已认证的端口
       let timerList = null; // ―――★ 用来在成功后停止刷新
 
       // =========== 刷新串口列表 ===========
@@ -197,13 +198,26 @@
         const sel = document.getElementById("portList");
         const list = (await authAPI.getPorts()) || [];
         const pathArr = list.map((p) => p.path);
+        
+
+            /* ①  如果当前已连接，但端口已不在列表 ⇒ 立即视为掉线 */  
+        if (is_connected && currentPortPath && !pathArr.includes(currentPortPath)){   // ★★ 新  
+        document.getElementById('status').innerHTML =  
+            '⚠️ 已断开连接 (Disconnected)';  
+        is_connected = false;  
+        authAPI.disconnect();                 // 触发主进程逻辑  
+        // UI 切回待连接状态  
+        toggleUI(false);  
+        }  
+
         if (sameList(pathArr, portsCache)) return; // ―――★ 无变化就跳过
         portsCache = pathArr; // ―――★ 更新缓存
 
         /* 仅在变化时重绘 ↓ */
         sel.innerHTML = "";
         if (!list.length) {
-          sel.innerHTML = "<option>未检测到设备(No device detected)</option>";
+          sel.innerHTML =
+            "<option value=''>未检测到设备(No device detected)</option>";
           sel.disabled = true;
           if (is_connected) authAPI.disconnect();
         } else {
@@ -223,6 +237,7 @@
         document.getElementById("status").innerHTML =
           "✅ 连接成功 (Connect Success)";
         is_connected = true;
+        currentPortPath = document.getElementById('portList').value;  // ★★ 新
         toggleUI(true);
         // clearInterval(timerList);
       });
@@ -241,6 +256,8 @@
         document.getElementById("status").innerHTML =
           "⚠️ 已断开连接 (Disconnected)";
         toggleUI(false);
+        is_connected     = false;          // ★★ 新  
+        currentPortPath  = '';             // ★★ 新  
         // if(!timerList) timerList=setInterval(loadPorts,2000); // ―――★ 重新启动定时器
       });
 
@@ -249,15 +266,26 @@
         .getElementById("connectBtn")
         .addEventListener("click", async () => {
           // ★
-          const path = document.getElementById("portList").value;
+          const sel  = document.getElementById('portList');
+          const path = sel.value;
+
+          /* ---------- 先做前端校验 ---------- */
+          if (sel.disabled || !path) {
+            // ★★ 新
+            document.getElementById("status").innerHTML =
+              '<span style="color:red">❌ 未检测到可用设备 (No device detected)</span>';
+            return; // ★★ 新
+          }
+
           document.getElementById("status").textContent =
             "🚀 正在连接设备... (Connecting...)";
           const res = await authAPI.connect(path); // ★
-          if (!res) {
+          console.log(res);
+          if (!res || res.ok === false) {
             document.getElementById(
               "status"
             ).innerHTML = `<span style="color:red">❌ 连接失败 (Connect Failed): </span>`;
-          } 
+          }
         });
 
       document.getElementById("disconnectBtn").addEventListener("click", () => {
