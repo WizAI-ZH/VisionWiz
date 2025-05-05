@@ -87,7 +87,7 @@ const createWindow = () => {
     transparent: false,
     show: false,
     autoHideMenuBar: false,
-    title: "威智慧眼V1.1", //程序窗口名字
+    title: "威智慧眼V1.2", //程序窗口名字
     icon: path.join(__dirname, "icons", "visionwiz_logo.ico"), //程序的图标
     frame: true,
     webPreferences: {
@@ -104,7 +104,7 @@ const createWindow = () => {
     transparent: false,
     show: false,
     autoHideMenuBar: false,
-    title: "威智慧眼V1.1", //程序窗口名字
+    title: "威智慧眼V1.2", //程序窗口名字
     icon: path.join(__dirname, "icons", "visionwiz_logo.ico"), //程序的图标
     frame: true,
     webPreferences: {
@@ -118,7 +118,7 @@ const createWindow = () => {
     transparent: false,
     show: false,
     autoHideMenuBar: false,
-    title: "威智慧眼V1.1", //程序窗口名字
+    title: "威智慧眼V1.2", //程序窗口名字
     icon: path.join(__dirname, "icons", "visionwiz_logo.ico"), //程序的图标
     frame: true,
     webPreferences: {
@@ -132,7 +132,7 @@ const createWindow = () => {
     transparent: false,
     show: false,
     autoHideMenuBar: false,
-    title: "威智慧眼V1.1", //程序窗口名字
+    title: "威智慧眼V1.2", //程序窗口名字
     icon: path.join(__dirname, "icons", "visionwiz_logo.ico"), //程序的图标
     frame: true,
     webPreferences: {
@@ -146,7 +146,7 @@ const createWindow = () => {
     transparent: false,
     show: false,
     autoHideMenuBar: false,
-    title: "威智慧眼V1.1", //程序窗口名字
+    title: "威智慧眼V1.2", //程序窗口名字
     icon: path.join(__dirname, "icons", "visionwiz_logo.ico"), //程序的图标
     frame: true,
     webPreferences: {
@@ -160,7 +160,7 @@ const createWindow = () => {
     transparent: false,
     show: false,
     autoHideMenuBar: false,
-    title: "威智慧眼V1.1", //程序窗口名字
+    title: "威智慧眼V1.2", //程序窗口名字
     icon: path.join(__dirname, "icons", "visionwiz_logo.ico"), //程序的图标
     frame: true,
     webPreferences: {
@@ -308,11 +308,8 @@ function createAuthWindow() {
     webPreferences: {
       preload: path.join(__dirname, "authPreload.js"),
       backgroundThrottling: false
-      // nodeIntegration: true,
-      // contextIsolation: false,
     },
   });
-  // authWindow.openDevTools();
   authWindow.loadFile("auth.html");
   authWindow.setMenuBarVisibility(false);        // 阻断 Ctrl+W / Alt 键菜单
 

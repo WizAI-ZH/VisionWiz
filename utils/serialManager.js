@@ -13,15 +13,6 @@ async function refreshPortList() {
   return all.filter(p => p.vendorId === '1A86' && ['7523', '5523'].includes(p.productId));  
 }  
 
-/* ---------- Win 驱动检测 ---------- */  
-async function checkWindowsDriver() {  
-  if (os.platform() !== 'win32') return true;  
-  const { execSync } = require('child_process');  
-  try {  
-    const out = execSync('pnputil /enum-devices /class "Ports"');  
-    return out.includes('CH340');  
-  } catch { return false; }  
-}  
 
 /* ---------- 复位：拉低 DTR 50 ms，再拉高 ---------- */
 async function hardwareReset(path) {  
@@ -36,8 +27,6 @@ async function hardwareReset(path) {
 
 /* ========== 初始化串口监视器 ========== */  
 exports.initSerialManager = async () => {  
-  if (!(await checkWindowsDriver())) throw new Error('CH340 驱动未安装'); 
-  // console.log('start refreshPortList') 
   return refreshPortList();  
 };  
 
