@@ -2,7 +2,7 @@
   "name": "VisionWiz",
   "version": "1.2.0",
   "description": "威智的AI工具",
-  "main": "main.js",
+  "main": "main_bootstrap.js",
   "config": {
     "forge": "./forge.config.js"
   },
@@ -16,13 +16,15 @@
       "tools/**/*",
       "utils/**/*",
       "icons/**/*",
-      "main.js",
+      "compiled/**/*",
       "loading.html",
       "mainpage.html",
-      "preload.js",
-      "windowManger.js",
-      "menu.js",
-      "eventManager.js",
+      "preload_compiled.js",
+      "windowManger_compiled.js", 
+      "menu_compiled.js",
+      "eventManager_compiled.js",
+      "main_compiled.js",
+      "node_modules/bytenode/**/*",
       {
         "from": "out",
         "to": "out",
@@ -52,14 +54,15 @@
   },
   "scripts": {
     "test": "vesi_test",
+    "compile": "node compile.js",
     "start-forge": "electron-forge start",
     "start": "electron .",
     "start2": "nodemon --watch main.js --exec npm run build",
     "rebuild-nodepty": "electron-rebuild -f -w node-pty",
     "rebuild-rob": "electron-rebuild -f -w robotjs",
-    "package": "electron-forge package",
-    "package-onekey": "node package.js",
-    "make": "electron-forge make"
+    "package": "npm run compile && electron-forge package",
+    "package-onekey": "npm run compile && node package.js",
+    "make": "npm run compile && electron-forge make"
   },
   "keywords": [
     "AI",
@@ -111,6 +114,7 @@
     "font-awesome": "^4.7.0",
     "identity-obj-proxy": "^3.0.0",
     "imageinfo": "^1.0.4",
+    "javascript-obfuscator": "^4.1.1",
     "jest": "^28.1.3",
     "jest-environment-jsdom": "^28.1.3",
     "mock-aws-s3": "^4.0.2",
@@ -128,6 +132,8 @@
     "typescript": "4.7.4",
     "vite": "^3.0.2",
     "vite-tsconfig-paths": "^3.5.0",
+    "webpack": "^5.101.3",
+    "webpack-cli": "^6.0.1",
     "xterm": "^5.3.0",
     "xterm-addon-fit": "^0.8.0",
     "xterm-addon-web-links": "^0.9.0"
@@ -149,6 +155,7 @@
     "asar": "^3.2.0",
     "axios": "^1.1.3",
     "bootstrap": "^5.3.3",
+    "bytenode": "^1.5.7",
     "classnames": "^2.3.1",
     "echarts": "^5.5.1",
     "electron-squirrel-startup": "^1.0.1",

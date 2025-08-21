@@ -66,3 +66,4 @@ package.js
 utils/cryptoService.js
 authPreload.js
 auth.html
+compile.js

@@ -84,12 +84,12 @@ const createWindow = () => {
     y: 0,
     // fullscreen: true,
     resizable: true,
-    transparent: false,
+    transparent: false, // 是否透明
     show: false,
     autoHideMenuBar: false,
     title: "威智慧眼V1.2", //程序窗口名字
     icon: path.join(__dirname, "icons", "visionwiz_logo.ico"), //程序的图标
-    frame: true,
+    frame: true, // 是否显示窗口边框
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: true,
