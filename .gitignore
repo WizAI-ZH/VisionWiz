@@ -98,3 +98,4 @@ utils_protected/path_utils.jsc
 utils_protected/serialManager.jsc
 forge.config - 副本.js
 .electron-cache/electron-v29.4.6-win32-x64.zip
+compile-bytenode.js

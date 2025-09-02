@@ -97,6 +97,7 @@ ipcRenderer.on('window-resize', (event, { width, height }) => {
 
     // 将宽度缩小到原来的90%  
     terminalElement.style.width = (width * 0.9) + 'px';
+    terminalElement.style.height = (height * 0.6) + 'px';
 
     // 将终端居中  
     terminalElement.style.marginLeft = 'auto';

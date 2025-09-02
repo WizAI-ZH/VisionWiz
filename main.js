@@ -83,6 +83,7 @@ const createWindow = () => {
     x: 0,
     y: 0,
     // fullscreen: true,
+    maximize: true,
     resizable: true,
     transparent: false, // 是否透明
     show: false,
@@ -267,9 +268,9 @@ const createWindow = () => {
   );
   console.log("finished setAppMenu");
 
-  mainWindow.once("ready-to-show", () => {
-    mainWindow.maximize();
-  });
+  // mainWindow.once("ready-to-show", () => {
+  //   mainWindow.maximize();
+  // });
 
   mainWindow.webContents.on("close", () => {
     console.log("8--->this window is closed");
