@@ -3,6 +3,10 @@
 // 根据GPLv3或更高版本的条款进行许可
 // 请参阅LICENSE文件以获取详细信息
 // main.js
+console.log('[MAIN] marker', new Date().toISOString());
+const VisionWiz_version = "V1.2.5";
+// process.on('uncaughtException', e => console.error('[FATAL] uncaughtException:', e));
+// process.on('unhandledRejection', r => console.error('[FATAL] unhandledRejection:', r));
 const {
   app,
   BrowserWindow,
@@ -28,7 +32,9 @@ const {
   delDirRecurse,
   delDirContents,
 } = require("./utils/file_process");
+console.log('[MAIN] before language-manager');
 const languageManager = require("./utils/language-manager");
+console.log('[MAIN] after language-manager');
 const path_utils = require("./utils/path_utils");
 const { initSerialManager, connectPort } = require("./utils/serialManager");
 const { validateKey } = require("./utils/cryptoService.js");
@@ -55,11 +61,64 @@ SerialPort.list().then((initialPorts) => {
   }, 2000); // 每2秒检测一次
 });
 
+
 // 本地数据
-const store = new Store();
-read_config(); //读取本地数据
-languageManager.updateLocales(get_store_value("current_lang") || "zh");
-let current_locales = languageManager.getLocales();
+let current_locales;
+let store;
+let config_store = {};
+
+async function initStoreAfterReady() {
+  console.log('[STORE] init - before app.whenReady()');
+  return app.whenReady().then(() => {
+    console.log('[STORE] init - app ready');
+    let userDataPath;
+    try {
+      console.log('[STORE] before app.getPath(userData)');
+      userDataPath = app.getPath('userData');
+      console.log('[STORE] userDataPath =', userDataPath);
+    } catch (e) {
+      console.error('[STORE] app.getPath("userData") failed:', e);
+    }
+
+    try {
+      console.log('[STORE] before new Store()');
+      store = new Store({
+        cwd: userDataPath,
+        name: 'settings'
+      });
+      console.log('[STORE] new Store OK, file =', store.path);
+    } catch (e) {
+      console.error('[STORE] new Store failed:', e);
+      // 兜底：如果配置可能损坏，先尝试备份并重建
+      try {
+        const p = path.join(userDataPath || '', 'settings.json');
+        if (fs.existsSync(p)) {
+          fs.renameSync(p, p + '.bak-' + Date.now());
+          console.warn('[STORE] corrupted config backed up:', p);
+        }
+        store = new Store({
+          cwd: userDataPath,
+          name: 'settings'
+        });
+        console.log('[STORE] new Store OK after reset, file =', store.path);
+      } catch (e2) {
+        console.error('[STORE] new Store still failed after reset:', e2);
+      }
+    }
+  });
+}
+
+async function bootstrap() {
+  console.log('[BOOTSTRAP] start');
+  await initStoreAfterReady();
+  console.log('[BOOTSTRAP] store init done');
+
+  const cfg = read_config();
+  languageManager.updateLocales(get_store_value("current_lang") || "zh");
+  current_locales = languageManager.getLocales();
+  console.log('[BOOTSTRAP] read_config done');
+}
+console.log('Start Store Setup')
 
 let cmd = process.platform === "win32" ? "tasklist" : "ps aux";
 const rex = new RegExp("pattern");
@@ -88,7 +147,7 @@ const createWindow = () => {
     transparent: false, // 是否透明
     show: false,
     autoHideMenuBar: false,
-    title: "威智慧眼V1.2", //程序窗口名字
+    title: "威智慧眼"+VisionWiz_version, //程序窗口名字
     icon: path.join(__dirname, "icons", "visionwiz_logo.ico"), //程序的图标
     frame: true, // 是否显示窗口边框
     webPreferences: {
@@ -105,7 +164,7 @@ const createWindow = () => {
     transparent: false,
     show: false,
     autoHideMenuBar: false,
-    title: "威智慧眼V1.2", //程序窗口名字
+    title: "威智慧眼"+VisionWiz_version, //程序窗口名字
     icon: path.join(__dirname, "icons", "visionwiz_logo.ico"), //程序的图标
     frame: true,
     webPreferences: {
@@ -119,7 +178,7 @@ const createWindow = () => {
     transparent: false,
     show: false,
     autoHideMenuBar: false,
-    title: "威智慧眼V1.2", //程序窗口名字
+    title: "威智慧眼"+VisionWiz_version, //程序窗口名字
     icon: path.join(__dirname, "icons", "visionwiz_logo.ico"), //程序的图标
     frame: true,
     webPreferences: {
@@ -133,7 +192,7 @@ const createWindow = () => {
     transparent: false,
     show: false,
     autoHideMenuBar: false,
-    title: "威智慧眼V1.2", //程序窗口名字
+    title: "威智慧眼"+VisionWiz_version, //程序窗口名字
     icon: path.join(__dirname, "icons", "visionwiz_logo.ico"), //程序的图标
     frame: true,
     webPreferences: {
@@ -147,7 +206,7 @@ const createWindow = () => {
     transparent: false,
     show: false,
     autoHideMenuBar: false,
-    title: "威智慧眼V1.2", //程序窗口名字
+    title: "威智慧眼"+VisionWiz_version, //程序窗口名字
     icon: path.join(__dirname, "icons", "visionwiz_logo.ico"), //程序的图标
     frame: true,
     webPreferences: {
@@ -161,7 +220,7 @@ const createWindow = () => {
     transparent: false,
     show: false,
     autoHideMenuBar: false,
-    title: "威智慧眼V1.2", //程序窗口名字
+    title: "威智慧眼"+VisionWiz_version, //程序窗口名字
     icon: path.join(__dirname, "icons", "visionwiz_logo.ico"), //程序的图标
     frame: true,
     webPreferences: {
@@ -259,7 +318,7 @@ const createWindow = () => {
 
   // mainWindow.loadFile('mainpage.html')
   childWindow.show();
-
+  console.log('setAppMenu')
   // 设置应用菜单，并传递主窗口的引用
   setAppMenu(
     mainWindow,
@@ -298,14 +357,14 @@ function createAuthWindow() {
   authWindow = new BrowserWindow({
     width: 500,
     height: 350,
-    parent:      mainWindow,       // ← 关键：指定父窗  
-    modal:       true,             // ← 关键：Modal
+    parent: mainWindow,       // ← 关键：指定父窗  
+    modal: true,             // ← 关键：Modal
     autoHideMenuBar: true,
-    resizable:   false,  
-    minimizable: false,  
+    resizable: false,
+    minimizable: false,
     maximizable: false,
-    closable:    true,
-    frame:    true,
+    closable: true,
+    frame: true,
     webPreferences: {
       preload: path.join(__dirname, "authPreload.js"),
       backgroundThrottling: false
@@ -314,12 +373,12 @@ function createAuthWindow() {
   authWindow.loadFile("auth.html");
   authWindow.setMenuBarVisibility(false);        // 阻断 Ctrl+W / Alt 键菜单
 
-  authWindow.on('close', e => {  
+  authWindow.on('close', e => {
     app.quit();
-  });  
+  });
 
   authWindow.webContents.on('render-process-gone', (_e, details) => { // ★★  
-    console.warn('[SEC] auth renderer gone:', details);  
+    console.warn('[SEC] auth renderer gone:', details);
     app.quit();                      // ★★ 立即退出  
   });
 }
@@ -347,11 +406,11 @@ ipcMain.handle("get-ports", () => initSerialManager());
 ipcMain.handle("connect-port", (_, path) => connectPort(path));
 
 function afterAuthSuccess() {
-  if (authWindow){
+  if (authWindow) {
     authWindow.webContents.send("auth-success", "");
-    setTimeout(()=>{
+    setTimeout(() => {
       authWindow.hide();
-    },1000);
+    }, 1000);
   }
   if (mainWindow) mainWindow.setEnabled(true);
 }
@@ -359,7 +418,8 @@ function afterAuthSuccess() {
 // 这段程序将会在 Electron 结束初始化
 // 和创建浏览器窗口的时候调用
 // 部分 API 在 ready 事件触发后才能使用。
-app.whenReady().then(() => {
+app.whenReady().then(async() => {
+  await bootstrap(); 
   createWindow();
   createAuthWindow();
   initSerialManager();
@@ -413,16 +473,16 @@ function timeout(ms) {
 }
 
 ipcMain.on("auth-success", afterAuthSuccess);
-ipcMain.on("auth-failure",(arg)=>{ 
-  if (authWindow){
-    console.log('[AUTH] failure:', arg.error); 
-    authWindow.webContents.send("auth-failure",arg.error);
+ipcMain.on("auth-failure", (arg) => {
+  if (authWindow) {
+    console.log('[AUTH] failure:', arg.error);
+    authWindow.webContents.send("auth-failure", arg.error);
     authWindow.focus();
   }
 })
 ipcMain.on("disconnected", () => {
-  if (mainWindow) mainWindow.setEnabled(false);  
-  if (authWindow){
+  if (mainWindow) mainWindow.setEnabled(false);
+  if (authWindow) {
     authWindow.webContents.send("disconnected");
     authWindow.show();
     authWindow.focus();
@@ -937,30 +997,72 @@ function get_store_value(name) {
   return store.get(name);
 }
 
+// function read_config() {
+//   let config = {
+//     save_img: get_store_value("save_img") || "",
+//     save_img_name: get_store_value("save_img_name") || "",
+//     yolo_img: get_store_value("yolo_img") || "",
+//     yolo_xml: get_store_value("yolo_xml") || "",
+//     yolo_epoch: get_store_value("yolo_epoch") || 25,
+//     yolo_alpha: get_store_value("yolo_alpha") || 0,
+//     yolo_batch_size: get_store_value("yolo_batch_size") || 8,
+//     yolo_data_aug: get_store_value("yolo_data_aug") || 0,
+//     cls_img: get_store_value("cls_img") || "",
+//     cls_epoch: get_store_value("cls_epoch") || 25,
+//     cls_alpha: get_store_value("cls_alpha") || 0,
+//     cls_batch_size: get_store_value("cls_batch_size") || 8,
+//     cls_data_aug: get_store_value("cls_data_aug") || 0,
+//     test_img_dir_cls: get_store_value("test_img_dir_cls") || "",
+//     test_img_dir_yolo: get_store_value("test_img_dir_yolo") || "",
+//     current_lang: get_store_value("current_lang") || "zh",
+//   };
+// }
+
 function read_config() {
-  let config = {
-    save_img: get_store_value("save_img") || "",
-    save_img_name: get_store_value("save_img_name") || "",
-    yolo_img: get_store_value("yolo_img") || "",
-    yolo_xml: get_store_value("yolo_xml") || "",
-    yolo_epoch: get_store_value("yolo_epoch") || 25,
-    yolo_alpha: get_store_value("yolo_alpha") || 0,
-    yolo_batch_size: get_store_value("yolo_batch_size") || 8,
-    yolo_data_aug: get_store_value("yolo_data_aug") || 0,
-    cls_img: get_store_value("cls_img") || "",
-    cls_epoch: get_store_value("cls_epoch") || 25,
-    cls_alpha: get_store_value("cls_alpha") || 0,
-    cls_batch_size: get_store_value("cls_batch_size") || 8,
-    cls_data_aug: get_store_value("cls_data_aug") || 0,
-    test_img_dir_cls: get_store_value("test_img_dir_cls") || "",
-    test_img_dir_yolo: get_store_value("test_img_dir_yolo") || "",
-    current_lang: get_store_value("current_lang") || "zh",
+  console.log('[CFG] read_config start');
+
+  function safeGet(key, def) {
+    // console.log(`[CFG] get "${key}" - start`);
+    try {
+      const v = get_store_value(key);
+      // console.log(`[CFG] get "${key}" - end`);
+      return (v === undefined || v === null || v === '') ? def : v;
+    } catch (e) {
+      console.error(`[CFG] get "${key}" failed:`, e);
+      return def;
+    }
+  }
+
+  config_store = {
+    save_img: safeGet("save_img", ""),
+    save_img_name: safeGet("save_img_name", ""),
+    yolo_img: safeGet("yolo_img", ""),
+    yolo_xml: safeGet("yolo_xml", ""),
+    yolo_epoch: safeGet("yolo_epoch", 25),
+    yolo_alpha: safeGet("yolo_alpha", 0),
+    yolo_batch_size: safeGet("yolo_batch_size", 8),
+    yolo_data_aug: safeGet("yolo_data_aug", 0),
+    cls_img: safeGet("cls_img", ""),
+    cls_epoch: safeGet("cls_epoch", 25),
+    cls_alpha: safeGet("cls_alpha", 0),
+    cls_batch_size: safeGet("cls_batch_size", 8),
+    cls_data_aug: safeGet("cls_data_aug", 0),
+    test_img_dir_cls: safeGet("test_img_dir_cls", ""),
+    test_img_dir_yolo: safeGet("test_img_dir_yolo", ""),
+    current_lang: safeGet("current_lang", "zh"),
   };
-  ipcMain.on("config", function (event, arg) {
-    //用本地数据初始化所有页面的参数数值
-    sendMessageToAllViews(mainWindow_views, "config", config);
-  });
+  console.log('[CFG] config ready');
+  return config_store;
 }
+
+ipcMain.on("config", function (event, arg) {
+  //用本地数据初始化所有页面的参数数值
+  console.log('[ipcMain] read: "config"')
+  console.log('[CFG] read_config request', arg);
+  let result = read_config();
+  sendMessageToAllViews(mainWindow_views, "config" , result);
+});
+
 
 ipcMain.on("config_save_img_name", function (event, arg) {
   //接收到通信信息后进行拍摄保存图片文的更新

@@ -100,3 +100,6 @@ forge.config - 副本.js
 .electron-cache/electron-v29.4.6-win32-x64.zip
 compile-bytenode.js
 compile.js
+compile_backup.js
+scripts/compile-in-electron-incremental.js
+scripts/compile-in-electron.js

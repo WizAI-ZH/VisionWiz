@@ -1,6 +1,7 @@
 const { Menu } = require('electron');
 let currentLanguage
 let currentView = 'Wizhome'
+let VisionWiz_version = "V1.2.5";
 
 //菜单本地化数据翻译
 const languages = {
@@ -14,9 +15,9 @@ const languages = {
             image_collection: 'Image Collect',
             object_detection: 'Object Detection',
             image_classification: 'Image Classification',
-            tool_set: 'Tookkit',
+            tool_set: 'Toolkit',
         },
-        title: 'VisionWiz V1.2'
+        title: 'VisionWiz'+ VisionWiz_version
     },
     zh: {
         menu: {
@@ -30,7 +31,7 @@ const languages = {
             image_classification: '图像分类',
             tool_set: '工具集',
         },
-        title: '威智慧眼V1.2'
+        title: '威智慧眼'+ VisionWiz_version
     },
     zht: {
         menu: {
@@ -44,7 +45,7 @@ const languages = {
             image_classification: '圖像分類',
             tool_set: '工具集',
         },
-        title: '威智慧眼V1.2'
+        title: '威智慧眼'+ VisionWiz_version
     }
 };
 

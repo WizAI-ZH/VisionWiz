@@ -2,8 +2,8 @@
   "name": "VisionWiz",
   "version": "1.2.0",
   "description": "威智的AI工具",
-  "main": "main_bootstrap.js",
   "main": "main.js",
+  "main": "main_bootstrap.js",
   "config": {
     "forge": "./forge.config.js"
   },
@@ -55,6 +55,12 @@
   },
   "scripts": {
     "test": "vesi_test",
+    "prestart:protect": "electron scripts/compile-in-electron-incremental.js",
+    "prestart:protectfull": "electron scripts/compile-in-electron.js",
+    "start:protect": "electron .",
+    "start:protectfull": "electron .",
+    "dev:protect": "chcp 65001 && npm run start:protect",
+    "dev:protectfull": "chcp 65001 && npm run start:protectfull",
     "get-struct": "powershell -ExecutionPolicy Bypass -File get_project_structure_tree.ps1",
     "compile": "node compile.js",
     "start-forge": "electron-forge start",
