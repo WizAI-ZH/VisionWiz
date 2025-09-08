@@ -49,7 +49,7 @@ const languages = {
     }
 };
 
-const { sendMessageToAllViews, sendMessageToView } = require('./utils/ipc_commu')
+const { sendMessageToAllViews, sendMessageToView } = require('./utils_protected/ipc_commu_loader')
 
 function changeLanguage(language, browserWindow, views) {
     console.log('changeLanguage to', language)

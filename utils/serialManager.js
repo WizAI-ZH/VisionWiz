@@ -1,9 +1,11 @@
 const { SerialPort } = require('serialport');  
 const { ipcMain }    = require('electron');  
 const os             = require('os');  
-const AuthService    = require('./cryptoService.js');  
+const AuthService    = require('../cryptoservice_critical_loader.js');  
+// const AuthService    = require('../utils/cryptoservice.js');  
 const delay = ms => new Promise(r => setTimeout(r, ms));  
 
+console.log('[serialmanager] module loaded');
 let currentAuth = null;  
 
 /* ---------- CH340 端口列表 ---------- */  

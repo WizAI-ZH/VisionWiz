@@ -26,18 +26,21 @@ const Store = require("electron-store");
 const {
   sendMessageToView,
   sendMessageToAllViews,
-} = require("./utils/ipc_commu");
+} = require("./utils_protected/ipc_commu_loader");
 const {
   findFilesWithSubstring,
   delDirRecurse,
   delDirContents,
-} = require("./utils/file_process");
+} = require("./utils_protected/file_process_loader");
 console.log('[MAIN] before language-manager');
-const languageManager = require("./utils/language-manager");
+const languageManager = require("./utils_protected/language-manager_loader")
 console.log('[MAIN] after language-manager');
-const path_utils = require("./utils/path_utils");
-const { initSerialManager, connectPort } = require("./utils/serialManager");
-const { validateKey } = require("./utils/cryptoService.js");
+const path_utils = require("./utils_protected/path_utils_loader")
+const { initSerialManager, connectPort } = require("./utils_protected/serialManager_loader");
+console.log('[MAIN] after serialManager');
+console.log('[MAIN] before cryptoservice');
+const { validateKey } = require("./cryptoservice_critical_loader");
+console.log('[MAIN] after cryptoservice');
 const { SerialPort } = require("serialport");
 const { ReadlineParser } = require("@serialport/parser-readline"); // 新增解析器包
 
@@ -388,8 +391,14 @@ ipcMain.handle("get-language", () => {
   return get_store_value("current_lang") || "zh";
 });
 
+ipcMain.handle("get-current-locales", () => {
+  console.log('[MAIN] get-current-locales invoked');
+  return current_locales;
+});
+
 ipcMain.handle("set-language", async (event, language) => {
   try {
+    console.log(`[MAIN] set-language requested: ${language}`);
     set_store_value("current_lang", language);
     languageManager.updateLocales(language);
     current_locales = languageManager.getLocales();

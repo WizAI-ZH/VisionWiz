@@ -11,10 +11,13 @@ yarn-error.log*
 /out/
 /dist/
 /trainOutput/
+/utils_protected/
+.electron-cache/
 
 #依赖库
 /py39/
 /node_modules/
+/node_modules_backup/
 /maix_train/
 
 #安装包
@@ -22,6 +25,7 @@ yarn-error.log*
 
 #安装配置文件
 forge.config.js
+.yarnrc.yml
 
 #有修改/添加过的内容
 !maix_train/train/detector/predict_test.py
@@ -37,6 +41,8 @@ npminstall-debug.log
 
 #旧文件 
 index-old.html
+forge.config_waste.js
+package_backup.json
 
 #make-sense相关
 # ide
@@ -54,6 +60,7 @@ make-sense/coverage
 # production
 make-sense/build/
 make-sense/dist/
+
 
 # misc
 .DS_Store
@@ -103,3 +110,8 @@ compile.js
 compile_backup.js
 scripts/compile-in-electron-incremental.js
 scripts/compile-in-electron.js
+.gitignore
+package_forge_backup.js
+package_new_backup.json
+yarn.lock
+.yarn/install-state.gz

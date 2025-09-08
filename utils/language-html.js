@@ -6,11 +6,11 @@
 console.log(__dirname)
 let languageManager;
 try{
-    languageManager = require('../utils/language-manager')
+    languageManager = require('../utils_protected/language-manager_loader')
 }
 catch{
     const path = require('path');
-    languageManager = require(path.join(__dirname,'../../utils/language-manager'))
+    languageManager = require(path.join(__dirname,'../../utils_protected/language-manager_loader'))
 }
 let current_locales
 

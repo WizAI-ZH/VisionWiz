@@ -2,7 +2,31 @@ const { ipcRenderer } = require('electron');
 const { FitAddon } = require('xterm-addon-fit');
 const { WebLinksAddon } = require('xterm-addon-web-links');
 const echarts = require('echarts');
-const path = require('path');
+try {
+    const path = require('path');
+} catch (error) {
+    console.warning('Error loading path module:', error);
+}
+let current_locales;
+
+async function init_current_locales() {
+  try {
+    current_locales = await ipcRenderer.invoke('get-current-locales');
+    console.log('locales:', current_locales);
+    // 后续初始化逻辑...
+  } catch (e) {
+    console.error('获取语言库失败:', e);
+  }
+}
+
+init_current_locales();
+
+ipcRenderer.on('change-language', async (event, language) => {
+    console.log('[RENDERER] 语言变更通知，重新加载语言库:', language);
+    current_locales = await ipcRenderer.invoke('get-current-locales');
+    console.log(current_locales)
+})
+
 
 let train_situation_yolo = false
 let current_tab_dir
@@ -13,7 +37,7 @@ let trainScript
 let testScript
 
 //发送获取应用根目录指令
-ipcRenderer.send('get_app_path','objectDetection');
+ipcRenderer.send('get_app_path', 'objectDetection');
 
 ipcRenderer.on('get_app_path_reply', (event, appPath) => {
     // 获取 python.exe 和 train.py 的路径  
@@ -182,7 +206,7 @@ ipcRenderer.on('update_train_history', function (event, arg) {
                 }
             }
         } catch (error) {
-            console.log("An error occurred while processing the data from "+ d["name"] +":", error);
+            console.log("An error occurred while processing the data from " + d["name"] + ":", error);
         }
     }
 
