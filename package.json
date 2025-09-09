@@ -68,7 +68,9 @@
       "auth.html",
       "mainpage.html",
       "preload.js",
-      "loading.html"
+      "loading.html",
+      "utils{,/**}",
+      "main.js"
     ],
     "extraResources": [
       {
