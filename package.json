@@ -84,10 +84,6 @@
       {
         "from": "tools/WizResizer.exe",
         "to": "tools/WizResizer.exe"
-      },
-      {
-        "from": "out/trainOutput",
-        "to": "trainOutput"
       }
     ],
     "asar": true,
