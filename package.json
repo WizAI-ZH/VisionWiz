@@ -91,9 +91,6 @@
       }
     ],
     "asar": true,
-    "asarUnpack": [
-      "**/node_modules/node-pty/**"
-    ],
     "win": {
       "target": [
         {
