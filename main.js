@@ -375,7 +375,7 @@ function createAuthWindow() {
   });
   authWindow.loadFile("auth.html");
   authWindow.setMenuBarVisibility(false);        // 阻断 Ctrl+W / Alt 键菜单
-  authWindow.openDevTools({ mode: "detach" });
+  // authWindow.openDevTools({ mode: "detach" });
 
   authWindow.on('close', e => {
     app.quit();
