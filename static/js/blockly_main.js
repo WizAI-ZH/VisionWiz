@@ -1,5 +1,3 @@
-const { wait } = require("@testing-library/user-event/dist/cjs/utils/index.js");
-
 let delay;
 let current_locales_local;
 
