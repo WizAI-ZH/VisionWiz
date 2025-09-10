@@ -41,6 +41,7 @@
       "!**/*.map",
       "!scripts{,/**}",
       "!build{,/**}",
+      "!backup{,/**}",
       "!packages{,/**}",
       "!**/*.code-workspace",
       "!**/project_structure.txt",
@@ -66,11 +67,12 @@
       "icons{,/**}",
       "locales{,/**}",
       "auth.html",
+      "authpreload.js",
       "mainpage.html",
-      "preload.js",
       "loading.html",
-      "utils{,/**}",
-      "main.js"
+      "tools/make-sense-en{,/**}",
+      "tools/make-sense-zh{,/**}",
+      "tools/make-sense-zht{,/**}"
     ],
     "extraResources": [
       {

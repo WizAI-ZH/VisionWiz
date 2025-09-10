@@ -24,7 +24,7 @@ init_current_locales();
 ipcRenderer.on('change-language', async (event, language) => {
     console.log('[RENDERER] 语言变更通知，重新加载语言库:', language);
     current_locales = await ipcRenderer.invoke('get-current-locales');
-    console.log(current_locales)
+    // console.log(current_locales)
 })
 
 
