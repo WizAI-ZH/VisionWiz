@@ -16,6 +16,7 @@
     "get-struct": "powershell -ExecutionPolicy Bypass -File get_project_structure_tree.ps1",
     "compile": "node compile.js",
     "compile:inc": "node scripts/compile-in-electron-incremental.js",
+    "compile:full": "npx electron scripts/compile-in-electron.js",
     "start": "electron .",
     "start2": "nodemon --watch main.js --exec npm run build",
     "rebuild-nodepty": "electron-rebuild -f -w node-pty",
@@ -27,7 +28,7 @@
     "build:portable": "electron-builder --win portable",
     "build:dir": "electron-builder --dir",
     "package": "node --trace-deprecation package.js",
-    "package-onekey": "npm run compile && node --trace-deprecation package.js",
+    "package-onekey": "npm run compile:full && node --trace-deprecation package.js",
     "postinstall": "electron-builder install-app-deps"
   },
   "build": {
