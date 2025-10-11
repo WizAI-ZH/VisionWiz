@@ -313,8 +313,27 @@ const createWindow = () => {
     });
     // mainWindow_views['Wizhome'].webContents.openDevTools({ mode: 'detach' })
 
-    childWindow.destroy();
-    mainWindow.show();
+    // TODO: 调整 Splash → Main → Auth 的顺序控制
+    // 延迟 3 秒（Splash 停留时间），销毁 childWindow 后显示主窗口，再创建验证窗口
+    setTimeout(() => {
+      if (childWindow && !childWindow.isDestroyed()) {
+        childWindow.destroy();
+        childWindow = null; // ← 可选：释放引用
+      }
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        // 先展示主窗口
+        mainWindow.show();
+
+        // 再创建验证窗口，确保以 mainWindow 为父且 modal
+        // TODO: 将 createAuthWindow 的调用移动到这里
+        createAuthWindow();
+
+        // 确保 authWindow 在前台并获取焦点
+        if (authWindow && !authWindow.isDestroyed()) {
+          authWindow.focus();
+        }
+      }
+    }, 1500); // 需要更短可改为 1000~1500ms
   });
 
 
@@ -431,7 +450,7 @@ function afterAuthSuccess() {
 app.whenReady().then(async () => {
   await bootstrap();
   createWindow();
-  createAuthWindow();
+  // createAuthWindow();
   initSerialManager();
   globalShortcut.register("Control+Shift+I", () => {
     try {
@@ -579,7 +598,7 @@ ipcMain.on("open_website", (event, arg) => {
 
 ipcMain.on("open_make_sense", () => {
   //打开make-sense软件，并且设定make-sense语言
-  setupWindowManager.createMakeSenseWindow(get_store_value("current_lang"));
+  setupWindowManager.createMakeSenseWindow(get_store_value("current_lang") || "zh");
 });
 
 ipcMain.on("openfile", function (event, arg) {

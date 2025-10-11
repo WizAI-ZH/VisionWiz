@@ -1,6 +1,6 @@
 {
   "name": "VisionWiz",
-  "version": "1.2.0",
+  "version": "1.2.5",
   "description": "威智的AI工具",
   "main": "main_bootstrap.js",
   "author": "曹振威",
@@ -21,14 +21,12 @@
     "start2": "nodemon --watch main.js --exec npm run build",
     "rebuild-nodepty": "electron-rebuild -f -w node-pty",
     "rebuild-rob": "electron-rebuild -f -w robotjs",
-    "rebuild:bytenode_old": "node -e \"require('fs');\" && powershell -Command \"Get-ChildItem -Recurse -Include *.jsc | Remove-Item -Force; $env:ELECTRON_RUN_AS_NODE='1'; & node_modules/.bin/electron node_modules/bytenode/bin/bytenode --compile src/main.js --out build/main.jsc\"",
-    "rebuild:bytenode": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Get-ChildItem -Recurse -Filter *.jsc | Remove-Item -Force\" && cross-env ELECTRON_RUN_AS_NODE=1 electron ./compile-bytenode.js",
     "build": "electron-builder",
     "build:win": "electron-builder --win nsis zip",
     "build:portable": "electron-builder --win portable",
     "build:dir": "electron-builder --dir",
     "package": "node --trace-deprecation package.js",
-    "package-onekey": "npm run compile:full && node --trace-deprecation package.js",
+    "package-onekey": "chcp 65001 && npm run compile:full && node --trace-deprecation package.js",
     "postinstall": "electron-builder install-app-deps"
   },
   "build": {

@@ -1,32 +1,594 @@
-<!DOCTYPE html>  
-<html style="height: 100%;">  
-<head>  
-    <link rel="stylesheet" type="text/css" href="static/css/style1.css">  
-</head>  
-<body>  
-    <div class="logos">  
-        <svg viewBox="0 0 1200 800">  
-            <defs>  
-                <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">  
-                    <stop offset="0%" stop-color="#2980b9">  
-                        <animate attributeName="stop-color" values="#2980b9; #85c1e9; #2980b9" dur="5s" repeatCount="indefinite" />  
-                    </stop>  
-                    <stop offset="100%" stop-color="#85c1e9">  
-                        <animate attributeName="stop-color" values="#85c1e9; #2980b9; #85c1e9" dur="5s" repeatCount="indefinite" />  
-                    </stop>  
-                </linearGradient>  
-            </defs>  
+<!DOCTYPE html>
+<html lang="zh-CN" style="height: 100%;">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>威智慧眼 · VisionWiz - Loading</title>
+  <style>
+    /* ===== 主题配置 ===== */
+    :root{
+      --brand-1: #1fa2ff;
+      --brand-2: #22e1ff;
+      --brand-3: #6c5ce7;
+      --bg-deep: #0a0f1c;
 
-            <!-- 第一行文本 -->  
-            <text x="50%" y="40%" text-anchor="middle" dy=".3em" font-size="120" fill="url(#gradient)" class="animated-text" stroke="black" stroke-width="2">  
-                威智慧眼  
-            </text>  
+      --card-bg: rgba(10,15,28,0.35);
+      --card-border: rgba(255,255,255,0.06);
+      --text-soft: rgba(255,255,255,0.8);
+      --text-weak: rgba(255,255,255,0.55);
 
-            <!-- 第二行文本 -->  
-            <text x="50%" y="60%" text-anchor="middle" dy=".3em" font-size="120" fill="url(#gradient)" class="animated-text" stroke="black" stroke-width="2">  
-                VisionWiz  
-            </text>  
-        </svg>  
-    </div>  
-</body>  
+      --grid-alpha: 0.12;
+      --trail-alpha: 0.10;
+      --scan-alpha: 0.08;
+      --noise-alpha: 0.10;
+
+      --title-stroke: rgba(255,255,255,0.35);
+      --title-glow-a: rgba(34,225,255,0.6);
+      --title-glow-b: rgba(108,92,231,0.35);
+
+      /* === 新增：淡入参数（可调） === */
+      --page-fade-duration: 680ms;
+      --page-fade-ease: cubic-bezier(.22,.61,.36,1);
+      --page-start-scale: 0.985;
+      --page-glow-max: 0.25;
+    }
+
+    /* ===== 基础重置 ===== */
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; background: var(--bg-deep); overflow: hidden;
+      font-family: "Segoe UI","PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif; }
+
+    /* === 新增：整页淡入层与动画 === */
+    body {
+      opacity: 0;
+      transform: scale(var(--page-start-scale));
+      filter: drop-shadow(0 0 0 rgba(34,225,255,0)); /* 初始无光晕 */
+      transition:
+        opacity var(--page-fade-duration) var(--page-fade-ease),
+        transform var(--page-fade-duration) var(--page-fade-ease),
+        filter calc(var(--page-fade-duration) + 220ms) ease-out;
+    }
+    body.is-ready {
+      opacity: 1;
+      transform: scale(1);
+      /* 轻微氛围光，呈现更“科技感”的淡入 */
+      filter: drop-shadow(0 0 24px rgba(34,225,255,var(--page-glow-max)));
+    }
+
+    /* ===== 背景层 ===== */
+    .bg-nebula {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(1200px 800px at 70% 20%, rgba(58,123,213,0.18), transparent 60%),
+        radial-gradient(900px 700px at 30% 80%, rgba(123,67,255,0.14), transparent 60%),
+        linear-gradient(135deg, #05080f 0%, #0a0f1c 100%);
+      filter: saturate(115%);
+    }
+    canvas.bg-layer { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+    /* 细节覆盖层（低 z-index，避免压住前景） */
+    .scan, .noise { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
+    .scan {
+      background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(120,200,255,0.06) 50%, rgba(255,255,255,0) 100%);
+      background-size: 100% 16%;
+      animation: scanMove 7s linear infinite;
+      mix-blend-mode: screen; opacity: var(--scan-alpha);
+    }
+    @keyframes scanMove {
+      0% { background-position-y: 100%; }
+      100% { background-position-y: 0%; }
+    }
+    .noise {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="2" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity="0.035"/></svg>');
+      opacity: var(--noise-alpha); mix-blend-mode: overlay;
+    }
+
+    /* ===== HUD（最上层） ===== */
+    .hud {
+      position: fixed; z-index: 11; color: #e6faff;
+      font-size: 12px; letter-spacing: .08em;
+      display: grid; gap: 8px;
+      background: rgba(10,15,28,0.35);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px; padding: 12px 14px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 6px 24px rgba(0,0,0,.25);
+    }
+    .top-left { top: 20px; left: 20px; }
+    .top-right { top: 20px; right: 20px; }
+    .tag { opacity: .9; white-space: nowrap; }
+    .metric { display: flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+    .metric span { color: var(--text-weak); }
+    .metric b { font-weight: 600; color: #67e8f9; }
+
+    /* ===== 布局容器 ===== */
+    .container {
+      position: relative; z-index: 10; /* 提升至内容层之上 */
+      height: 100%; display: grid; place-items: center; padding: 24px;
+    }
+
+    /* ===== 中央卡片与保护遮罩 ===== */
+    .card {
+      position: relative;
+      border-radius: 24px;
+      background: transparent;
+      padding: 0;
+      width: min(92vw, 1100px);
+      /* 让中央视觉也有单独的微淡入（比页面略短一点） */
+      opacity: 0;
+      transform: translateY(8px);
+      transition:
+        opacity calc(var(--page-fade-duration) - 100ms) var(--page-fade-ease) 60ms,
+        transform calc(var(--page-fade-duration) - 100ms) var(--page-fade-ease) 60ms;
+    }
+    body.is-ready .card {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .mask-pane {
+      position: relative;
+      margin: 0 auto;
+      padding: 44px 52px 28px;
+      border-radius: 24px;
+      background: radial-gradient(120% 140% at 50% 40%, rgba(10,15,28,0.55), rgba(10,15,28,0.35) 60%, rgba(10,15,28,0.25) 100%);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.04);
+      z-index: 10;
+    }
+
+    /* ===== 标题 ===== */
+    .logo { width: 100%; height: auto; display: block; }
+    .line {
+      paint-order: stroke fill;
+      stroke: var(--title-stroke);
+      stroke-width: 3;
+      filter: drop-shadow(0 0 18px var(--title-glow-a)) drop-shadow(0 0 36px var(--title-glow-b));
+    }
+    .gradient-fill { fill: url(#grad); }
+    .word { opacity: 1; transform: translateY(0); filter: none; }
+    #cn text { font-size: 130px; }
+    #en text { font-size: 120px; letter-spacing: 4px; }
+
+    /* ===== 副标题与进度条（独立层叠上下文） ===== */
+    .progress-wrap{
+      position: relative;
+      z-index: 12;
+      margin-top: 6px;
+      /* 进度区域也同步淡入，稍后于卡片 */
+      opacity: 0;
+      transform: translateY(6px);
+      transition:
+        opacity calc(var(--page-fade-duration) - 40ms) var(--page-fade-ease) 120ms,
+        transform calc(var(--page-fade-duration) - 40ms) var(--page-fade-ease) 120ms;
+    }
+    body.is-ready .progress-wrap{
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 15px;
+      letter-spacing: .2em;
+      color: var(--text-soft);
+      margin: 0 0 10px 0;
+      white-space: nowrap;
+      text-shadow: 0 0 8px rgba(34,225,255,.25);
+    }
+    .progress {
+      width: 340px; height: 4px; border-radius: 4px;
+      background: rgba(255,255,255,0.09);
+      overflow: hidden; margin: 0 auto; position: relative;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+    }
+    .progress > span {
+      position: absolute; inset: 0; width: 38%;
+      background: linear-gradient(90deg, var(--brand-3), var(--brand-2), var(--brand-1));
+      border-radius: 4px; transform: translateX(-60%);
+      animation: bar 2.2s cubic-bezier(.4,.0,.2,1) infinite;
+      box-shadow: 0 0 16px rgba(34,225,255,0.35);
+    }
+    @keyframes bar {
+      0% { transform: translateX(-60%); }
+      50% { transform: translateX(80%); }
+      100% { transform: translateX(160%); }
+    }
+
+    /* ===== 模块胶囊（下移，避开进度条） ===== */
+    .capsule-row {
+      position: fixed; z-index: 9;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%) translateY(210px);
+      display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+      max-width: 92vw;
+      padding: 6px 10px;
+      background: rgba(10,15,28,0.25);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px;
+      backdrop-filter: blur(6px);
+      /* 胶囊比进度稍晚显现，避免层叠突兀 */
+      opacity: 0;
+      transform-origin: 50% 0;
+      transition: opacity var(--page-fade-duration) var(--page-fade-ease) 160ms;
+    }
+    body.is-ready .capsule-row { opacity: 1; }
+
+    .cap {
+      font-size: 12px; padding: 6px 12px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: #cfefff; letter-spacing: .1em;
+      position: relative; overflow: hidden;
+      white-space: nowrap;
+    }
+    .cap.on { border-color: rgba(34,225,255,0.35); box-shadow: 0 0 12px rgba(34,225,255,0.25) inset; }
+    .cap.load { border-color: rgba(108,92,231,0.35); box-shadow: 0 0 12px rgba(108,92,231,0.25) inset; }
+    .cap.off { opacity: .6; }
+
+    /* ===== 底部日志 ===== */
+    .log {
+      position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+      width: min(92vw, 900px);
+      color: #cfefff; font-size: 12px; letter-spacing: .06em;
+      z-index: 8; display: grid; gap: 6px;
+      opacity: 0;
+      transition: opacity var(--page-fade-duration) var(--page-fade-ease) 220ms;
+    }
+    body.is-ready .log { opacity: 1; }
+    .log .item {
+      opacity: 0; transform: translateY(6px);
+      transition: all .4s ease;
+      color: rgba(230,250,255,.85);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .log .item.show { opacity: 1; transform: translateY(0); }
+    .log .item .ts { color: rgba(255,255,255,.45); margin-right: 8px; }
+
+    /* ===== 响应式优化 ===== */
+    @media (max-width: 640px) {
+      #cn text { font-size: 72px; }
+      #en text { font-size: 50px; letter-spacing: 1px; }
+      .mask-pane { padding: 28px 20px 22px; }
+      .progress { width: 240px; }
+      .capsule-row { transform: translate(-50%,-50%) translateY(180px); }
+      .hud { display: none; }
+      .noise { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 背景星云与动态层 -->
+  <div class="bg-nebula"></div>
+  <canvas id="stars" class="bg-layer"></canvas>
+  <canvas id="grid" class="bg-layer"></canvas>
+  <canvas id="trails" class="bg-layer"></canvas>
+  <div class="scan"></div>
+  <div class="noise"></div>
+
+  <!-- HUD 顶部信息 -->
+  <div class="hud top-left" id="hud-left">
+    <div class="tag">Env: Prod</div>
+    <div class="tag">Build: 2025.10.09-rc3</div>
+    <div class="tag">Version: 1.2.5</div>
+  </div>
+  <div class="hud top-right" id="hud-right">
+    <div class="metric"><span>GPU</span><b id="gpu">63%</b></div>
+    <div class="metric"><span>Mem</span><b id="mem">44%</b></div>
+    <div class="metric"><span>Latency</span><b id="lat">31ms</b></div>
+  </div>
+
+  <!-- 中心内容：标题 + 进度条（受 mask-pane 保护，避免被背景穿透） -->
+  <div class="container">
+    <div class="card" id="card">
+      <div class="mask-pane">
+        <svg class="logo" viewBox="0 0 1200 500" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="威智慧眼 VisionWiz">
+          <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="var(--brand-1)" />
+              <stop offset="100%" stop-color="var(--brand-3)" />
+            </linearGradient>
+          </defs>
+          <g class="word" id="cn">
+            <text x="50%" y="45%" text-anchor="middle" class="line gradient-fill">威智慧眼</text>
+          </g>
+          <g class="word" id="en">
+            <text x="50%" y="70%" text-anchor="middle" class="line gradient-fill">VisionWiz</text>
+          </g>
+        </svg>
+
+        <div class="progress-wrap">
+          <div class="subtitle" id="subtitle">Loading perception engine...</div>
+          <div class="progress"><span></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模块状态胶囊（整体下移，避免与进度条叠） -->
+  <div class="capsule-row" id="capsules">
+    <span class="cap on">Perception</span>
+    <span class="cap on">Inference</span>
+    <span class="cap load">Routing</span>
+    <span class="cap off">Storage</span>
+    <span class="cap on">Streaming</span>
+    <span class="cap load">Scheduler</span>
+  </div>
+
+  <!-- 初始化日志 -->
+  <div class="log" id="log"></div>
+
+  <script>
+    // 页面就绪后触发整页淡入
+    (function(){
+      const ready = () => document.body.classList.add('is-ready');
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        requestAnimationFrame(ready);
+      } else {
+        document.addEventListener('DOMContentLoaded', ready);
+      }
+    })();
+
+    // ===== 公用 =====
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    function setupCanvas(canvas) {
+      const ctx = canvas.getContext('2d');
+      function resize() {
+        canvas.width = Math.floor(innerWidth * DPR);
+        canvas.height = Math.floor(innerHeight * DPR);
+        canvas.style.width = innerWidth + 'px';
+        canvas.style.height = innerHeight + 'px';
+      }
+      resize();
+      window.addEventListener('resize', resize);
+      return ctx;
+    }
+
+    // ===== 星空 =====
+    (function () {
+      const canvas = document.getElementById('stars');
+      const ctx = setupCanvas(canvas);
+      let w = canvas.width, h = canvas.height;
+
+      function refreshSize() { w = canvas.width; h = canvas.height; }
+      window.addEventListener('resize', refreshSize);
+
+      let stars = [];
+      function initStars() {
+        const count = Math.min(260, Math.floor((w * h) / (18000 * DPR)));
+        stars = new Array(count).fill(0).map(() => ({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          r: Math.random() * (1.4 * DPR) + (0.2 * DPR),
+          a: Math.random() * Math.PI * 2,
+          s: Math.random() * 0.3 + 0.05,
+          tw: Math.random() * 0.8 + 0.2
+        }));
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        for (const st of stars) {
+          st.a += 0.01 * st.tw;
+          st.x += Math.cos(st.a) * st.s;
+          st.y += Math.sin(st.a) * st.s;
+
+          if (st.x < -5) st.x = w + 5;
+          if (st.x > w + 5) st.x = -5;
+          if (st.y < -5) st.y = h + 5;
+          if (st.y > h + 5) st.y = -5;
+
+          const twinkle = 0.6 + Math.sin(st.a * 2.3) * 0.4;
+          const radius = st.r * (0.8 + Math.sin(st.a) * 0.2);
+          const g = ctx.createRadialGradient(st.x, st.y, 0, st.x, st.y, radius * 6);
+          g.addColorStop(0, `rgba(103, 232, 249, ${0.7 * twinkle})`);
+          g.addColorStop(0.5, `rgba(124, 58, 237, ${0.25 * twinkle})`);
+          g.addColorStop(1, 'rgba(10,15,28,0)');
+
+          ctx.beginPath();
+          ctx.fillStyle = g;
+          ctx.arc(st.x, st.y, radius * 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        requestAnimationFrame(draw);
+      }
+
+      initStars();
+      draw();
+      window.addEventListener('resize', initStars);
+    })();
+
+    // ===== 动态网格 =====
+    (function () {
+      const canvas = document.getElementById('grid');
+      const ctx = setupCanvas(canvas);
+      let w = canvas.width, h = canvas.height;
+      function refreshSize() { w = canvas.width; h = canvas.height; }
+      window.addEventListener('resize', refreshSize);
+
+      let t = 0;
+      function draw() {
+        t += 0.005;
+        ctx.clearRect(0, 0, w, h);
+
+        ctx.globalAlpha = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--grid-alpha')) || 0.12;
+        ctx.strokeStyle = '#7dd3fc';
+        ctx.lineWidth = 1;
+
+        const gap = 48 * DPR;
+        for (let y = 0; y < h + gap; y += gap) {
+          ctx.beginPath();
+          for (let x = 0; x < w + gap; x += gap) {
+            const ny = Math.sin((x * 0.001 + t)) * 6 * DPR;
+            const px = x, py = y + ny;
+            x === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+        }
+
+        ctx.globalAlpha = 0.1;
+        ctx.strokeStyle = '#a78bfa';
+        for (let x = 0; x < w + gap; x += gap) {
+          ctx.beginPath();
+          for (let y = 0; y < h + gap; y += gap) {
+            const nx = Math.cos((y * 0.001 + t)) * 6 * DPR;
+            const px = x + nx, py = y;
+            y === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+        }
+
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    // ===== 数据流轨迹 =====
+    (function () {
+      const canvas = document.getElementById('trails');
+      const ctx = setupCanvas(canvas);
+      let w = canvas.width, h = canvas.height;
+      function refreshSize() { w = canvas.width; h = canvas.height; }
+      window.addEventListener('resize', refreshSize);
+
+      function makeTrails() {
+        const base = [0.22, 0.34, 0.46, 0.58];
+        return base.map((by, i) => ({
+          c1: { x: 0.15 * w, y: by * h },
+          c2: { x: 0.85 * w, y: (by + 0.1) * h },
+          speed: 0.001 + i * 0.00025,
+          offset: Math.random()
+        }));
+      }
+      let trails = makeTrails();
+      window.addEventListener('resize', () => trails = makeTrails());
+
+      function bezier(p0, p1, p2, p3, t) {
+        const u = 1 - t, tt = t * t, uu = u * u, uuu = uu * u, ttt = tt * t;
+        return {
+          x: uuu * p0.x + 3 * uu * t * p1.x + 3 * u * tt * p2.x + ttt * p3.x,
+          y: uuu * p0.y + 3 * uu * t * p1.y + 3 * u * tt * p2.y + ttt * p3.y
+        };
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        const alpha = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--trail-alpha')) || 0.10;
+
+        trails.forEach((tr, i) => {
+          const p0 = { x: 0.05 * w, y: tr.c1.y * 0.92 };
+          const p1 = tr.c1, p2 = tr.c2, p3 = { x: 0.95 * w, y: tr.c2.y * 1.04 };
+
+          ctx.globalAlpha = alpha;
+          const grad = ctx.createLinearGradient(p0.x, p0.y, p3.x, p3.y);
+          grad.addColorStop(0, getComputedStyle(document.documentElement).getPropertyValue('--brand-2').trim() || '#22e1ff');
+          grad.addColorStop(1, getComputedStyle(document.documentElement).getPropertyValue('--brand-3').trim() || '#6c5ce7');
+          ctx.strokeStyle = grad; ctx.lineWidth = 2; ctx.beginPath();
+          for (let t = 0; t <= 1; t += 0.02) {
+            const p = bezier(p0, p1, p2, p3, t);
+            t === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+          }
+          ctx.stroke();
+
+          const T = (performance.now() * tr.speed * 0.06 + tr.offset) % 1;
+          const p = bezier(p0, p1, p2, p3, T);
+          const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 18 * DPR);
+          g.addColorStop(0, 'rgba(103,232,249,0.9)');
+          g.addColorStop(0.6, 'rgba(124,58,237,0.35)');
+          g.addColorStop(1, 'rgba(10,15,28,0)');
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = g;
+          ctx.beginPath(); ctx.arc(p.x, p.y, 6 * DPR, 0, Math.PI * 2); ctx.fill();
+        });
+
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    // ===== 副标题轮播 =====
+    (function () {
+      const subtitle = document.getElementById('subtitle');
+      const subtitles = [
+        "Loading perception engine...",
+        "Calibrating inference graph...",
+        "Activating VisionWiz core...",
+        "Optimizing pipelines...",
+        "Initializing modules..."
+      ];
+      let idx = 0;
+      setInterval(() => {
+        idx = (idx + 1) % subtitles.length;
+        subtitle.style.opacity = 0;
+        setTimeout(() => {
+          subtitle.textContent = subtitles[idx];
+          subtitle.style.opacity = 1;
+        }, 220);
+      }, 1500);
+    })();
+
+    // ===== HUD 数值模拟 =====
+    (function () {
+      const gpu = document.getElementById('gpu');
+      const mem = document.getElementById('mem');
+      const lat = document.getElementById('lat');
+      setInterval(() => {
+        const g = 58 + Math.floor(Math.random() * 10);
+        const m = 40 + Math.floor(Math.random() * 8);
+        const l = 28 + Math.floor(Math.random() * 7);
+        if (gpu) gpu.textContent = g + '%';
+        if (mem) mem.textContent = m + '%';
+        if (lat) lat.textContent = l + 'ms';
+      }, 900);
+    })();
+
+    // ===== 初始化日志 =====
+    (function(){
+      const el = document.getElementById('log');
+      const lines = [
+        'Load camera drivers...',
+        'Warmup transformer layers...',
+        'Init Vision pipeline...',
+        'Boot kernel modules...',
+        'Register inference services...',
+        'Start streaming gateway...',
+        'Seal security context...',
+      ];
+      let i = 0;
+      function push() {
+        const div = document.createElement('div');
+        div.className = 'item';
+        const ts = new Date().toLocaleTimeString();
+        div.innerHTML = `<span class="ts">[${ts}]</span>${lines[i % lines.length]}`;
+        el.prepend(div);
+        requestAnimationFrame(() => div.classList.add('show'));
+        i++;
+        while (el.children.length > 6) el.lastChild.remove();
+      }
+      setInterval(push, 900);
+      push(); setTimeout(push, 320);
+    })();
+
+    // ===== 轻微视差（桌面端） =====
+    (function(){
+      if (isMobile) return;
+      const target = document.getElementById('card');
+      if (!target) return;
+      let cx = 0, cy = 0;
+      window.addEventListener('mousemove', e => {
+        const x = (e.clientX / innerWidth - 0.5) * 4;
+        const y = (e.clientY / innerHeight - 0.5) * 4;
+        cx = x; cy = y;
+      });
+      function tick(){
+        target.style.transform = `rotateX(${ -cy*0.25 }deg) rotateY(${ cx*0.25 }deg)`;
+        requestAnimationFrame(tick);
+      }
+      tick();
+    })();
+  </script>
+</body>
 </html>
