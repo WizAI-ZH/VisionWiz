@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src_zht_ver"],
+  "compilerOptions": {
+    "outDir": "dist_zht"
+  }
+}

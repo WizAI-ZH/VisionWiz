@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src_eng_ver"],
+  "compilerOptions": {
+    "outDir": "dist_eng"
+  }
+}

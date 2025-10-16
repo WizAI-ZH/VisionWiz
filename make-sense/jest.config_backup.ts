@@ -1,34 +1,35 @@
 import type { Config } from '@jest/types';
 
-const SRC_DIR = process.env.SRC_DIR || 'src';
-
+// Sync object
 const config: Config.InitialOptions = {
   rootDir: process.cwd(),
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   transformIgnorePatterns: [],
   testEnvironment: 'jsdom',
-  roots: [`<rootDir>/${SRC_DIR}`],
-  setupFilesAfterEnv: [`<rootDir>/${SRC_DIR}/configureTest.ts`],
+  roots: ["<rootDir>/src"],
+  setupFilesAfterEnv: ["<rootDir>/src/configureTest.ts"],
   transform: {
     "^.+(t|j)sx?$": [
       "@swc/jest",
       {
         jsc: {
           transform: {
-            react: { runtime: 'automatic' },
+            react: {
+              runtime: 'automatic',
+            },
           },
         },
       },
     ],
   },
-  moduleNameMapper: {
+  "moduleNameMapper": {
     "\\.(css|scss|less)$": "identity-obj-proxy"
   },
   extensionsToTreatAsEsm: [".ts", ".tsx"],
   collectCoverageFrom: [
     "**/*.{ts,tsx}",
     "!**/node_modules/**",
-    "!**/dist*/**",
+    "!**/dist/**",
     "!**/coverage/**",
   ],
 };

@@ -24,7 +24,7 @@ const ContactUsPopup: React.FC = () => {
                     />
                 </div>
                 <div className="Address">
-                    <strong>聯繫地址：</strong>珠海市橫琴天河街28號105室-265
+                    <strong>聯繫地址：</strong>橫琴粵澳深度合作區琴朗道91號304辦公
                 </div>
             </div>
             <div className='Footer'>

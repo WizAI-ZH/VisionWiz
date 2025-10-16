@@ -4,8 +4,8 @@
 // 根据GPLv3或更高版本的条款进行许可  
 // 请参阅LICENSE文件以获取详细信息
 
-const { BrowserWindow, ipcMain } = require('electron');  
-const path = require('path');  
+const { BrowserWindow, ipcMain, Menu } = require('electron');
+const path = require('path');
 
 const titlename = {
   en: "Make-Sense",
@@ -13,25 +13,37 @@ const titlename = {
   zht: "慧標"
 }
 
-function createMakeSenseWindow(language) {  
+function createMakeSenseWindow(language) {
   // 创建 make-sense 窗口  
-  const makeSenseWindow = new BrowserWindow({  
-    width: 1200,  
-    height: 800,  
+  const makeSenseWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
     autoHideMenuBar: true,
-    icon: path.join(__dirname,'icons','make-sense-ico.png'), //程序的图标
+    icon: path.join(__dirname, 'icons', 'make-sense-ico.png'),
     title: titlename[language],
-    webPreferences: {  
-      nodeIntegration: true, 
+    webPreferences: {
+      nodeIntegration: true,
       contextIsolation: false,
       preload: path.join(__dirname, 'preload_loader.js'),
-    },  
-  });  
+    },
+  });
+
+  // ✅ 彻底禁用菜单栏（防止 Alt 键触发）
+  makeSenseWindow.setMenuBarVisibility(false);
+  makeSenseWindow.setAutoHideMenuBar(true);
+  
+  // ✅ 只阻止【单独按下 Alt 键】，不影响 Alt+其他键的组合
+  makeSenseWindow.webContents.on('before-input-event', (event, input) => {
+    // 只拦截：单独按 Alt 键（没有其他按键组合）
+    if (input.key === 'Alt' && input.type === 'keyDown') {
+      event.preventDefault();
+    }
+  });
 
   // 加载 make-sense 的 index.html 
-  makeSenseWindow.loadFile(path.join(__dirname,'tools', 'make-sense-'+language , 'index.html'));  
-  // makeSenseWindow.loadFile(path.join(__dirname, 'make-sense','dist' , 'index.html'));  
-  // makeSenseWindow.webContents.openDevTools({ mode: 'detach' })
-}  
+  makeSenseWindow.loadFile(path.join(__dirname, 'tools', 'make-sense-' + language, 'index.html'));
 
-module.exports = {createMakeSenseWindow};
+  // makeSenseWindow.webContents.openDevTools({ mode: 'detach' });
+}
+
+module.exports = { createMakeSenseWindow };

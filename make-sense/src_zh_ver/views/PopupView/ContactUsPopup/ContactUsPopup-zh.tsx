@@ -1,6 +1,6 @@
 import React from 'react';  
 import { connect } from 'react-redux'
-import { AppState } from '../../../store';;
+import { AppState } from '../../../store';
 import './ContactUsPopup.scss';  
 import { PopupActions } from '../../../logic/actions/PopupActions';  
 import { GenericYesNoPopup } from '../GenericYesNoPopup/GenericYesNoPopup';
@@ -25,7 +25,7 @@ const ContactUsPopup: React.FC = () => {
                     />  
                 </div>  
                 <div className="Address">  
-                    <strong>联系地址：</strong>珠海市横琴天河街28号105室-265  
+                    <strong>联系地址：</strong>横琴粤澳深度合作区琴朗道91号304办公  
                 </div>  
             </div>  
             <div className="CloseButton" onClick={onClose}>  

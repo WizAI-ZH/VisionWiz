@@ -44,6 +44,11 @@ index-old.html
 forge.config_waste.js
 package_backup.json
 
+#备份文件
+backup/
+make-sense/src_backup/
+make-sense/jest.config_backup.js
+
 #make-sense相关
 # ide
 .idea/
@@ -115,3 +120,6 @@ package_forge_backup.js
 package_new_backup.json
 yarn.lock
 .yarn/install-state.gz
+make-sense/dist_eng/
+make-sense/dist_zh/
+make-sense/dist_zht/

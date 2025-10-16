@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux'
-import { AppState } from '../../../store';;
+import { AppState } from '../../../store';
 import './ContactUsPopup.scss';
 import { PopupActions } from '../../../logic/actions/PopupActions';
 import { GenericYesNoPopup } from '../GenericYesNoPopup/GenericYesNoPopup';
@@ -27,7 +27,7 @@ const ContactUsPopup: React.FC = () => {
                     />
                 </div>
                 <div className="Address">
-                    <strong>Contact Address:</strong> Room 105-265, No. 28 Tianhe Street, Hengqin, Zhuhai
+                    <strong>Contact Address:</strong> Room 304, No. 91 Qinlang Road, Hengqin Guangdong-Macao In-Depth Cooperation Zone
                 </div>
             </div>
             <div className="Footer">
