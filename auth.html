@@ -218,14 +218,12 @@
       const list = (await authAPI.getPorts()) || [];
       const pathArr = list.map((p) => p.path);
 
-
       /* ①  如果当前已连接，但端口已不在列表 ⇒ 立即视为掉线 */
-      if (is_connected && currentPortPath && !pathArr.includes(currentPortPath)) {   // ★★ 新  
-        document.getElementById('status').innerHTML =
-          '⚠️ 已断开连接 (Disconnected)';
+      if (is_connected && currentPortPath && !pathArr.includes(currentPortPath)) {
+        document.getElementById('status').innerHTML = '⚠️ 已断开连接 (Disconnected)';
         is_connected = false;
-        authAPI.disconnect();                 // 触发主进程逻辑  
-        // UI 切回待连接状态  
+        authAPI.disconnect(); // 触发主进程逻辑
+        // UI 切回待连接状态
         toggleUI(false);
       }
 
@@ -235,21 +233,32 @@
       /* 仅在变化时重绘 ↓ */
       sel.innerHTML = "";
       if (!list.length) {
-        sel.innerHTML =
-          "<option value=''>未检测到设备(No device detected)</option>";
+        // 提示语也可以稍微改得更友好一点
+        sel.innerHTML = "<option value=''>未检测到 WCH 设备 (No WCH device)</option>";
         sel.disabled = true;
+        // 这里不需要再次 disconnect，因为上面的逻辑①已经处理了掉线情况，
+        // 但为了双重保险保留也无妨，或者仅在连接状态下调用
         if (is_connected) authAPI.disconnect();
       } else {
         list.forEach((p) => {
           const o = document.createElement("option");
           o.value = p.path;
-          o.textContent = `${p.path} (CH340)`;
+
+          // ★★ 修改处：判断 PID 来显示更准确的名称，或者直接统称为 WCH-USB ★★
+          let chipName = "CH34x";
+          if (['7523', '5523'].includes(p.productId)) {
+            chipName = "CH340";
+          } else if (['55D4', '55D3'].includes(p.productId)) {
+            chipName = "CH343";
+          }
+
+          // 显示格式例如: COM3 (CH340) 或 /dev/ttyUSB0 (CH343)
+          o.textContent = `${p.path} (${chipName})`;
           sel.appendChild(o);
         });
         sel.disabled = false;
       }
     }
-
     // =========== 主进程推送事件 ===========
     authAPI.onAuthSuccess(() => {
       // ★

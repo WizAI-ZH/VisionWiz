@@ -1,6 +1,6 @@
 {
   "name": "VisionWiz",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "威智的AI工具",
   "main": "main_bootstrap.js",
   "author": "曹振威",
@@ -12,7 +12,7 @@
     "start:protect": "electron .",
     "start:protectfull": "electron .",
     "dev:protect": "chcp 65001 && npm run start:protect",
-    "dev:protectfull": "chcp 65001 && npm run start:protectfull",
+    "dev:protectfull": "chcp 65001 && cnpm install && npm run start:protectfull",
     "get-struct": "powershell -ExecutionPolicy Bypass -File get_project_structure_tree.ps1",
     "compile": "node compile.js",
     "compile:inc": "node scripts/compile-in-electron-incremental.js",
@@ -27,6 +27,7 @@
     "build:dir": "electron-builder --dir",
     "package": "node --trace-deprecation package.js",
     "package-onekey": "chcp 65001 && npm run compile:full && node --trace-deprecation package.js",
+    "release-package-onekey_ps": "powershell -NoProfile -Command \"chcp 65001 >$null; npm run compile:full; node --trace-deprecation package.js\"",
     "postinstall": "electron-builder install-app-deps"
   },
   "build": {

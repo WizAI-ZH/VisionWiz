@@ -247,7 +247,6 @@ class Train():
             log.i("没有GPU，将使用[CPU]。No GPU, will use [CPU].")
         else:
             log.i(f"选择的GPU: {gpu}. Selected GPU: {gpu}.")
-
         # 启动训练
         try:
             classifier = Classifier(datasets_zip=self.datasets_zip_path, datasets_cls_dir=self.datasets_cls_dir,
@@ -323,6 +322,16 @@ class Train():
         # print("-" * 10 + "训练开始前(before train start) " + "-" * 10)
         
         try:
+            log.i("detector train start")
+            log.i("config:")
+            log.i("self.datasets_zip_path: ", self.datasets_zip_path)
+            log.i("self.datasets_img_dir: ", self.datasets_img_dir)
+            log.i("self.datasets_xml_dir: ", self.datasets_xml_dir)
+            log.i("self.temp_datasets_dir: ", self.temp_datasets_dir)
+            log.i("self.alpha: ", self.alpha)
+            log.i("detector_train_max_classes_num: ", config.detector_train_max_classes_num)
+            log.i("detector_train_one_class_min_img_num: ", config.detector_train_one_class_min_img_num)
+            log.i("detector_train_one_class_max_img_num: ", config.detector_train_one_class_max_img_num)
             detector = Detector(input_shape=(224, 224, 3),
                                 datasets_zip=self.datasets_zip_path,
                                 datasets_img_dir=self.datasets_img_dir,
@@ -337,6 +346,7 @@ class Train():
         except Exception as e:
             # log.e("train datasets not valid: {}".format(e))
             log.e("数据集无效: {}. Train datasets not valid: {}".format(e, e))
+            log.e("(错误跟踪)Traceback:\n" + traceback.format_exc())
             raise Exception((TrainFailReason.ERROR_PARAM, "数据集无效: {}. Datasets not valid: {}".format(str(e), str(e))))
         try:
             if self.alpha == '0.75':
@@ -428,26 +438,64 @@ class Train():
         shutil.make_archive(os.path.splitext(out_zip_file_path)[0], "zip", dir_path)
 
     def convert_to_kmodel(self, tf_lite_path, kmodel_path, ncc_path, images_path):
-        '''
-            @ncc_path ncc 可执行程序路径
-            @return (ok, msg) 是否出错 (bool, str)
-        '''
-        print([ncc_path, "-i", "tflite", "-o", "k210model", "--dataset", images_path, tf_lite_path, kmodel_path])
-        p = subprocess.Popen(
-            [ncc_path, "-i", "tflite", "-o", "k210model", "--dataset", images_path, tf_lite_path, kmodel_path],
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        """
+        @ncc_path ncc 可执行程序路径
+        @return (ok, msg) 是否出错 (bool, str)
+        """
+        cmd = [ncc_path, "-i", "tflite", "-o", "k210model", "--dataset", images_path, tf_lite_path, kmodel_path]
+        print(cmd)
+
+        def _to_text(x):
+            """把任意对象稳定转为 str（用于日志/错误信息展示）"""
+            if x is None:
+                return ""
+            if isinstance(x, str):
+                return x
+            if isinstance(x, (bytes, bytearray, memoryview)):
+                b = bytes(x)
+                # 常见情况：工具输出多为 utf-8；Windows 下可能是 gbk
+                for enc in ("utf-8", "gbk"):
+                    try:
+                        return b.decode(enc)
+                    except Exception:
+                        pass
+                # 兜底：不报错，替换无法解码字符
+                return b.decode("utf-8", errors="replace")
+            # 兜底：其它类型
+            try:
+                return str(x)
+            except Exception:
+                try:
+                    return repr(x)
+                except Exception:
+                    return "<unprintable>"
+
         try:
+            p = subprocess.Popen(
+                cmd,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
             output, err = p.communicate()
-            res = p.returncode
+            rc = p.returncode
         except Exception as e:
-            print("[错误ERROR] ", e)
-            return False, str(e)
-        res = p.returncode
-        if res == 0:
+            return False, f"运行 ncc 失败(run ncc failed): {e}\ncmd: {cmd}"
+
+        out_s = _to_text(output).strip()
+        err_s = _to_text(err).strip()
+
+        if rc == 0:
             return True, "ok"
-        else:
-            print("[错误ERROR] ", res, output, err)
-        return False, f"output:\n{output.encode('gpk')}\nerror:\n{err.encode('gpk')}"
+
+        # 失败时，把 returncode、stdout、stderr 都带上，且保证不会再因编码问题崩
+        return False, (
+            "ncc convert failed\n"
+            f"returncode: {rc}\n"
+            f"cmd: {cmd}\n"
+            f"stdout:\n{out_s}\n"
+            f"stderr:\n{err_s}\n"
+        )
 
 
 if __name__ == "__main__":

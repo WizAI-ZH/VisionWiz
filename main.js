@@ -389,7 +389,7 @@ function createAuthWindow() {
     frame: true,
     webPreferences: {
       preload: path.join(__dirname, "authpreload.js"),
-      backgroundThrottling: false
+      backgroundThrottling: false // 防止被后台挂起
     },
   });
   authWindow.loadFile("auth.html");

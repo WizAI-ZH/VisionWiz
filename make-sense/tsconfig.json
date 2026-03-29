@@ -24,7 +24,6 @@
     "strictNullChecks": false,
     "noImplicitReturns": true,
     "noImplicitThis": true,
-    "suppressImplicitAnyIndexErrors": true,
     "noImplicitAny": false,
     "strictPropertyInitialization": false,
     "noFallthroughCasesInSwitch": true,

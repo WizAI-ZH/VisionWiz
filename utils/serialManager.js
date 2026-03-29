@@ -8,13 +8,25 @@ const delay = ms => new Promise(r => setTimeout(r, ms));
 console.log('[serialmanager] module loaded');
 let currentAuth = null;  
 
-/* ---------- CH340 端口列表 ---------- */  
-async function refreshPortList() {  
-  const all = await SerialPort.list();  
+/* ---------- WCH (CH340/CH341/CH343) 端口列表 ---------- */
+async function refreshPortList() {
+  const all = await SerialPort.list();
   // console.log(all);
-  return all.filter(p => p.vendorId === '1A86' && ['7523', '5523'].includes(p.productId));  
-}  
 
+  // 1A86 是沁恒 (WCH) 的 Vendor ID
+  return all.filter(p => {
+    if (p.vendorId !== '1A86') return false;
+
+    // productId 列表：
+    // 7523, 5523: 常见的 CH340
+    // 55D4: 常见的 CH343
+    // 55D3: CH343 的另一种模式
+    // 7522: CH341
+    const supportedPids = ['7523', '5523', '55D4', '55D3', '7522'];
+    
+    return supportedPids.includes(p.productId);
+  });
+}
 
 /* ---------- 复位：拉低 DTR 50 ms，再拉高 ---------- */
 async function hardwareReset(path) {  
