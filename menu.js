@@ -1,7 +1,7 @@
 const { Menu } = require('electron');
 let currentLanguage
 let currentView = 'Wizhome'
-let VisionWiz_version = "V1.2.5";
+let VisionWiz_version = "V1.2.6";
 
 //菜单本地化数据翻译
 const languages = {

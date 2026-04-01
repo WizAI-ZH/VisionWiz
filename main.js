@@ -4,7 +4,7 @@
 // 请参阅LICENSE文件以获取详细信息
 // main.js
 console.log('[MAIN] marker', new Date().toISOString());
-const VisionWiz_version = "V1.2.5";
+const VisionWiz_version = "V1.2.6";
 // process.on('uncaughtException', e => console.error('[FATAL] uncaughtException:', e));
 // process.on('unhandledRejection', r => console.error('[FATAL] unhandledRejection:', r));
 const {
