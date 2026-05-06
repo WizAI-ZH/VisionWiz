@@ -1,4 +1,4 @@
-# 原始版权所有 (C) [2020] [Sipeed]
+﻿# 原始版权所有 (C) [2020] [Sipeed]
 # 版权所有 (C) [2024] [珠海威智人工智能有限公司]  
 # 根据GPLv3或更高版本的条款进行许可  
 # 请参阅LICENSE文件以获取详细信息
@@ -71,6 +71,7 @@ def test(model_path,test_path=None):
     info_dir = curr_dir / 'out' / model_path / 'info.json'
     with open(info_dir, 'r', encoding='utf-8') as f:
         data = json.loads(f.read())
+    input_shape = data.get('input_shape', [224, 224, 3])
 
     ty = getanchors(model_path)
     data['anchors'] = ty
@@ -81,7 +82,7 @@ def test(model_path,test_path=None):
     yolo = create_yolo('MobileNet',
                        ty[0], 
                        alpha=float(data['alpha']),
-                       input_size=[224, 224, 3],
+                       input_size=input_shape,
                        anchors=ty[1])
 
     yolo.load_weights(curr_dir / 'out' / model_path / 'mx_best.h5', by_name=True)

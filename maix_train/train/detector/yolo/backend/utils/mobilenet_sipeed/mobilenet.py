@@ -1,4 +1,4 @@
-"""MobileNet v1 models for Keras.
+﻿"""MobileNet v1 models for Keras.
 
 MobileNet is a general architecture and can be used for multiple use cases.
 Depending on the use case, it can use different input layer size and
@@ -154,13 +154,16 @@ def MobileNet(input_shape=None,
     backend, layers, models, keras_utils = get_submodules_from_kwargs(kwargs)
 
     if not (weights in {'imagenet', None} or os.path.exists(weights)):
-        raise ValueError('`weights` 参数应为 `None`(随机初始化)、`imagenet`(在 ImageNet 上预训练)，'  
-                 '或要加载的权重文件的路径。The `weights` argument should be either `None` (random initialization), '  
-                 '`imagenet` (pre-training on ImageNet), or the path to the weights file to be loaded.')
+        raise ValueError(
+            'The `weights` argument should be either `None`, `imagenet`, '
+            'or the path to the weights file to be loaded.'
+        )
 
     if weights == 'imagenet' and include_top and classes != 1000:
-        raise ValueError('如果使用 `weights` 为 `"imagenet"` 且 `include_top` 为 true，'  
-                 '`classes` 应为 1000。If using `weights` as `"imagenet"` with `include_top` as true, `classes` should be 1000.')
+        raise ValueError(
+            'If using `weights="imagenet"` with `include_top=True`, '
+            '`classes` should be 1000.'
+        )
 
     # Determine proper input shape and default size.
     if input_shape is None:
@@ -194,10 +197,13 @@ def MobileNet(input_shape=None,
 
     if weights == 'imagenet':
         if depth_multiplier != 1:
-            raise ValueError('如果加载的是 ImageNet 权重，深度乘数必须为 1. If ImageNet weights are being loaded, depth multiplier must be 1')
+            raise ValueError('如果加载的是 ImageNet 权重，depth multiplier 必须为 1。If ImageNet weights are being loaded, depth multiplier must be 1.')
 
         if alpha not in [0.25, 0.50, 0.75, 1.0]:
-            raise ValueError('如果加载的是 ImageNet 权重，alpha 只能是 `0.25`、`0.50`、`0.75` 或 `1.0` 之一。If ImageNet weights are being loaded, alpha can be one of `0.25`, `0.50`, `0.75`, or `1.0` only.')
+            raise ValueError(
+                'If ImageNet weights are being loaded, alpha can be one of '
+                '`0.25`, `0.50`, `0.75`, or `1.0` only.'
+            )
 
         '''if rows != cols or rows not in [128, 160, 192, 224]:
             rows = 224
@@ -207,14 +213,15 @@ def MobileNet(input_shape=None,
                           ' loaded as the default.')'''
         
     if backend.image_data_format() != 'channels_last':
-        warnings.warn('MobileNet 模型系列仅适用于输入数据格式 "channels_last" (宽度, 高度, 通道)。'  
-              '然而，您的设置指定了默认数据格式 "channels_first" (通道, 宽度, 高度)。'  
-              '您应该在 ~/.keras/keras.json 中的 Keras 配置中设置 `image_data_format="channels_last"`。'  
-              '当前返回的模型将期望输入遵循 "channels_last" 数据格式。'  
-              'The MobileNet family of models is only available for the input data format "channels_last" (width, height, channels). '  
-              'However your settings specify the default data format "channels_first" (channels, width, height). '  
-              'You should set `image_data_format="channels_last"` in your Keras config located at ~/.keras/keras.json. '  
-              'The model being returned right now will expect inputs to follow the "channels_last" data format.')
+        warnings.warn(
+            'The MobileNet family of models is only available for the input '
+            'data format "channels_last" (width, height, channels). '
+            'However your settings specify the default data format '
+            '"channels_first" (channels, width, height). You should set '
+            '`image_data_format="channels_last"` in your Keras config '
+            'located at ~/.keras/keras.json. The model being returned right '
+            'now will expect inputs to follow the "channels_last" data format.'
+        )
         backend.set_image_data_format('channels_last')
         old_data_format = 'channels_first'
     else:
@@ -253,7 +260,7 @@ def MobileNet(input_shape=None,
         x = _depthwise_conv_block(x, 1024, alpha, depth_multiplier,
                               strides=(1, 1), block_id=12)
     else:
-        raise Exception("total_strip_size 不支持，只支持 16 和 32. total_strip_size not supported, only supports 16 and 32")
+        raise Exception("total_strip_size 不支持，仅支持 16 和 32。total_strip_size not supported, only supports 16 and 32")
     x = _depthwise_conv_block(x, 1024, alpha, depth_multiplier, block_id=13)
 
     if include_top:
@@ -289,7 +296,7 @@ def MobileNet(input_shape=None,
     # Load weights.
     if weights == 'imagenet':
         if backend.image_data_format() == 'channels_first':
-            raise ValueError('不提供 "channels_first" 格式的权重。Weights for "channels_first" format are not available.')
+            raise ValueError('Weights for "channels_first" format are not available.')
         if alpha == 1.0:
             alpha_text = '1_0'
         elif alpha == 0.75:
@@ -305,8 +312,7 @@ def MobileNet(input_shape=None,
            
         else:
             pass
-            '''不加载权重
-            model_name = 'mobilenet_%s_%d_tf_no_top.h5' % (alpha_text, rows)
+            '''涓嶅姞杞芥潈閲?            model_name = 'mobilenet_%s_%d_tf_no_top.h5' % (alpha_text, rows)
             weight_path = BASE_WEIGHT_PATH + model_name
             weights_path = keras_utils.get_file(model_name,
                                                 weight_path,
@@ -314,22 +320,25 @@ def MobileNet(input_shape=None,
         model.load_weights('mobilenet_7_5_224_tf_no_top.h5')
         '''
     elif weights is not None:
-        if alpha == 1.0:
-            alpha_text = '1_0'
-        elif alpha == 0.75:
-            alpha_text = '7_5'
-        elif alpha == 0.50:
-            alpha_text = '5_0'
+        weights_path = str(weights)
+        if os.path.exists(weights_path):
+            model.load_weights(weights_path)
         else:
-            alpha_text = '2_5'
-        model_name = 'mobilenet_%s_%d_tf_no_top.h5' % (alpha_text, rows)
-        try:
-            weights=os.path.join(os.getcwd(),'maix_train/train/detector/weights',model_name)
-            model.load_weights(weights)
-        except:
-            weights=os.path.join(os.getcwd(),'resources/maix_train/train/detector/weights',model_name)
-            model.load_weights(weights)
-        print(f"加载本地权重文件(Load local weight file): {weights}")
+            model_name = os.path.basename(weights_path)
+            local_candidates = [
+                os.path.join(os.getcwd(), 'maix_train/train/detector/weights', model_name),
+                os.path.join(os.getcwd(), 'resources/maix_train/train/detector/weights', model_name),
+            ]
+            loaded = False
+            for candidate in local_candidates:
+                if os.path.exists(candidate):
+                    model.load_weights(candidate)
+                    weights_path = candidate
+                    loaded = True
+                    break
+            if not loaded:
+                raise FileNotFoundError("Unable to open detector weights: {}".format(weights))
+        print(f"加载本地权重文件(Load local weight file): {weights_path}")
 
     if old_data_format:
         backend.set_image_data_format(old_data_format)
@@ -476,3 +485,4 @@ def _depthwise_conv_block(inputs, pointwise_conv_filters, alpha,
     x = layers.BatchNormalization(axis=channel_axis,
                                   name='conv_pw_%d_bn' % block_id)(x)
     return layers.ReLU(6., name='conv_pw_%d_relu' % block_id)(x)
+

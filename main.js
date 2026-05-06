@@ -1,4 +1,4 @@
-// 原始版权所有 (C) [2020] [Sipeed]
+﻿// 原始版权所有 (C) [2020] [Sipeed]
 // 版权所有 (C) [2024] [珠海威智人工智能有限公司]
 // 根据GPLv3或更高版本的条款进行许可
 // 请参阅LICENSE文件以获取详细信息
@@ -63,7 +63,6 @@ SerialPort.list().then((initialPorts) => {
     }
   }, 2000); // 每2秒检测一次
 });
-
 
 // 本地数据
 let current_locales;
@@ -759,17 +758,222 @@ const ptyProcess_cls = pty.spawn(shell, [], {
   env: process.env,
 });
 
+const TRAIN_ERROR_PREFIX = "VW_TRAIN_ERROR::";
+const trainStreamState = {
+  imgCls: { buffer: "", lastError: null },
+  objectDetection: { buffer: "", lastError: null },
+};
+
+function buildFallbackTrainError(rawText) {
+  const text = String(rawText || "");
+  const normalized = text.toLowerCase();
+  const payload = {
+    code: "unknown_error",
+    title: "未知训练错误 / Unknown training error",
+    summary:
+      "训练过程中发生了未分类错误，请结合下方原始日志继续排查。/ An uncategorized error occurred during training. Please inspect the raw log below.",
+    suggestions: [
+      "检查数据集路径、标注文件和图片尺寸是否正确。/ Check dataset paths, label files, and image sizes.",
+      "确认 Python、TensorFlow、权重文件和转换工具依赖完整。/ Confirm Python, TensorFlow, weight files, and conversion tools are available.",
+      "如仍失败，请保留完整日志继续定位。/ If it still fails, keep the full log for further debugging.",
+    ],
+    raw_error: text,
+  };
+
+  if (
+    normalized.includes("datasets not valid") ||
+    normalized.includes("dataset invalid")
+  ) {
+    payload.code = "dataset_invalid";
+    payload.title = "Dataset invalid / Invalid dataset";
+    payload.summary =
+      "训练数据集未通过校验，可能是目录、标注或样本数量不符合要求。/ The dataset did not pass validation. The folder layout, annotations, or sample counts may be invalid.";
+    payload.suggestions = [
+      "确认图片目录与标注目录存在且内容完整。/ Make sure image and label folders exist and are complete.",
+      "检查图片与 XML 是否一一对应。/ Check whether images and XML files match one to one.",
+      "检查每个类别的样本数量是否达到最低要求。/ Verify each class meets the minimum sample requirement.",
+    ];
+  } else if (
+    normalized.includes("input shape") ||
+    normalized.includes("输入形状") ||
+    normalized.includes("not supported input size") ||
+    normalized.includes("shape not valid")
+  ) {
+    payload.code = "input_size_mismatch";
+    payload.title = "输入尺寸不匹配 / Input size mismatch";
+    payload.summary =
+      "数据集图片尺寸与当前模型输入分辨率不一致，或所选分辨率不受支持。/ Dataset image sizes do not match the selected model input resolution, or the resolution is unsupported.";
+    payload.suggestions = [
+      "确认训练窗口选择的输入分辨率与数据集图片尺寸一致。/ Ensure the selected input resolution matches dataset image sizes.",
+      "K210 当前建议使用 224x224、240x240 或 320x224。320x240 已暂时禁用，以避免 KPU 内存不足导致转换失败。/ K210 currently recommends 224x224, 240x240, or 320x224. The 320x240 option is temporarily disabled to avoid KPU out-of-memory conversion failures.",
+      "必要时先批量调整数据集尺寸。/ Resize the dataset beforehand if needed.",
+    ];
+  } else if (
+    normalized.includes("gpu") ||
+    normalized.includes("显存") ||
+    normalized.includes("no free gpu") ||
+    normalized.includes("insufficient gpu")
+  ) {
+    payload.code = "gpu_memory";
+    payload.title = "GPU/显存不足 / GPU or memory unavailable";
+    payload.summary =
+      "当前环境没有可用 GPU，或显存不足以完成训练。/ No GPU is available, or GPU memory is insufficient for training.";
+    payload.suggestions = [
+      "关闭其它占用显存的程序后重试。/ Close other GPU-intensive programs and retry.",
+      "适当减小 batch size。/ Reduce the batch size.",
+      "如环境允许，可改用 CPU 训练。/ Use CPU training if the environment allows it.",
+    ];
+  } else if (
+    normalized.includes("load") && normalized.includes("weight") ||
+    normalized.includes("权重")
+  ) {
+    payload.code = "weights_error";
+    payload.title = "权重加载失败 / Weight loading failed";
+    payload.summary =
+      "预训练权重文件不存在、损坏，或与当前模型配置不匹配。/ The pretrained weight file is missing, corrupted, or incompatible with the current model configuration.";
+    payload.suggestions = [
+      "确认权重文件存在且未损坏。/ Confirm the weight file exists and is intact.",
+      "确认 alpha 和输入尺寸与权重兼容。/ Ensure alpha and input size are compatible with the weights.",
+      "必要时重新准备权重文件。/ Re-prepare the weight file if necessary.",
+    ];
+  } else if (
+    normalized.includes("tensorflow") ||
+    normalized.includes("modulenotfounderror") ||
+    normalized.includes("importerror")
+  ) {
+    payload.code = "dependency_error";
+    payload.title = "依赖或 TensorFlow 异常 / Dependency or TensorFlow error";
+    payload.summary =
+      "训练环境缺少依赖，或 TensorFlow 运行异常。/ Training dependencies are missing, or TensorFlow failed at runtime.";
+    payload.suggestions = [
+      "检查 Python 运行环境与依赖安装是否完整。/ Check the Python environment and installed dependencies.",
+      "确认 TensorFlow 与当前系统兼容。/ Ensure TensorFlow is compatible with the current system.",
+      "查看完整 traceback 进一步定位。/ Review the full traceback for more detail.",
+    ];
+  } else if (
+    normalized.includes("kmodel") ||
+    normalized.includes("ncc") ||
+    normalized.includes("convert")
+  ) {
+    payload.code = "kmodel_convert_error";
+    payload.title = "KModel 转换失败 / KModel conversion failed";
+    payload.summary =
+      "训练完成后模型转换为 KModel 的阶段失败。/ The post-training conversion to KModel failed.";
+    payload.suggestions = [
+      "确认转换工具与模型文件存在。/ Confirm the converter tool and model files exist.",
+      "检查 sample_images 和 tflite 输出是否正常生成。/ Check whether sample_images and the TFLite output were generated correctly.",
+      "查看转换阶段日志中的具体报错。/ Review the converter-stage log for the exact error.",
+    ];
+  } else if (
+    normalized.includes("xml") ||
+    normalized.includes("parse") ||
+    normalized.includes("annotation")
+  ) {
+    payload.code = "xml_annotation_error";
+    payload.title = "标注文件异常 / Annotation file error";
+    payload.summary =
+      "XML 标注文件解析失败，或标注格式不符合训练要求。/ XML annotations could not be parsed, or their format is invalid for training.";
+    payload.suggestions = [
+      "检查 XML 是否损坏、缺字段或编码异常。/ Check whether XML files are corrupted, missing fields, or encoded incorrectly.",
+      "确认标签文件与图片名称一一对应。/ Ensure label files map one to one with image names.",
+      "用标注工具重新导出异常样本。/ Re-export problematic samples with the annotation tool.",
+    ];
+  }
+  return payload;
+}
+
+function parseTrainErrorPayloadFromText(text) {
+  const value = String(text || "");
+  const regex = new RegExp(`${TRAIN_ERROR_PREFIX}(\\{.*\\})`, "g");
+  let match = null;
+  let lastPayload = null;
+  while ((match = regex.exec(value)) !== null) {
+    try {
+      lastPayload = JSON.parse(match[1]);
+    } catch (error) {
+      console.warn("[TRAIN] failed to parse structured error payload:", error);
+    }
+  }
+  if (lastPayload) {
+    return lastPayload;
+  }
+  if (
+    value.includes("训练错误:") ||
+    value.includes("Train error:") ||
+    value.includes("Datasets not valid") ||
+    value.includes("dataset invalid")
+  ) {
+    return buildFallbackTrainError(value);
+  }
+  return null;
+}
+
+function ingestTrainStream(channel, data) {
+  const state = trainStreamState[channel];
+  if (!state) {
+    return null;
+  }
+  state.buffer += String(data || "");
+  const lines = state.buffer.split(/\r?\n/);
+  state.buffer = lines.pop();
+  for (const line of lines) {
+    const payload = parseTrainErrorPayloadFromText(line);
+    if (payload) {
+      state.lastError = payload;
+    }
+  }
+  const immediatePayload = parseTrainErrorPayloadFromText(data);
+  if (immediatePayload) {
+    state.lastError = immediatePayload;
+  }
+  return state.lastError;
+}
+
+function resetTrainStream(channel) {
+  if (!trainStreamState[channel]) {
+    return;
+  }
+  trainStreamState[channel].buffer = "";
+  trainStreamState[channel].lastError = null;
+}
+
+function getTrainStreamError(channel) {
+  return trainStreamState[channel] ? trainStreamState[channel].lastError : null;
+}
+
+function extractTrainErrorFromLog(logText) {
+  const payload = parseTrainErrorPayloadFromText(logText);
+  if (payload) {
+    return payload;
+  }
+  const text = String(logText || "").trim();
+  if (!text) {
+    return null;
+  }
+  if (
+    text.includes("训练错误:") ||
+    text.includes("Train error:") ||
+    text.includes("Datasets not valid")
+  ) {
+    return buildFallbackTrainError(text);
+  }
+  return null;
+}
+
 ipcMain.on("send_data_terminal_yolo", function (event, arg) {
   //输入信息到目标检测控制台中
+  resetTrainStream("objectDetection");
   ptyProcess_yolo.write(arg);
 });
 
 ipcMain.on("send_data_terminal_cls", function (event, arg) {
   //输入信息到图像分类控制台中
+  resetTrainStream("imgCls");
   ptyProcess_cls.write(arg);
 });
 
 ptyProcess_cls.onData((data) => {
+  const errorPayload = ingestTrainStream("imgCls", data);
   var pattern = /Epoch [0-9.]+[/][0-9.]+/;
   var patterns = /[0-9.]+[/][0-9.]+/g;
   if (pattern.test(data)) {
@@ -796,8 +1000,11 @@ ptyProcess_cls.onData((data) => {
   if (data.indexOf("Test succeed!") != -1) {
     sendMessageToView(mainWindow_views, "imgCls", "show_test_succeed");
   }
-  if (data.indexOf("训练错误:") != -1) {
-    sendMessageToView(mainWindow_views, "imgCls", "show_train_failed", data);
+  if (errorPayload) {
+    sendMessageToView(mainWindow_views, "imgCls", "show_train_failed", errorPayload);
+  }
+  if (data.indexOf("训练错误:") != -1 && !errorPayload) {
+    sendMessageToView(mainWindow_views, "imgCls", "show_train_failed", buildFallbackTrainError(data));
   }
   sendMessageToView(
     mainWindow_views,
@@ -808,6 +1015,7 @@ ptyProcess_cls.onData((data) => {
 });
 
 ptyProcess_yolo.onData((data) => {
+  const errorPayload = ingestTrainStream("objectDetection", data);
   var pattern = /Epoch [0-9.]+[/][0-9.]+/;
   var patterns = /[0-9.]+[/][0-9.]+/g;
   if (pattern.test(data)) {
@@ -842,12 +1050,20 @@ ptyProcess_yolo.onData((data) => {
   if (data.indexOf("Test succeed!") != -1) {
     sendMessageToView(mainWindow_views, "objectDetection", "show_test_succeed");
   }
-  if (data.indexOf("训练错误:") != -1) {
+  if (errorPayload) {
     sendMessageToView(
       mainWindow_views,
       "objectDetection",
       "show_train_failed",
-      data
+      errorPayload
+    );
+  }
+  if (data.indexOf("训练错误:") != -1 && !errorPayload) {
+    sendMessageToView(
+      mainWindow_views,
+      "objectDetection",
+      "show_train_failed",
+      buildFallbackTrainError(data)
     );
   }
   sendMessageToView(
@@ -1326,3 +1542,4 @@ ipcMain.on("export_model", function (event, arg) {
       console.log(error);
     });
 });
+

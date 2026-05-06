@@ -1,4 +1,4 @@
-<!--list.html-->
+﻿<!--list.html-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -16,87 +16,291 @@
 </head>
 
 <body>
-  <div style='padding-top:0px'>
+  <div class="page-shell" style='padding-top:0px'>
     <style>
+      .page-shell {
+        width: calc(100vw - 32px);
+        margin: 0 auto;
+      }
+
       #descript_ob_detect {
         background-color: #f0f8ff;
-        /* 设置背景颜色 (淡蓝色) */
-        padding: 0px;
-        /* 设置内边距，给文字和边框之间留出空间 */
+        padding: 0;
         border-radius: 8px;
-        /* 设置圆角 */
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        /* 设置轻微的阴影 */
         text-align: center;
-        /* 文本居中对齐 */
-        width: 90%;
-        /* 可根据需要调整宽度 */
+        width: 100%;
         margin: auto;
-        /* 居中 */
+      }
+
+      .top-panels {
+        margin: 0 0 16px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        gap: 20px;
+      }
+
+      .train-panel {
+        position: relative;
+        min-height: 170px;
+        margin-bottom: 20px;
+        padding-top: 28px;
+      }
+
+      .train-panel-left {
+        flex: 1 1 520px;
+        min-width: 320px;
+      }
+
+      .train-panel-middle {
+        flex: 1 1 480px;
+        min-width: 320px;
+        padding-right: 18px;
+      }
+
+      .train-panel-right {
+        flex: 0 0 160px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .panel-title {
+        position: absolute;
+        top: 2px;
+        left: 10px;
+        padding: 0 5px;
+        color: #155724;
+        font-weight: bold;
+        font-size: 14px;
+      }
+
+      .params-layout {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(220px, 1fr));
+        gap: 10px 20px;
+        align-items: start;
+      }
+
+      .param-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .param-stack .form-floating,
+      .param-stack .form-select,
+      .param-stack .form-control {
+        width: 100%;
+      }
+
+      .action-buttons {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 20px;
+      }
+
+      .progress-shell {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        gap: 10px;
+      }
+
+      .terminal-wrap {
+        width: 100%;
+        margin: 0 auto 60px;
+      }
+
+      #xterm_yolo {
+        width: 100%;
+        min-height: 420px;
+      }
+
+      .side-tools {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        position: fixed;
+        top: 40%;
+        right: 0;
+        width: auto;
+        gap: 12px;
+        padding: 8px 12px 8px 8px;
+        z-index: 10;
+      }
+
+      .side-tools .sidebar {
+        width: 54px;
+        min-width: 54px;
+        min-height: 118px;
+        height: auto;
+        padding: 12px 8px;
+        margin-bottom: 0;
+        border-radius: 10px;
+        font-size: 14px;
+        line-height: 1.15;
+        text-align: center;
+        white-space: normal;
+        word-break: break-all;
+        writing-mode: vertical-lr;
+        text-orientation: mixed;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+      }
+
+      .test-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .test-toolbar input {
+        flex: 1 1 360px;
+        min-width: 220px;
+      }
+
+      .offcanvas-body {
+        padding-bottom: 96px;
+        overscroll-behavior: contain;
+      }
+
+      #train_history_list_yolo {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding-bottom: 96px;
+        margin-bottom: 0;
+      }
+
+      #train_history_list_yolo .filelist {
+        margin-bottom: 0;
+      }
+
+      .graph-wrap {
+        min-height: 400px;
+        min-width: 0;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+      }
+
+      #echarts {
+        width: 100%;
+        max-width: 800px;
+        height: 400px;
+      }
+
+      @media (max-width: 1200px) {
+        .train-panel-right {
+          flex: 1 1 100%;
+        }
+
+        .action-buttons {
+          flex-direction: row;
+          justify-content: center;
+        }
+      }
+
+      @media (max-width: 900px) {
+        .params-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .side-tools {
+          position: static;
+          align-items: stretch;
+          width: 100%;
+          margin: 0 auto 16px;
+          padding: 0 0 8px;
+        }
+
+        .side-tools .sidebar {
+          width: 54px;
+          min-width: 54px;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .train-panel-left,
+        .train-panel-middle {
+          min-width: 100%;
+        }
+
+        .action-buttons {
+          flex-direction: column;
+        }
       }
     </style>
     <div style='display: flex; align-items: center; justify-content: center; margin-bottom: 10px'>
-      <p id="descript_ob_detect">在此进行目标检测模型训练，可以设定目标检测参数、查看训练过程以及测试与导出训练结果</p>
+      <p id="descript_ob_detect">在此进行目标检测模型训练，可设置检测参数、查看训练过程，并测试和导出训练结果。</p>
     </div>
 
-    <div class='innum' style="margin-top: 0px;margin-bottom: 0px;">
-      <div class="alert alert-primary" style='height: 170px;width: 600px;' role="alert">
-        <div id="trainset_dir_yolo_descript"
-          style="position: absolute; top: 2px; left: 10px; padding: 0 5px; color: #155724; font-weight: bold; font-size: 14px;">
-          请在此选择正确的模型训练文件夹(路径无中文,文件名无空格无特殊符号)
-        </div>
+    <div class='innum top-panels'>
+      <div class="alert alert-primary train-panel train-panel-left" role="alert">
+        <div id="trainset_dir_yolo_descript" class="panel-title">请在此选择正确的模型训练文件夹。（路径中不要包含中文，文件名不要包含空格或特殊字符。）</div>
         <div class="form-floating" style="margin-bottom:10px;margin-top: 10px">
           <input class="form-control" id="dataset_dir_yolo" data-bs-toggle="tooltip" data-bs-placement="top" title="">
-          <label id="train_dataset_dir" for="dataset_dir_yolo">训练图片文件夹地址</label>
+          <label id="train_dataset_dir" for="dataset_dir_yolo">训练图片文件夹路径</label>
         </div>
         <div class="form-floating">
           <input class="form-control" id="train_xml_dir_yolo" data-bs-toggle="tooltip" data-bs-placement="top" title="">
-          <label id="train_xml_dir" for="train_xml_dir_yolo">训练标签文件夹地址</label>
+          <label id="train_xml_dir" for="train_xml_dir_yolo">训练标签文件夹路径</label>
         </div>
       </div>
-      <div class="alert alert-success" role="alert"
-        style='height: 170px;display: flex;flex-direction: row;margin-left:20px; '>
-        <!-- 添加文字说明 -->
-        <div id="train_param_descript"
-          style="position: absolute; top: 2px; left: 10px; padding: 0 5px; color: #155724; font-weight: bold; font-size: 14px;">
-          模型训练超参数
-        </div>
-        <div style='margin-right:20px'>
-          <div class="form-floating" style="margin-bottom:10px;margin-top: 10px">
-            <input class="form-control" id="epoch_yolo" oninput="value=value.replace(/^(0+)|[^\d]+/g,'')" value=25
-              data-bs-toggle="tooltip" data-bs-placement="top" title="该参数决定该次训练的最大迭代次数，建议设定一个较大的数字（100以上），让模型充分训练到最佳效果">
-            <label id="train_epoch" for="epoch_yolo">训练次数</label>
+      <div class="alert alert-success train-panel train-panel-middle" role="alert">
+        <div id="train_param_descript" class="panel-title">模型训练超参数</div>
+        <div class="params-layout">
+          <div class="param-stack">
+            <div class="form-floating" style="margin-bottom:10px;margin-top: 10px">
+              <input class="form-control" id="epoch_yolo" oninput="value=value.replace(/^(0+)|[^\d]+/g,'')" value="25"
+                data-bs-toggle="tooltip" data-bs-placement="top" title="">
+              <label id="train_epoch" for="epoch_yolo">训练轮次</label>
+            </div>
+            <div class="form-floating">
+              <input class="form-control" id="batch_size_yolo" oninput="value=value.replace(/^(0+)|[^\d]+/g,'')" value="8"
+                data-bs-toggle="tooltip" data-bs-placement="top" title="">
+              <label id="batch_size_name" for="batch_size_yolo">批大小</label>
+            </div>
           </div>
-          <div class="form-floating">
-            <input class="form-control" id="batch_size_yolo" oninput="value=value.replace(/^(0+)|[^\d]+/g,'')" value=8
-              data-bs-toggle="tooltip" data-bs-placement="top"
-              title="该参数影响模型训练时每次学习同时学习的图片数量，越多代表迭代的方向更稳定，但同时需要的训练集数量大增而且需要的内存更大，建议设定在最小种类训练图片数的10%~20%左右，但是最好不要超过64。比如数字检测中1和2的训练图片是100:200，那该参数设定为10~20之间比较合适">
-            <label id="batch_size_name" for="batch_size_yolo">批尺寸</label>
-          </div>
-        </div>
-        <div>
-          <div class="form-floating" style='width: 181px;margin-bottom:10px; ; margin-top: 10px'>
-            <select class="form-select" aria-label="Floating label select example" id='alpha_yolo'
-              data-bs-toggle="tooltip" data-bs-placement="top" title="该参数影响模型的整体宽度，数值越大越接近完整模型，如果在威智板中使用默认0.75即可">
-              <option value='0.75'>0.75</option>
-              <option value='1.0'>1.0</option>
-              <option value='0.5'>0.5</option>
-              <option value='0.25'>0.25</option>
-            </select>
-            <label for="floatingSelect">Alpha</label>
-          </div>
-          <div class="form-floating" style='width: 181px;'>
-            <select class="form-select" aria-label="Floating label select example" id="data_aug_yolo"
-              data-bs-toggle="tooltip" data-bs-placement="top" title="该参数影响模型训练开始前是否对数据进行预处理，开启后会随机对训练集图片进行分割、反转、模糊等操作">
-              <option id="open" value='1'>开启</option>
-              <option id="close" value='0'>关闭</option>
-            </select>
-            <label id="data_augmentation" for="floatingSelect">数据增强</label>
+          <div class="param-stack">
+            <div class="form-floating" style='margin-bottom:10px; margin-top: 10px'>
+              <select class="form-select" aria-label="Floating label select example" id='alpha_yolo'
+                data-bs-toggle="tooltip" data-bs-placement="top" title="">
+                <option value='0.75'>0.75</option>
+                <option value='1.0'>1.0</option>
+                <option value='0.5'>0.5</option>
+                <option value='0.25'>0.25</option>
+              </select>
+              <label for="alpha_yolo">Alpha</label>
+            </div>
+            <div class="form-floating">
+              <select class="form-select" aria-label="Floating label select example" id="data_aug_yolo"
+                data-bs-toggle="tooltip" data-bs-placement="top" title="">
+                <option id="open" value='1'>打开</option>
+                <option id="close" value='0'>关闭</option>
+              </select>
+              <label id="data_augmentation" for="data_aug_yolo">数据增强</label>
+            </div>
+            <div class="form-floating" style='margin-top: 10px'>
+              <select class="form-select" aria-label="Floating label select example" id="input_size_yolo"
+                data-bs-toggle="tooltip" data-bs-placement="top" title="">
+                <option value='224x224'>224x224</option>
+                <option value='240x240'>240x240</option>
+                <option value='320x224'>320x224</option>
+              </select>
+              <label id="model_input_size_label" for="input_size_yolo">模型输入分辨率</label>
+            </div>
           </div>
         </div>
       </div>
-      <div class="alert alert-info" role="alert" style="height: 170px;margin-bottom:20px;margin-left:20px">
-        <div style='display: flex;flex-direction: column;'>
+      <div class="alert alert-info train-panel train-panel-right" role="alert">
+        <div class="action-buttons">
           <button type="button" id='start_train_yolo' class="btn btn-success btn-lg"
             style='margin-bottom:20px;min-width: 100px;font-size:15px;height:55px;'>开始训练</button>
           <button type="button" id='stop_train_yolo' class="btn btn-primary btn-lg"
@@ -104,7 +308,7 @@
         </div>
       </div>
     </div>
-    <div style='display: flex;align-items: center;margin-bottom:15px'>
+    <div class="progress-shell">
       <div style='margin-left:10px;margin-right:10px;' id="training_situation_yolo"><i class="fa fa-check"
           style='color:#069b34'></i></div>
       <div style="width:100%;display: flex;flex-direction: column;align-items: center;">
@@ -114,7 +318,7 @@
           <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" id='progress_bar_value_yolo'
             style="width: 0%;">
             <span id="progress_bar_name"
-              style="position: absolute; width: 100%; text-align: center; color: black; font-weight: bold; left: 0; top: 50%; transform: translateY(-50%);">训练进度条</span>
+              style="position: absolute; width: 100%; text-align: center; color: black; font-weight: bold; left: 0; top: 50%; transform: translateY(-50%);">训练进度</span>
           </div>
         </div>
         <div class="progress" role="progressbar" aria-label="Success striped example" aria-valuenow="10"
@@ -125,15 +329,16 @@
       </div>
     </div>
 
-    <div id="xterm_yolo" style="margin-top: 0px; margin-bottom: 60px;"></div>
-    <div
-      style="display: flex; flex-direction: column; align-items:flex-end; position: fixed;top: 40%;right: 0px;width: 10px; padding:10px">
+    <div class="terminal-wrap">
+      <div id="xterm_yolo" style="margin-top: 0px; margin-bottom: 0;"></div>
+    </div>
+    <div class="side-tools">
       <button class="sidebar btn btn-primary" type="button" data-bs-toggle="offcanvas"
         data-bs-target="#offcanvasRightLabel" aria-controls="offcanvasExample" id='train_history_dir_yolo'>
-        训练记录查看
+        训练记录
       </button>
       <button class="sidebar btn btn-primary" type="button" id='make_sense_tool_button'>
-        图片标注
+        使用慧标进行图片标注
       </button>
     </div>
   </div>
@@ -175,7 +380,7 @@
             </li>
             <li class="nav-item" role="presentation">
               <button class="nav-link" id="model_test_tab" data-bs-toggle="tab" data-bs-target="#model_test_tab_pane"
-                type="button" role="tab" aria-controls="model_test_tab_pane" aria-selected="false">模型预测结果</button>
+                type="button" role="tab" aria-controls="model_test_tab_pane" aria-selected="false">模型测试结果</button>
             </li>
             <li class="nav-item" role="presentation">
               <button class="nav-link" id="train_log_tab" data-bs-toggle="tab" data-bs-target="#train_log_succeed"
@@ -197,12 +402,16 @@
                     <p style="margin-left:20px;font-size: larger;" id="model_alpha"></p>
                   </div>
                   <div style="display:flex;align-items: center;">
-                    <p style="font-weight:700;font-size: larger;" id="train_epoch_key">训练次数 : </p>
+                    <p style="font-weight:700;font-size: larger;" id="train_epoch_key">训练轮次 : </p>
                     <p style="margin-left:20px;font-size: larger;" id="model_epoch"></p>
                   </div>
                   <div style="display:flex;align-items: center;">
-                    <p style="font-weight:700;font-size: larger;" id="batch_size_key">批尺寸 : </p>
+                    <p style="font-weight:700;font-size: larger;" id="batch_size_key">批大小 : </p>
                     <p style="margin-left:20px;font-size: larger;" id="model_batchsize"></p>
+                  </div>
+                  <div style="display:flex;align-items: center;">
+                    <p style="font-weight:700;font-size: larger;" id="input_size_key">输入尺寸 : </p>
+                    <p style="margin-left:20px;font-size: larger;" id="model_input_size"></p>
                   </div>
                   <div style="display:flex;align-items: center;">
                     <p style="font-weight:700;font-size: larger;" id="label_key">标签 : </p>
@@ -218,8 +427,8 @@
             <div class="tab-pane fade" id="model_graph_pane" role="tabpanel" aria-labelledby="model_train_graph_tab"
               tabindex="1">
               <div>
-                <div style="min-height: 400px;min-width: 500px;display: flex;justify-content: center;">
-                  <div id="echarts" style="width: 800px;height:400px;"></div>
+                <div class="graph-wrap">
+                  <div id="echarts"></div>
                 </div>
               </div>
               <div id="mximg" style="width: 100%;display: flex;justify-content: center;">
@@ -228,10 +437,10 @@
             <div class="tab-pane fade" id="model_test_tab_pane" role="tabpanel" aria-labelledby="model_test_tab"
               tabindex="2">
 
-              <div style="display: flex; align-items: center;">
+              <div class="test-toolbar">
                 <label id="test_img_dir_label" for="test_img_dir_yolo" style="margin-right: 10px;">测试图片地址：</label>
                 <input type="text" id="test_img_dir_yolo"
-                  style="margin-top: 10px; margin-right: 10px; padding: 5px; width: 600px; overflow-x: auto;">
+                  style="margin-top: 10px; margin-right: 10px; padding: 5px; overflow-x: auto;">
 
                 <button id="test_model_button"
                   style="padding: 5px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">
@@ -249,7 +458,9 @@
 
             </div>
             <div class="tab-pane fade" id="train_log_succeed" role="tabpanel" aria-labelledby="train_log_tab"
-              tabindex="3">'
+              tabindex="3">
+              <div class="alert alert-warning" role="alert" id="train_error_summary"
+                style="display:none;white-space: pre-wrap;"></div>
               <div class="alert alert-light" role="alert" id="train_log"
                 style="font-size:14px;background-color: #282828;color: #ffffffe3;">
               </div>
@@ -304,18 +515,24 @@
                 <div
                   style="display: flex;align-items: flex-start;padding: 10px;justify-content: flex-start;flex-direction: column;">
                   <div style="display:flex;align-items: center;">
-                    <p style="font-weight:700;font-size: larger;" id="train_epoch_key_err">训练次数 : </p>
+                    <p style="font-weight:700;font-size: larger;" id="train_epoch_key_err">训练轮次 : </p>
                     <p style="margin-left:20px;font-size: larger;" id="model_epoch_err"></p>
                   </div>
                   <div style="display:flex;align-items: center;">
-                    <p style="font-weight:700;font-size: larger;" id="batch_size_key_err">批尺寸 : </p>
+                    <p style="font-weight:700;font-size: larger;" id="batch_size_key_err">批大小 : </p>
                     <p style="margin-left:20px;font-size: larger;" id="model_batchsize_err"></p>
+                  </div>
+                  <div style="display:flex;align-items: center;">
+                    <p style="font-weight:700;font-size: larger;" id="input_size_key_err">输入尺寸 : </p>
+                    <p style="margin-left:20px;font-size: larger;" id="model_input_size_err"></p>
                   </div>
                 </div>
               </div>
             </div>
             <div class="tab-pane fade" id="train_log_failed" role="tabpanel" aria-labelledby="train_log_tab_err"
               tabindex="1">
+              <div class="alert alert-warning" role="alert" id="train_error_summary_err"
+                style="display:none;white-space: pre-wrap;"></div>
               <div class="alert alert-light" role="alert" id="train_log_err"
                 style="font-size:14px;background-color: #282828;color: #ffffffe3;"></div>
             </div>
@@ -341,3 +558,5 @@
 </body>
 
 </html>
+
+

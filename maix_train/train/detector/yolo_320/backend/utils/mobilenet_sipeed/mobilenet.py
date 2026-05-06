@@ -1,4 +1,4 @@
-"""MobileNet v1 models for Keras.
+﻿"""MobileNet v1 models for Keras.
 
 MobileNet is a general architecture and can be used for multiple use cases.
 Depending on the use case, it can use different input layer size and
@@ -325,7 +325,24 @@ def MobileNet(input_shape=None,
         except:
             model.load_weights(os.path.join(os.getcwd(),'resources/maix_train/train/detector/weights',model_name))
     elif weights is not None:
-        model.load_weights(weights)
+        weights_path = str(weights)
+        if os.path.exists(weights_path):
+            model.load_weights(weights_path)
+        else:
+            model_name = os.path.basename(weights_path)
+            local_candidates = [
+                os.path.join(os.getcwd(), 'maix_train/train/detector/weights', model_name),
+                os.path.join(os.getcwd(), 'resources/maix_train/train/detector/weights', model_name),
+            ]
+            loaded = False
+            for candidate in local_candidates:
+                if os.path.exists(candidate):
+                    model.load_weights(candidate)
+                    weights_path = candidate
+                    loaded = True
+                    break
+            if not loaded:
+                raise FileNotFoundError("Unable to open detector weights: {}".format(weights))
 
     if old_data_format:
         backend.set_image_data_format(old_data_format)
@@ -503,6 +520,7 @@ def _depthwise_conv_block_without_same(inputs, pointwise_conv_filters, alpha,
     x = layers.BatchNormalization(axis=channel_axis,
                                   name='conv_pw_%d_bn' % block_id)(x)
     return layers.ReLU(6., name='conv_pw_%d_relu' % block_id)(x)
+
 
 
 

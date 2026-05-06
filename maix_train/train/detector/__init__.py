@@ -1,4 +1,4 @@
-'''
+﻿'''
     train detector
 
     @author neucrack@sipeed
@@ -42,7 +42,7 @@ class Detector(Train_Base):
     def __init__(self, input_shape=(224, 224, 3), datasets_img_dir=None,datasets_xml_dir=None, datasets_zip=None, unpack_dir=None, logger = None,
                 max_classes_limit = 15, one_class_min_images_num=100, one_class_max_images_num=2000,
                 allow_reshape=False,alpha=0.75,
-                support_shapes=((240, 240, 3),(224, 224, 3),(224,320,3) )
+                support_shapes=((224, 224, 3), (240, 240, 3), (224, 320, 3))
                 ):
         '''
             input_shape: input shape (height, width)
@@ -1028,4 +1028,3 @@ if __name__ == "__main__":
         import traceback
         traceback.print_exc()
         print("============")
-

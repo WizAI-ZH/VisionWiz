@@ -1,4 +1,4 @@
-'''
+﻿'''
     train main class
 
     @author neucrack@sipeed
@@ -51,7 +51,8 @@ class Train():
                  alpha,
                  batch_size,
                  epoch,
-                 out_dir):
+                 out_dir,
+                 input_shape=(224, 224, 3)):
         '''
             creat /temp/train_temp dir to train
         '''
@@ -59,6 +60,7 @@ class Train():
         self.batch_size = batch_size
         self.train_epochs = epoch
         self.train_type = train_type
+        self.input_shape = input_shape
         self.datasets_cls_dir = datasets_cls_dir
         self.datasets_zip_path = datasets_zip
         self.dataset_img_dir = dataset_img_dir
@@ -332,7 +334,7 @@ class Train():
             log.i("detector_train_max_classes_num: ", config.detector_train_max_classes_num)
             log.i("detector_train_one_class_min_img_num: ", config.detector_train_one_class_min_img_num)
             log.i("detector_train_one_class_max_img_num: ", config.detector_train_one_class_max_img_num)
-            detector = Detector(input_shape=(224, 224, 3),
+            detector = Detector(input_shape=self.input_shape,
                                 datasets_zip=self.datasets_zip_path,
                                 datasets_img_dir=self.datasets_img_dir,
                                 datasets_xml_dir=self.datasets_xml_dir,
