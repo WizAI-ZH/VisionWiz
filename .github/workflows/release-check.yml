@@ -1,0 +1,64 @@
+﻿name: VisionWiz Release Check
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts --no-fund --no-audit
+
+      - name: Validate package version and build inputs
+        shell: powershell
+        run: |
+          $pkg = Get-Content package.json -Raw | ConvertFrom-Json
+          if (-not $pkg.version) { throw "package.json missing version" }
+          if (-not (Test-Path "package.js")) { throw "package.js missing" }
+          if (-not (Test-Path "main_bootstrap.js")) { throw "main_bootstrap.js missing" }
+          if (-not (Test-Path "build/installer-includes.nsh")) { throw "build/installer-includes.nsh missing" }
+          Write-Host "package.json version: $($pkg.version)"
+
+      - name: Detect full packaging resources
+        id: resource_check
+        shell: powershell
+        run: |
+          $hasPy = Test-Path "py39"
+          $hasTrain = Test-Path "maix_train"
+          if ($hasPy -and $hasTrain) {
+            "can_build_full=true" >> $env:GITHUB_OUTPUT
+            Write-Host "Full packaging resources present."
+          } else {
+            "can_build_full=false" >> $env:GITHUB_OUTPUT
+            Write-Host "Full packaging resources missing; skipping full package build."
+          }
+
+      - name: Run lightweight build validation
+        if: steps.resource_check.outputs.can_build_full == 'true'
+        run: npm run build:dir
+
+      - name: Upload validation artifact
+        if: steps.resource_check.outputs.can_build_full == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: visionwiz-win-unpacked-check
+          path: dist/win-unpacked
+          if-no-files-found: error

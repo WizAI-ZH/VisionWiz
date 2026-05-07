@@ -102,7 +102,7 @@ def main():
     from train import Train, TrainType
 
     if args.type == "classifier":
-        train_task = Train(TrainType.CLASSIFIER, args.zip, args.datasets_cls, args.datasets_img, args.datasets_xml, args.alpha, int(args.batch_size), int(args.train_epochs), save_dir)
+        train_task = Train(TrainType.CLASSIFIER, args.zip, args.datasets_cls, args.datasets_img, args.datasets_xml, args.alpha, int(args.batch_size), int(args.train_epochs), save_dir, input_shape=(args.input_size[1], args.input_size[0], 3))
     elif args.type == "detector":
         train_task = Train(TrainType.DETECTOR, args.zip, args.datasets_cls, args.datasets_img, args.datasets_xml, args.alpha, int(args.batch_size), int(args.train_epochs), save_dir, input_shape=(args.input_size[1], args.input_size[0], 3))
     else:

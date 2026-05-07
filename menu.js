@@ -1,7 +1,8 @@
 const { Menu } = require('electron');
+const packageJson = require('./package.json');
 let currentLanguage
 let currentView = 'Wizhome'
-let VisionWiz_version = "V1.2.6";
+let VisionWiz_version = `V${packageJson.version}`;
 
 //菜单本地化数据翻译
 const languages = {

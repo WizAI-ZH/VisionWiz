@@ -2,6 +2,7 @@
 const { FitAddon } = require('xterm-addon-fit');
 const { WebLinksAddon } = require('xterm-addon-web-links');
 const echarts = require('echarts');
+const { setupXtermCopyBehavior } = require('./xterm-copy-helper');
 let pathModule;
 try {
     pathModule = require('path');
@@ -257,6 +258,11 @@ xterm_yolo.loadAddon(fitAddon_yolo)
 xterm_yolo.loadAddon(new WebLinksAddon());
 xterm_yolo.open(document.getElementById('xterm_yolo'));
 xterm_yolo.onData(data => { ipcRenderer.send('send_data_terminal_yolo', data); });
+setupXtermCopyBehavior(
+    xterm_yolo,
+    document.getElementById('xterm_yolo'),
+    () => current_locales
+);
 
 function resizeTerminalLayout() {
     const terminalElement = document.getElementById('xterm_yolo');

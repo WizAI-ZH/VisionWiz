@@ -1,0 +1,108 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>VisionWiz Update</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #10151f;
+      color: #f6f8fc;
+    }
+
+    .shell {
+      padding: 20px;
+    }
+
+    .card {
+      border-radius: 14px;
+      background: #1a2231;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.24);
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0 0 8px;
+    }
+
+    .summary {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.76);
+      margin: 0 0 16px;
+      line-height: 1.45;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: 92px 1fr;
+      gap: 8px 10px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    .meta-key {
+      color: rgba(255, 255, 255, 0.66);
+    }
+
+    .status {
+      margin-bottom: 12px;
+      font-size: 13px;
+      line-height: 1.45;
+      min-height: 36px;
+      color: rgba(255, 255, 255, 0.88);
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #3ba6ff 0%, #34d399 100%);
+      transition: width 0.2s ease;
+    }
+
+    .progress-row {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.74);
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="card">
+      <h1 class="title" id="update_title">Downloading update</h1>
+      <p class="summary" id="update_summary">Please keep VisionWiz open while the new version is being prepared.</p>
+      <div class="meta">
+        <div class="meta-key" id="current_version_label">Current</div>
+        <div id="current_version_value">-</div>
+        <div class="meta-key" id="latest_version_label">Latest</div>
+        <div id="latest_version_value">-</div>
+      </div>
+      <div class="status" id="update_status">Preparing update download...</div>
+      <div class="progress-track">
+        <div class="progress-bar" id="update_progress_bar"></div>
+      </div>
+      <div class="progress-row">
+        <div id="update_progress_text">0%</div>
+        <div id="update_speed_text">--</div>
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="./update-progress_renderer.js"></script>
+</body>
+</html>

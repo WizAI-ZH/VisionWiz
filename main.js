@@ -4,7 +4,8 @@
 // 请参阅LICENSE文件以获取详细信息
 // main.js
 console.log('[MAIN] marker', new Date().toISOString());
-const VisionWiz_version = "V1.2.6";
+const packageJson = require("./package.json");
+const VisionWiz_version = `V${packageJson.version}`;
 // process.on('uncaughtException', e => console.error('[FATAL] uncaughtException:', e));
 // process.on('unhandledRejection', r => console.error('[FATAL] unhandledRejection:', r));
 const {
@@ -14,8 +15,10 @@ const {
   ipcMain,
   dialog,
   globalShortcut,
+  shell: electronShell,
 } = require("electron");
 const { exec, spawn } = require("child_process");
+const axios = require("axios");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
@@ -68,6 +71,391 @@ SerialPort.list().then((initialPorts) => {
 let current_locales;
 let store;
 let config_store = {};
+const MANUAL_UPDATE_URL = "https://vesibit.yuque.com/ednd8n/visionwiz/intro";
+const UPDATE_REPO_OWNER = "WizAI-ZH";
+const UPDATE_REPO_NAME = "VisionWiz";
+const UPDATE_RELEASE_API = `https://api.github.com/repos/${UPDATE_REPO_OWNER}/${UPDATE_REPO_NAME}/releases/latest`;
+let hasCheckedForUpdates = false;
+let updateProgressWindow = null;
+let updateDownloadInProgress = false;
+let latestUpdateProgressState = {
+  currentVersion: packageJson.version,
+  latestVersion: "",
+  percent: 0,
+  statusText: "",
+  speedText: "--",
+};
+
+function normalizeVersion(versionValue) {
+  return String(versionValue || "")
+    .trim()
+    .replace(/^v/i, "")
+    .split("-")[0];
+}
+
+function compareVersions(leftVersion, rightVersion) {
+  const left = normalizeVersion(leftVersion).split(".").map((item) => parseInt(item, 10) || 0);
+  const right = normalizeVersion(rightVersion).split(".").map((item) => parseInt(item, 10) || 0);
+  const maxLength = Math.max(left.length, right.length);
+  for (let index = 0; index < maxLength; index += 1) {
+    const leftValue = left[index] || 0;
+    const rightValue = right[index] || 0;
+    if (leftValue > rightValue) {
+      return 1;
+    }
+    if (leftValue < rightValue) {
+      return -1;
+    }
+  }
+  return 0;
+}
+
+function formatByteSize(bytes) {
+  const value = Number(bytes) || 0;
+  if (value < 1024) {
+    return `${value} B`;
+  }
+  if (value < 1024 * 1024) {
+    return `${(value / 1024).toFixed(1)} KB`;
+  }
+  if (value < 1024 * 1024 * 1024) {
+    return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+  }
+  return `${(value / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+}
+
+function formatSpeedText(bytesPerSecond) {
+  const value = Number(bytesPerSecond) || 0;
+  return value > 0 ? `${formatByteSize(value)}/s` : "--";
+}
+
+function buildGitHubHeaders() {
+  return {
+    Accept: "application/vnd.github+json",
+    "User-Agent": "VisionWiz-Updater",
+  };
+}
+
+function getCurrentAppVersion() {
+  try {
+    return normalizeVersion(app.getVersion());
+  } catch (error) {
+    return normalizeVersion(packageJson.version);
+  }
+}
+
+function setUpdateProgressState(patch = {}) {
+  latestUpdateProgressState = {
+    ...latestUpdateProgressState,
+    ...patch,
+  };
+  if (updateProgressWindow && !updateProgressWindow.isDestroyed()) {
+    updateProgressWindow.webContents.send("update-progress-state", latestUpdateProgressState);
+  }
+}
+
+function createUpdateProgressWindow() {
+  if (updateProgressWindow && !updateProgressWindow.isDestroyed()) {
+    updateProgressWindow.focus();
+    return updateProgressWindow;
+  }
+
+  updateProgressWindow = new BrowserWindow({
+    width: 440,
+    height: 280,
+    parent: mainWindow || null,
+    modal: true,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    autoHideMenuBar: true,
+    show: false,
+    title: "VisionWiz Update",
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+    },
+  });
+
+  updateProgressWindow.loadFile(path.join(__dirname, "feature", "update-progress.html"));
+  updateProgressWindow.once("ready-to-show", () => {
+    if (updateProgressWindow && !updateProgressWindow.isDestroyed()) {
+      updateProgressWindow.show();
+      updateProgressWindow.webContents.send("update-progress-state", latestUpdateProgressState);
+    }
+  });
+  updateProgressWindow.webContents.on("did-finish-load", () => {
+    if (updateProgressWindow && !updateProgressWindow.isDestroyed()) {
+      updateProgressWindow.webContents.send("update-progress-state", latestUpdateProgressState);
+    }
+  });
+  updateProgressWindow.on("closed", () => {
+    updateProgressWindow = null;
+  });
+
+  return updateProgressWindow;
+}
+
+function closeUpdateProgressWindow() {
+  if (updateProgressWindow && !updateProgressWindow.isDestroyed()) {
+    updateProgressWindow.close();
+  }
+  updateProgressWindow = null;
+}
+
+async function fetchLatestGitHubRelease() {
+  try {
+    const response = await axios.get(UPDATE_RELEASE_API, {
+      headers: buildGitHubHeaders(),
+      timeout: 6000,
+      maxRedirects: 5,
+    });
+    const release = response.data;
+    if (!release || release.draft || release.prerelease) {
+      return null;
+    }
+    return release;
+  } catch (error) {
+    console.warn("[UPDATE] latest release check skipped:", error.message);
+    return null;
+  }
+}
+
+function extractReleaseNotes(release) {
+  const lines = String(release && release.body ? release.body : "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 6);
+  return lines.join("\n");
+}
+
+function pickWindowsInstallerAsset(release) {
+  const assets = Array.isArray(release && release.assets) ? release.assets.slice() : [];
+  if (assets.length === 0) {
+    return null;
+  }
+  const setupAsset = assets.find((asset) => /\.exe$/i.test(asset.name || "") && /setup/i.test(asset.name || ""));
+  if (setupAsset) {
+    return setupAsset;
+  }
+  return assets.find((asset) => /\.exe$/i.test(asset.name || "")) || null;
+}
+
+async function promptForUpdate(release) {
+  if (!mainWindow || !release) {
+    return;
+  }
+
+  const latestVersion = normalizeVersion(release.tag_name || release.name || "");
+  const currentVersion = getCurrentAppVersion();
+  const notes = extractReleaseNotes(release);
+  const detailLines = [
+    `${current_locales?.update_current_version_label || "Current version"}: ${currentVersion}`,
+    `${current_locales?.update_latest_version_label || "Latest version"}: ${latestVersion}`,
+  ];
+  if (notes) {
+    detailLines.push("");
+    detailLines.push(notes);
+  }
+
+  const result = await dialog.showMessageBox(mainWindow, {
+    type: "info",
+    buttons: [
+      current_locales?.update_auto_button || "Update Now",
+      current_locales?.update_manual_button || "Manual Download",
+      current_locales?.update_cancel_button || "Later",
+    ],
+    defaultId: 0,
+    cancelId: 2,
+    noLink: true,
+    title: current_locales?.update_available_title || "Update Available",
+    message:
+      current_locales?.update_available_message ||
+      "A new version of VisionWiz is available.",
+    detail: detailLines.join("\n"),
+  });
+
+  if (result.response === 0) {
+    await downloadAndInstallRelease(release);
+    return;
+  }
+
+  if (result.response === 1) {
+    electronShell.openExternal(MANUAL_UPDATE_URL);
+  }
+}
+
+async function downloadReleaseAssetToTemp(asset, targetVersion) {
+  const tempInstallerPath = path.join(
+    app.getPath("temp"),
+    `VisionWiz-Setup-${normalizeVersion(targetVersion)}.exe`
+  );
+
+  if (fs.existsSync(tempInstallerPath)) {
+    fs.rmSync(tempInstallerPath, { force: true });
+  }
+
+  const response = await axios({
+    method: "get",
+    url: asset.browser_download_url,
+    headers: buildGitHubHeaders(),
+    responseType: "stream",
+    timeout: 30000,
+    maxRedirects: 5,
+  });
+
+  const totalBytes = Number(response.headers["content-length"] || 0);
+  const writer = fs.createWriteStream(tempInstallerPath);
+  let downloadedBytes = 0;
+  let lastProgressTick = 0;
+  const startedAt = Date.now();
+
+  response.data.on("data", (chunk) => {
+    downloadedBytes += chunk.length;
+    const now = Date.now();
+    if (now - lastProgressTick < 180 && downloadedBytes < totalBytes) {
+      return;
+    }
+    lastProgressTick = now;
+    const elapsedSeconds = Math.max((now - startedAt) / 1000, 0.1);
+    const percent = totalBytes > 0 ? (downloadedBytes / totalBytes) * 100 : 0;
+    setUpdateProgressState({
+      percent,
+      statusText:
+        current_locales?.update_downloading_status ||
+        "Downloading the latest installer...",
+      speedText: `${formatByteSize(downloadedBytes)}${
+        totalBytes > 0 ? ` / ${formatByteSize(totalBytes)}` : ""
+      }  ${formatSpeedText(downloadedBytes / elapsedSeconds)}`,
+    });
+  });
+
+  await new Promise((resolve, reject) => {
+    writer.on("finish", resolve);
+    writer.on("error", reject);
+    response.data.on("error", reject);
+    response.data.pipe(writer);
+  });
+
+  return tempInstallerPath;
+}
+
+function launchInstallerAndQuit(installerPath) {
+  const silentArgs = ["/S"];
+  app.once("will-quit", () => {
+    try {
+      const child = spawn(installerPath, silentArgs, {
+        detached: true,
+        stdio: "ignore",
+      });
+      child.unref();
+    } catch (error) {
+      console.warn("[UPDATE] silent installer launch failed, fallback to normal launch:", error.message);
+      try {
+        const child = spawn(installerPath, [], {
+          detached: true,
+          stdio: "ignore",
+        });
+        child.unref();
+      } catch (fallbackError) {
+        console.error("[UPDATE] installer launch failed:", fallbackError);
+      }
+    }
+  });
+
+  closeUpdateProgressWindow();
+  app.quit();
+}
+
+async function downloadAndInstallRelease(release) {
+  const asset = pickWindowsInstallerAsset(release);
+  if (!asset) {
+    await dialog.showMessageBox(mainWindow, {
+      type: "warning",
+      buttons: [current_locales?.confirm || "OK"],
+      defaultId: 0,
+      title: current_locales?.update_download_failed_title || "Update Download Failed",
+      message:
+        current_locales?.update_missing_asset_message ||
+        "No Windows installer was found in the latest release.",
+      detail: MANUAL_UPDATE_URL,
+    });
+    electronShell.openExternal(MANUAL_UPDATE_URL);
+    return;
+  }
+
+  if (updateDownloadInProgress) {
+    createUpdateProgressWindow();
+    return;
+  }
+
+  updateDownloadInProgress = true;
+  const latestVersion = normalizeVersion(release.tag_name || release.name || "");
+  setUpdateProgressState({
+    currentVersion: getCurrentAppVersion(),
+    latestVersion,
+    percent: 0,
+    statusText:
+      current_locales?.update_download_starting ||
+      "Preparing the update download...",
+    speedText: "--",
+  });
+  createUpdateProgressWindow();
+
+  try {
+    const installerPath = await downloadReleaseAssetToTemp(asset, latestVersion);
+    setUpdateProgressState({
+      percent: 100,
+      statusText:
+        current_locales?.update_installing_status ||
+        "Download complete. Starting installer...",
+      speedText:
+        current_locales?.update_installing_speed || "Launching installer...",
+    });
+    await timeout(800);
+    launchInstallerAndQuit(installerPath);
+  } catch (error) {
+    updateDownloadInProgress = false;
+    setUpdateProgressState({
+      statusText:
+        current_locales?.update_download_failed_status ||
+        "Failed to download the latest installer.",
+      speedText: "--",
+    });
+    await dialog.showMessageBox(mainWindow, {
+      type: "error",
+      buttons: [current_locales?.confirm || "OK"],
+      defaultId: 0,
+      title: current_locales?.update_download_failed_title || "Update Download Failed",
+      message:
+        current_locales?.update_download_failed_message ||
+        "The update download failed. You can continue using the current version.",
+      detail: String(error && error.message ? error.message : error),
+    });
+    closeUpdateProgressWindow();
+  }
+}
+
+async function checkForUpdatesOnce() {
+  if (hasCheckedForUpdates) {
+    return;
+  }
+  hasCheckedForUpdates = true;
+
+  const latestRelease = await fetchLatestGitHubRelease();
+  if (!latestRelease) {
+    return;
+  }
+
+  const currentVersion = getCurrentAppVersion();
+  const latestVersion = normalizeVersion(latestRelease.tag_name || latestRelease.name || "");
+  if (compareVersions(latestVersion, currentVersion) <= 0) {
+    return;
+  }
+
+  await promptForUpdate(latestRelease);
+}
 
 async function initStoreAfterReady() {
   console.log('[STORE] init - before app.whenReady()');
@@ -410,9 +798,17 @@ ipcMain.handle("get-language", () => {
   return get_store_value("current_lang") || "zh";
 });
 
+ipcMain.handle("get-app-version", () => {
+  return getCurrentAppVersion();
+});
+
 ipcMain.handle("get-current-locales", () => {
   console.log('[MAIN] get-current-locales invoked');
   return current_locales;
+});
+
+ipcMain.handle("get-update-progress-state", () => {
+  return latestUpdateProgressState;
 });
 
 ipcMain.handle("set-language", async (event, language) => {
@@ -441,6 +837,13 @@ function afterAuthSuccess() {
     }, 1000);
   }
   if (mainWindow) mainWindow.setEnabled(true);
+  if (!hasCheckedForUpdates) {
+    setTimeout(() => {
+      checkForUpdatesOnce().catch((error) => {
+        console.warn("[UPDATE] check failed silently:", error.message);
+      });
+    }, 1800);
+  }
 }
 
 // 这段程序将会在 Electron 结束初始化
@@ -1292,6 +1695,7 @@ function read_config() {
     cls_alpha: safeGet("cls_alpha", 0),
     cls_batch_size: safeGet("cls_batch_size", 8),
     cls_data_aug: safeGet("cls_data_aug", 0),
+    cls_input_size: safeGet("cls_input_size", "224x224"),
     test_img_dir_cls: safeGet("test_img_dir_cls", ""),
     test_img_dir_yolo: safeGet("test_img_dir_yolo", ""),
     current_lang: safeGet("current_lang", "zh"),
@@ -1349,6 +1753,10 @@ ipcMain.on("config_alpha_yolo", function (event, arg) {
 
 ipcMain.on("config_batch_size_cls", function (event, arg) {
   set_store_value("cls_batch_size", arg);
+});
+
+ipcMain.on("config_input_size_cls", function (event, arg) {
+  set_store_value("cls_input_size", arg);
 });
 
 ipcMain.on("config_batch_size_yolo", function (event, arg) {
@@ -1542,4 +1950,3 @@ ipcMain.on("export_model", function (event, arg) {
       console.log(error);
     });
 });
-
