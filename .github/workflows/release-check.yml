@@ -33,7 +33,8 @@ jobs:
           $pkg = Get-Content package.json -Raw | ConvertFrom-Json
           if (-not $pkg.version) { throw "package.json missing version" }
           if (-not (Test-Path "package.js")) { throw "package.js missing" }
-          if (-not (Test-Path "main_bootstrap.js")) { throw "main_bootstrap.js missing" }
+          if (-not (Test-Path "main.js")) { throw "main.js missing" }
+          if (-not (Test-Path "compile.js")) { throw "compile.js missing" }
           if (-not (Test-Path "icons/visionwiz_logo.ico")) { throw "icons/visionwiz_logo.ico missing" }
           if (-not (Test-Path "LICENSE")) { throw "LICENSE missing" }
           if (-not (Test-Path "README.md")) { throw "README.md missing" }
