@@ -82,6 +82,31 @@ function parseGitHubRepo(remoteUrl) {
   };
 }
 
+async function resolveGitRemoteName() {
+  const configuredPushDefault = await runCapture("git", ["config", "--get", "remote.pushDefault"]).catch(() => "");
+  if (configuredPushDefault) {
+    return configuredPushDefault;
+  }
+
+  const remotesOutput = await runCapture("git", ["remote"]).catch(() => "");
+  const remotes = remotesOutput
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (remotes.includes("origin")) {
+    return "origin";
+  }
+  if (remotes.length === 1) {
+    return remotes[0];
+  }
+  if (remotes.length > 1) {
+    return remotes[0];
+  }
+
+  throw new Error("No git remote found for release publishing.");
+}
+
 function getApiHeaders(extra = {}) {
   return {
     Accept: "application/vnd.github+json",
@@ -91,12 +116,12 @@ function getApiHeaders(extra = {}) {
   };
 }
 
-async function ensureTagAtHead(tagName) {
+async function ensureTagAtHead(tagName, remoteName) {
   const headCommit = await runCapture("git", ["rev-parse", "HEAD"]);
   const remoteTagLine = await runCapture("git", [
     "ls-remote",
     "--tags",
-    "origin",
+    remoteName,
     `refs/tags/${tagName}`,
   ]).catch(() => "");
   const remoteTagCommit = remoteTagLine ? remoteTagLine.split(/\s+/)[0] : "";
@@ -109,7 +134,7 @@ async function ensureTagAtHead(tagName) {
   }
 
   if (!localTagCommit && remoteTagCommit) {
-    await run("git", ["fetch", "origin", `refs/tags/${tagName}:refs/tags/${tagName}`]);
+    await run("git", ["fetch", remoteName, `refs/tags/${tagName}:refs/tags/${tagName}`]);
     localTagCommit = await runCapture("git", ["rev-list", "-n", "1", tagName]);
   }
 
@@ -123,12 +148,12 @@ async function ensureTagAtHead(tagName) {
 
   if (!localTagCommit && !remoteTagCommit) {
     await run("git", ["tag", "-a", tagName, "-m", `Release ${tagName}`]);
-    await run("git", ["push", "origin", tagName]);
+    await run("git", ["push", remoteName, tagName]);
     return;
   }
 
   if (localTagCommit && !remoteTagCommit) {
-    await run("git", ["push", "origin", tagName]);
+    await run("git", ["push", remoteName, tagName]);
   }
 }
 
@@ -286,11 +311,12 @@ async function main() {
   const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
   const buildStartedAt = Date.now();
 
-  const remoteUrl = await runCapture("git", ["config", "--get", "remote.origin.url"]);
+  const remoteName = await resolveGitRemoteName();
+  const remoteUrl = await runCapture("git", ["config", "--get", `remote.${remoteName}.url`]);
   const { owner, repo } = parseGitHubRepo(remoteUrl);
 
   console.log(`Publishing ${releaseTag} to ${owner}/${repo}`);
-  await ensureTagAtHead(releaseTag);
+  await ensureTagAtHead(releaseTag, remoteName);
   await run(npmCommand, ["run", "release-package-onekey_ps"]);
 
   const artifacts = findRecentArtifacts(buildStartedAt);
