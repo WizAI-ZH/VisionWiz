@@ -2,6 +2,11 @@ import { defineConfig, loadEnv, UserConfig, UserConfigExport, Plugin } from 'vit
 import react from '@vitejs/plugin-react';
 import * as path from 'path';
 import fs from 'fs';
+import { webcrypto } from 'crypto';
+
+if (!globalThis.crypto) {
+  globalThis.crypto = webcrypto as Crypto;
+}
 
 export default ({ mode }: UserConfig): UserConfigExport => {
   process.env = { ...process.env, ...loadEnv(mode || 'development', process.cwd()) };
@@ -49,7 +54,6 @@ export default ({ mode }: UserConfig): UserConfigExport => {
               '@tensorflow/tfjs-backend-cpu',
               '@tensorflow/tfjs-backend-webgl',
               '@tensorflow/tfjs-core',
-              '@tensorflow/tfjs-node',
             ],
             models: [
               '@tensorflow-models/coco-ssd',

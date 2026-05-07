@@ -1,7 +1,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { execSync } = require("child_process");
+const { execFileSync } = require("child_process");
 
 function renameDir(oldPath, newPath) {
   if (fs.existsSync(oldPath)) {
@@ -32,7 +32,28 @@ function buildVariant(variant) {
   try {
     // 3️⃣ 执行构建
     console.log(`🚧 正在构建 ${variant} 版本...`);
-    execSync(`cross-env OUT_DIR=dist_${variant} vite build`, { stdio: "inherit" });
+    const viteCli = path.join(root, "node_modules", "vite", "bin", "vite.js");
+    const nodeOptions = [process.env.NODE_OPTIONS, "--experimental-global-webcrypto"]
+      .filter(Boolean)
+      .join(" ");
+    const preferredVoltaNode =
+      process.platform === "win32" && process.env.ProgramFiles
+        ? path.join(process.env.ProgramFiles, "Volta", "node.exe")
+        : null;
+    const nodeCommand =
+      preferredVoltaNode && fs.existsSync(preferredVoltaNode)
+        ? preferredVoltaNode
+        : process.platform === "win32"
+          ? "node.exe"
+          : "node";
+    execFileSync(nodeCommand, [viteCli, "build"], {
+      stdio: "inherit",
+      env: {
+        ...process.env,
+        OUT_DIR: `dist_${variant}`,
+        NODE_OPTIONS: nodeOptions,
+      },
+    });
     console.log(`✅ 构建完成: dist_${variant}`);
   } catch (err) {
     console.error(`❌ 构建失败: ${variant}`, err);

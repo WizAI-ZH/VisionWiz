@@ -309,7 +309,7 @@ async function stepRunNSIS(manifest) {
     // 🎯 添加更多必要的定义
     ZIP_DIR: nsisPath(path.join(outputDir, '7-Zip')),
     ICON_PATH: nsisPath(path.join(projectRoot, 'icons', 'visionwiz_logo.ico')),
-    LICENSE_PATH: nsisPath(path.join(projectRoot, 'LICENSE')),
+    LICENSE_PATH: nsisPath(path.join(projectRoot, 'LICENSE.rtf')),
     README_PATH: nsisPath(path.join(projectRoot, 'README.md')),
   };
 

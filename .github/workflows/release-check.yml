@@ -37,6 +37,7 @@ jobs:
           if (-not (Test-Path "compile.js")) { throw "compile.js missing" }
           if (-not (Test-Path "icons/visionwiz_logo.ico")) { throw "icons/visionwiz_logo.ico missing" }
           if (-not (Test-Path "LICENSE")) { throw "LICENSE missing" }
+          if (-not (Test-Path "LICENSE.rtf")) { throw "LICENSE.rtf missing" }
           if (-not (Test-Path "README.md")) { throw "README.md missing" }
           Write-Host "package.json version: $($pkg.version)"
 
