@@ -74,7 +74,6 @@ make-sense/dist/
 .env.test.local
 .env.production.local
 
-package.js
 utils/cryptoService.js
 authPreload.js
 auth.html

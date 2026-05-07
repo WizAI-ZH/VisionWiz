@@ -34,7 +34,9 @@ jobs:
           if (-not $pkg.version) { throw "package.json missing version" }
           if (-not (Test-Path "package.js")) { throw "package.js missing" }
           if (-not (Test-Path "main_bootstrap.js")) { throw "main_bootstrap.js missing" }
-          if (-not (Test-Path "build/installer-includes.nsh")) { throw "build/installer-includes.nsh missing" }
+          if (-not (Test-Path "icons/visionwiz_logo.ico")) { throw "icons/visionwiz_logo.ico missing" }
+          if (-not (Test-Path "LICENSE")) { throw "LICENSE missing" }
+          if (-not (Test-Path "README.md")) { throw "README.md missing" }
           Write-Host "package.json version: $($pkg.version)"
 
       - name: Detect full packaging resources
