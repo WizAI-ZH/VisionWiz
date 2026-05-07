@@ -13,6 +13,7 @@ const githubToken =
   process.env.VISIONWIZ_GITHUB_TOKEN ||
   process.env.GITHUB_TOKEN ||
   process.env.GH_TOKEN;
+const escapedReleaseVersion = releaseVersion.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 if (!releaseVersion) {
   throw new Error("package.json is missing a version field.");
@@ -116,21 +117,51 @@ function getApiHeaders(extra = {}) {
   };
 }
 
+function isReleaseAssetCandidate(fileName) {
+  const name = String(fileName || "").trim();
+  const lowerName = name.toLowerCase();
+  const extension = path.extname(lowerName);
+  if (![".exe", ".zip", ".7z"].includes(extension)) {
+    return false;
+  }
+
+  if (/^visionwiz-win32-x64\.7z$/i.test(name)) {
+    return true;
+  }
+
+  if (extension === ".exe") {
+    return new RegExp(`^VisionWiz${escapedReleaseVersion}-win32-x64-Setup.*\\.exe$`, "i").test(name);
+  }
+
+  return new RegExp(escapedReleaseVersion, "i").test(name);
+}
+
 async function ensureTagAtHead(tagName, remoteName) {
   const headCommit = await runCapture("git", ["rev-parse", "HEAD"]);
-  const remoteTagLine = await runCapture("git", [
-    "ls-remote",
-    "--tags",
-    remoteName,
-    `refs/tags/${tagName}`,
-  ]).catch(() => "");
-  const remoteTagCommit = remoteTagLine ? remoteTagLine.split(/\s+/)[0] : "";
-
   let localTagCommit = "";
   try {
     localTagCommit = await runCapture("git", ["rev-list", "-n", "1", tagName]);
   } catch (_error) {
     localTagCommit = "";
+  }
+
+  let remoteTagCommit = "";
+  const remoteTagLine = await runCapture("git", [
+    "ls-remote",
+    "--tags",
+    remoteName,
+    `refs/tags/${tagName}`,
+    `refs/tags/${tagName}^{}`,
+  ]).catch(() => "");
+  if (remoteTagLine) {
+    const remoteRefs = remoteTagLine
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    const peeledLine = remoteRefs.find((line) => line.endsWith(`refs/tags/${tagName}^{}`));
+    const directLine = remoteRefs.find((line) => line.endsWith(`refs/tags/${tagName}`));
+    const selectedLine = peeledLine || directLine || "";
+    remoteTagCommit = selectedLine ? selectedLine.split(/\s+/)[0] : "";
   }
 
   if (!localTagCommit && remoteTagCommit) {
@@ -228,11 +259,17 @@ function findRecentArtifacts(buildStartedAt) {
     }
   }
 
-  const artifacts = Array.from(uniqueByPath.values());
+  const artifacts = Array.from(uniqueByPath.values()).filter((item) =>
+    isReleaseAssetCandidate(item.name)
+  );
   if (artifacts.length === 0) {
     throw new Error("No uploadable installer artifacts were found. Check the local packaging output.");
   }
   return artifacts;
+}
+
+function findExistingReleaseArtifacts() {
+  return findRecentArtifacts(0);
 }
 
 async function getOrCreateRelease(owner, repo, tagName, body) {
@@ -292,6 +329,19 @@ async function deleteExistingAssetIfNeeded(release, assetName) {
   });
 }
 
+async function deleteStaleAssets(release, targetAssetNames) {
+  const keepNames = new Set(targetAssetNames);
+  for (const asset of release.assets || []) {
+    if (!keepNames.has(asset.name)) {
+      console.log(`Deleting stale asset: ${asset.name}`);
+      await axios.delete(asset.url, {
+        headers: getApiHeaders(),
+        timeout: 15000,
+      });
+    }
+  }
+}
+
 async function uploadReleaseAsset(release, artifact) {
   const uploadUrl = String(release.upload_url || "").replace(/\{.*$/, "");
   const fileBuffer = fs.readFileSync(artifact.path);
@@ -317,11 +367,23 @@ async function main() {
 
   console.log(`Publishing ${releaseTag} to ${owner}/${repo}`);
   await ensureTagAtHead(releaseTag, remoteName);
-  await run(npmCommand, ["run", "release-package-onekey_ps"]);
+  let artifacts = [];
+  try {
+    artifacts = findExistingReleaseArtifacts();
+  } catch (_error) {
+    artifacts = [];
+  }
 
-  const artifacts = findRecentArtifacts(buildStartedAt);
+  if (artifacts.length === 0) {
+    await run(npmCommand, ["run", "release-package-onekey_ps"]);
+    artifacts = findRecentArtifacts(buildStartedAt);
+  } else {
+    console.log(`Reusing existing release artifacts (${artifacts.length} found).`);
+  }
+
   const releaseBody = await buildReleaseNotes(releaseTag);
   const release = await getOrCreateRelease(owner, repo, releaseTag, releaseBody);
+  await deleteStaleAssets(release, artifacts.map((artifact) => artifact.name));
 
   for (const artifact of artifacts) {
     console.log(`Uploading asset: ${artifact.name}`);
