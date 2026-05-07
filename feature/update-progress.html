@@ -2,64 +2,122 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VisionWiz Update</title>
   <style>
-    body {
+    :root {
+      color-scheme: dark;
+      --bg: #0f1724;
+      --panel: #1a2434;
+      --panel-soft: #202c40;
+      --line: rgba(148, 163, 184, 0.22);
+      --text: #f8fafc;
+      --text-soft: rgba(226, 232, 240, 0.74);
+      --accent: #38bdf8;
+      --accent-2: #34d399;
+      --danger: #f87171;
+      --shadow: 0 22px 50px rgba(0, 0, 0, 0.28);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
       margin: 0;
-      font-family: "Segoe UI", Arial, sans-serif;
-      background: #10151f;
-      color: #f6f8fc;
+      overflow: hidden;
+      font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    body {
+      padding: 18px;
     }
 
     .shell {
-      padding: 20px;
-    }
-
-    .card {
-      border-radius: 14px;
-      background: #1a2231;
-      padding: 20px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.24);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.96) 0%, rgba(20, 30, 46, 0.98) 100%);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 22px 22px 18px;
+      overflow: hidden;
     }
 
     .title {
-      font-size: 18px;
-      font-weight: 700;
       margin: 0 0 8px;
+      font-size: 22px;
+      line-height: 1.3;
+      font-weight: 700;
     }
 
     .summary {
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.76);
-      margin: 0 0 16px;
-      line-height: 1.45;
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-soft);
     }
 
-    .meta {
+    .meta-grid {
       display: grid;
-      grid-template-columns: 92px 1fr;
-      gap: 8px 10px;
-      margin-bottom: 16px;
-      font-size: 13px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
     }
 
-    .meta-key {
-      color: rgba(255, 255, 255, 0.66);
+    .meta-card,
+    .stats-card,
+    .error-panel {
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(15, 23, 36, 0.36);
+    }
+
+    .meta-card {
+      padding: 12px 14px;
+    }
+
+    .meta-label {
+      margin: 0 0 4px;
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .meta-value {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .status-block {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .status {
-      margin-bottom: 12px;
-      font-size: 13px;
-      line-height: 1.45;
-      min-height: 36px;
-      color: rgba(255, 255, 255, 0.88);
+      min-height: 48px;
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    .progress-shell {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
     .progress-track {
       width: 100%;
-      height: 12px;
+      height: 14px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(148, 163, 184, 0.16);
       overflow: hidden;
     }
 
@@ -67,40 +125,153 @@
       height: 100%;
       width: 0%;
       border-radius: 999px;
-      background: linear-gradient(90deg, #3ba6ff 0%, #34d399 100%);
-      transition: width 0.2s ease;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 100%);
+      transition: width 0.18s ease;
     }
 
-    .progress-row {
-      margin-top: 10px;
+    .progress-line {
       display: flex;
       justify-content: space-between;
-      align-items: center;
       gap: 12px;
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stats-card {
+      padding: 12px 14px;
+    }
+
+    .stats-value {
+      margin: 0 0 3px;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .stats-label {
+      margin: 0;
       font-size: 12px;
-      color: rgba(255, 255, 255, 0.74);
+      color: var(--text-soft);
+    }
+
+    .error-panel {
+      display: none;
+      padding: 14px 16px;
+      background: rgba(127, 29, 29, 0.24);
+      border-color: rgba(248, 113, 113, 0.34);
+      color: #fee2e2;
+      line-height: 1.55;
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .error-panel.show {
+      display: block;
+    }
+
+    .actions {
+      margin-top: auto;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      min-width: 126px;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(148, 163, 184, 0.46);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(90deg, var(--accent) 0%, #2563eb 100%);
+      border-color: transparent;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(90deg, #22c1ff 0%, #1d4ed8 100%);
+    }
+
+    .btn[hidden] {
+      display: none;
     }
   </style>
 </head>
 <body>
   <div class="shell">
-    <div class="card">
+    <div>
       <h1 class="title" id="update_title">Downloading update</h1>
       <p class="summary" id="update_summary">Please keep VisionWiz open while the new version is being prepared.</p>
-      <div class="meta">
-        <div class="meta-key" id="current_version_label">Current</div>
-        <div id="current_version_value">-</div>
-        <div class="meta-key" id="latest_version_label">Latest</div>
-        <div id="latest_version_value">-</div>
+    </div>
+
+    <div class="meta-grid">
+      <div class="meta-card">
+        <p class="meta-label" id="current_version_label">Current version</p>
+        <p class="meta-value" id="current_version_value">-</p>
       </div>
+      <div class="meta-card">
+        <p class="meta-label" id="latest_version_label">Latest version</p>
+        <p class="meta-value" id="latest_version_value">-</p>
+      </div>
+    </div>
+
+    <div class="status-block">
       <div class="status" id="update_status">Preparing update download...</div>
-      <div class="progress-track">
-        <div class="progress-bar" id="update_progress_bar"></div>
+      <div class="progress-shell">
+        <div class="progress-track">
+          <div class="progress-bar" id="update_progress_bar"></div>
+        </div>
+        <div class="progress-line">
+          <div id="update_progress_text">0%</div>
+          <div id="update_transfer_text">--</div>
+        </div>
       </div>
-      <div class="progress-row">
-        <div id="update_progress_text">0%</div>
-        <div id="update_speed_text">--</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stats-card">
+        <p class="stats-value" id="update_speed_text">--</p>
+        <p class="stats-label" id="update_speed_label">Download speed</p>
       </div>
+      <div class="stats-card">
+        <p class="stats-value" id="update_eta_text">--</p>
+        <p class="stats-label" id="update_eta_label">Estimated time remaining</p>
+      </div>
+      <div class="stats-card">
+        <p class="stats-value" id="update_stage_text">Downloading</p>
+        <p class="stats-label" id="update_stage_label">Current stage</p>
+      </div>
+    </div>
+
+    <div class="error-panel" id="update_error_panel"></div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="resume_button" hidden>Resume</button>
+      <button class="btn" id="restart_button" hidden>Restart Download</button>
+      <button class="btn" id="manual_button">Manual Download</button>
+      <button class="btn" id="close_button">Close</button>
     </div>
   </div>
   <script type="text/javascript" src="./update-progress_renderer.js"></script>

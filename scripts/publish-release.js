@@ -189,6 +189,15 @@ async function ensureTagAtHead(tagName, remoteName) {
 }
 
 async function buildReleaseNotes(tagName) {
+  const customReleaseNotesPath = path.join(
+    projectRoot,
+    "release-notes",
+    `${releaseVersion}.md`
+  );
+  if (fs.existsSync(customReleaseNotesPath)) {
+    return fs.readFileSync(customReleaseNotesPath, "utf8").trim();
+  }
+
   const tagsOutput = await runCapture("git", ["tag", "--sort=-version:refname"]).catch(() => "");
   const allTags = tagsOutput
     .split(/\r?\n/)
@@ -201,16 +210,37 @@ async function buildReleaseNotes(tagName) {
     : ["log", "--pretty=format:- %s", "-n", "12"];
   const commitLines = await runCapture("git", logArgs).catch(() => "");
   const today = new Date().toISOString().slice(0, 10);
+  const highlights = commitLines || "- Maintenance release";
+  const translatedHighlights = highlights
+    .split(/\r?\n/)
+    .map((line) =>
+      line
+        .replace(/^- /, "- ")
+        .replace(/^-\s*release:\s+prepare\s+/i, "- 发布准备：")
+        .replace(/^-\s*fix:\s+/i, "- 修复：")
+        .replace(/^-\s*feat:\s+/i, "- 功能：")
+        .replace(/^-\s*chore:\s+/i, "- 维护：")
+    )
+    .join("\n");
 
   return [
     `## VisionWiz ${releaseVersion}`,
     "",
+    "### English",
     `- Release version: ${releaseTag}`,
     `- Release date: ${today}`,
     `- Manual update guide: ${manualUpdateUrl}`,
     "",
     "### Highlights",
-    commitLines || "- Maintenance release",
+    highlights,
+    "",
+    "### 中文",
+    `- 发布版本：${releaseTag}`,
+    `- 发布时间：${today}`,
+    `- 手动更新说明：${manualUpdateUrl}`,
+    "",
+    "### 更新亮点",
+    translatedHighlights || "- 维护版本更新",
   ].join("\n");
 }
 

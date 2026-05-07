@@ -1,0 +1,254 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VisionWiz Update</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --panel-soft: #eef3f9;
+      --line: #d7e0ec;
+      --text: #17324d;
+      --text-soft: #5f728a;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --button: #ffffff;
+      --button-hover: #eef4ff;
+      --shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    body {
+      padding: 18px;
+    }
+
+    .shell {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 22px 22px 18px;
+      overflow: hidden;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .hero-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3ba6ff 0%, #2563eb 100%);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 28px;
+      font-weight: 700;
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.24);
+    }
+
+    .title {
+      margin: 2px 0 8px;
+      font-size: 20px;
+      line-height: 1.3;
+      font-weight: 700;
+    }
+
+    .summary {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-soft);
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 14px;
+    }
+
+    .meta-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel-soft);
+      padding: 12px 14px;
+      min-width: 0;
+    }
+
+    .meta-label {
+      margin: 0 0 4px;
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .meta-value {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .notes-shell {
+      min-height: 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .notes-title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .notes-panel {
+      min-height: 0;
+      flex: 1;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fbfdff;
+      padding: 16px 18px;
+    }
+
+    .notes-panel h1,
+    .notes-panel h2,
+    .notes-panel h3,
+    .notes-panel h4 {
+      margin: 0 0 10px;
+      line-height: 1.35;
+      color: var(--text);
+    }
+
+    .notes-panel h1 { font-size: 22px; }
+    .notes-panel h2 { font-size: 18px; margin-top: 18px; }
+    .notes-panel h3 { font-size: 15px; margin-top: 14px; }
+    .notes-panel h4 { font-size: 14px; margin-top: 12px; }
+
+    .notes-panel p {
+      margin: 0 0 10px;
+      line-height: 1.65;
+      color: var(--text-soft);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .notes-panel ul {
+      margin: 0 0 12px 18px;
+      padding: 0;
+    }
+
+    .notes-panel li {
+      margin: 0 0 8px;
+      line-height: 1.6;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .notes-panel a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding-top: 2px;
+    }
+
+    .btn {
+      min-width: 132px;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--button);
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+    }
+
+    .btn:hover {
+      background: var(--button-hover);
+      border-color: #b9c8da;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="hero">
+      <div class="hero-icon">i</div>
+      <div>
+        <h1 class="title" id="update_title">A new version of VisionWiz is available.</h1>
+        <p class="summary" id="update_summary">You can read the full release notes below and choose how to update.</p>
+      </div>
+    </div>
+
+    <div class="meta-grid">
+      <div class="meta-card">
+        <p class="meta-label" id="current_version_label">Current version</p>
+        <p class="meta-value" id="current_version_value">-</p>
+      </div>
+      <div class="meta-card">
+        <p class="meta-label" id="latest_version_label">Latest version</p>
+        <p class="meta-value" id="latest_version_value">-</p>
+      </div>
+    </div>
+
+    <div class="notes-shell">
+      <p class="notes-title" id="release_notes_label">Release notes</p>
+      <div class="notes-panel" id="release_notes_panel"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="auto_update_button">Auto Update</button>
+      <button class="btn" id="manual_update_button">Manual Download</button>
+      <button class="btn" id="later_button">Later</button>
+    </div>
+  </div>
+
+  <script type="text/javascript" src="./update-available_renderer.js"></script>
+</body>
+</html>

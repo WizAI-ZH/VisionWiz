@@ -76,14 +76,32 @@ const UPDATE_REPO_OWNER = "WizAI-ZH";
 const UPDATE_REPO_NAME = "VisionWiz";
 const UPDATE_RELEASE_API = `https://api.github.com/repos/${UPDATE_REPO_OWNER}/${UPDATE_REPO_NAME}/releases/latest`;
 let hasCheckedForUpdates = false;
+let updatePromptWindow = null;
 let updateProgressWindow = null;
 let updateDownloadInProgress = false;
+let activeUpdateRelease = null;
+let activeInstallerAsset = null;
+let activeInstallerPath = "";
 let latestUpdateProgressState = {
   currentVersion: packageJson.version,
   latestVersion: "",
   percent: 0,
   statusText: "",
   speedText: "--",
+  etaText: "--",
+  transferredText: "--",
+  errorText: "",
+  canResume: false,
+  canRestart: false,
+  isFailed: false,
+  manualUrl: MANUAL_UPDATE_URL,
+};
+let latestUpdatePromptState = {
+  currentVersion: packageJson.version,
+  latestVersion: "",
+  releaseTitle: "",
+  releaseBody: "",
+  manualUrl: MANUAL_UPDATE_URL,
 };
 
 function normalizeVersion(versionValue) {
@@ -129,6 +147,27 @@ function formatSpeedText(bytesPerSecond) {
   return value > 0 ? `${formatByteSize(value)}/s` : "--";
 }
 
+function formatEtaText(totalSeconds) {
+  const seconds = Math.max(0, Math.round(Number(totalSeconds) || 0));
+  if (!seconds) {
+    return "--";
+  }
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainSeconds = seconds % 60;
+  if (hours > 0) {
+    return `${hours}h ${String(minutes).padStart(2, "0")}m ${String(remainSeconds).padStart(2, "0")}s`;
+  }
+  if (minutes > 0) {
+    return `${minutes}m ${String(remainSeconds).padStart(2, "0")}s`;
+  }
+  return `${remainSeconds}s`;
+}
+
+function escapeRegExp(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function buildGitHubHeaders() {
   return {
     Accept: "application/vnd.github+json",
@@ -144,6 +183,16 @@ function getCurrentAppVersion() {
   }
 }
 
+function setUpdatePromptState(patch = {}) {
+  latestUpdatePromptState = {
+    ...latestUpdatePromptState,
+    ...patch,
+  };
+  if (updatePromptWindow && !updatePromptWindow.isDestroyed()) {
+    updatePromptWindow.webContents.send("update-prompt-state", latestUpdatePromptState);
+  }
+}
+
 function setUpdateProgressState(patch = {}) {
   latestUpdateProgressState = {
     ...latestUpdateProgressState,
@@ -154,6 +203,57 @@ function setUpdateProgressState(patch = {}) {
   }
 }
 
+function closeUpdatePromptWindow() {
+  if (updatePromptWindow && !updatePromptWindow.isDestroyed()) {
+    updatePromptWindow.close();
+  }
+  updatePromptWindow = null;
+}
+
+function createUpdatePromptWindow() {
+  if (updatePromptWindow && !updatePromptWindow.isDestroyed()) {
+    updatePromptWindow.focus();
+    return updatePromptWindow;
+  }
+
+  updatePromptWindow = new BrowserWindow({
+    width: 760,
+    height: 660,
+    minWidth: 760,
+    minHeight: 660,
+    parent: mainWindow || null,
+    modal: true,
+    resizable: true,
+    minimizable: false,
+    maximizable: false,
+    autoHideMenuBar: true,
+    show: false,
+    title: current_locales?.update_available_title || "Update Available",
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+    },
+  });
+
+  updatePromptWindow.loadFile(path.join(__dirname, "feature", "update-available.html"));
+  updatePromptWindow.once("ready-to-show", () => {
+    if (updatePromptWindow && !updatePromptWindow.isDestroyed()) {
+      updatePromptWindow.show();
+      updatePromptWindow.webContents.send("update-prompt-state", latestUpdatePromptState);
+    }
+  });
+  updatePromptWindow.webContents.on("did-finish-load", () => {
+    if (updatePromptWindow && !updatePromptWindow.isDestroyed()) {
+      updatePromptWindow.webContents.send("update-prompt-state", latestUpdatePromptState);
+    }
+  });
+  updatePromptWindow.on("closed", () => {
+    updatePromptWindow = null;
+  });
+
+  return updatePromptWindow;
+}
+
 function createUpdateProgressWindow() {
   if (updateProgressWindow && !updateProgressWindow.isDestroyed()) {
     updateProgressWindow.focus();
@@ -161,8 +261,10 @@ function createUpdateProgressWindow() {
   }
 
   updateProgressWindow = new BrowserWindow({
-    width: 440,
-    height: 280,
+    width: 620,
+    height: 430,
+    minWidth: 620,
+    minHeight: 430,
     parent: mainWindow || null,
     modal: true,
     resizable: false,
@@ -222,12 +324,77 @@ async function fetchLatestGitHubRelease() {
 }
 
 function extractReleaseNotes(release) {
-  const lines = String(release && release.body ? release.body : "")
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .slice(0, 6);
-  return lines.join("\n");
+  return String(release && release.body ? release.body : "").trim();
+}
+
+function translateReleaseLineToChinese(line) {
+  const trimmed = String(line || "").trim();
+  if (!trimmed) {
+    return "";
+  }
+  const prefix = trimmed.match(/^([-*]\s+)(.*)$/);
+  const bullet = prefix ? prefix[1] : "";
+  const raw = prefix ? prefix[2] : trimmed;
+
+  const replacements = [
+    [/^Release version:\s*/i, "发布版本："],
+    [/^Release date:\s*/i, "发布时间："],
+    [/^Manual update guide:\s*/i, "手动更新说明："],
+    [/^Highlights$/i, "更新亮点"],
+    [/^English$/i, "英文"],
+    [/^Chinese$/i, "中文"],
+    [/^Recent commits$/i, "最近提交"],
+    [/^Maintenance release$/i, "维护版本更新"],
+    [/^release:\s+prepare\s+/i, "发布准备："],
+    [/^fix:\s+/i, "修复："],
+    [/^feat:\s+/i, "功能："],
+    [/^chore:\s+/i, "维护："],
+    [/^docs:\s+/i, "文档："],
+    [/^refactor:\s+/i, "重构："],
+  ];
+
+  let translated = raw;
+  for (const [pattern, replacement] of replacements) {
+    if (pattern.test(raw)) {
+      translated = raw.replace(pattern, replacement);
+      break;
+    }
+  }
+
+  if (translated === raw && /^VisionWiz\s+/i.test(raw)) {
+    translated = raw;
+  }
+
+  return `${bullet}${translated}`;
+}
+
+function buildBilingualReleaseNotes(release) {
+  const body = extractReleaseNotes(release);
+  if (!body) {
+    return "";
+  }
+  if (/[一-龥]/.test(body) && /(###\s*中文|###\s*English|###\s*英文)/i.test(body)) {
+    return body;
+  }
+
+  const lines = body.split(/\r?\n/);
+  const zhLines = lines.map((line) => {
+    const heading = line.match(/^(#{1,6})\s+(.*)$/);
+    if (heading) {
+      return `${heading[1]} ${translateReleaseLineToChinese(heading[2])}`;
+    }
+    return translateReleaseLineToChinese(line);
+  });
+
+  return [
+    "### English",
+    body,
+    "",
+    "### 中文",
+    zhLines.join("\n"),
+  ]
+    .join("\n")
+    .trim();
 }
 
 function pickWindowsInstallerAsset(release) {
@@ -249,85 +416,106 @@ async function promptForUpdate(release) {
 
   const latestVersion = normalizeVersion(release.tag_name || release.name || "");
   const currentVersion = getCurrentAppVersion();
-  const notes = extractReleaseNotes(release);
-  const detailLines = [
-    `${current_locales?.update_current_version_label || "Current version"}: ${currentVersion}`,
-    `${current_locales?.update_latest_version_label || "Latest version"}: ${latestVersion}`,
-  ];
-  if (notes) {
-    detailLines.push("");
-    detailLines.push(notes);
-  }
-
-  const result = await dialog.showMessageBox(mainWindow, {
-    type: "info",
-    buttons: [
-      current_locales?.update_auto_button || "Update Now",
-      current_locales?.update_manual_button || "Manual Download",
-      current_locales?.update_cancel_button || "Later",
-    ],
-    defaultId: 0,
-    cancelId: 2,
-    noLink: true,
-    title: current_locales?.update_available_title || "Update Available",
-    message:
-      current_locales?.update_available_message ||
-      "A new version of VisionWiz is available.",
-    detail: detailLines.join("\n"),
+  activeUpdateRelease = release;
+  setUpdatePromptState({
+    currentVersion,
+    latestVersion,
+    releaseTitle: release.name || `VisionWiz ${latestVersion}`,
+    releaseBody: buildBilingualReleaseNotes(release),
+    manualUrl: MANUAL_UPDATE_URL,
   });
-
-  if (result.response === 0) {
-    await downloadAndInstallRelease(release);
-    return;
-  }
-
-  if (result.response === 1) {
-    electronShell.openExternal(MANUAL_UPDATE_URL);
-  }
+  createUpdatePromptWindow();
 }
 
-async function downloadReleaseAssetToTemp(asset, targetVersion) {
-  const tempInstallerPath = path.join(
+function buildInstallerTempPath(targetVersion) {
+  return path.join(
     app.getPath("temp"),
     `VisionWiz-Setup-${normalizeVersion(targetVersion)}.exe`
   );
+}
 
-  if (fs.existsSync(tempInstallerPath)) {
+async function downloadReleaseAssetToTemp(asset, targetVersion, options = {}) {
+  const shouldResume = Boolean(options.resume);
+  const tempInstallerPath = buildInstallerTempPath(targetVersion);
+  let downloadedBytes = 0;
+
+  if (shouldResume && fs.existsSync(tempInstallerPath)) {
+    downloadedBytes = fs.statSync(tempInstallerPath).size;
+  } else if (fs.existsSync(tempInstallerPath)) {
     fs.rmSync(tempInstallerPath, { force: true });
+  }
+
+  const headers = buildGitHubHeaders();
+  if (shouldResume && downloadedBytes > 0) {
+    headers.Range = `bytes=${downloadedBytes}-`;
   }
 
   const response = await axios({
     method: "get",
     url: asset.browser_download_url,
-    headers: buildGitHubHeaders(),
+    headers,
     responseType: "stream",
     timeout: 30000,
     maxRedirects: 5,
+    validateStatus: (status) => [200, 206].includes(status),
   });
 
-  const totalBytes = Number(response.headers["content-length"] || 0);
-  const writer = fs.createWriteStream(tempInstallerPath);
-  let downloadedBytes = 0;
+  const appendMode = shouldResume && downloadedBytes > 0 && response.status === 206;
+  if (!appendMode && downloadedBytes > 0) {
+    fs.rmSync(tempInstallerPath, { force: true });
+    downloadedBytes = 0;
+  }
+
+  const totalBytes = (() => {
+    const contentRange = String(response.headers["content-range"] || "");
+    const rangeMatch = contentRange.match(/\/(\d+)$/);
+    if (rangeMatch) {
+      return Number(rangeMatch[1]) || 0;
+    }
+    const contentLength = Number(response.headers["content-length"] || 0);
+    return appendMode ? downloadedBytes + contentLength : contentLength;
+  })();
+
+  const writer = fs.createWriteStream(tempInstallerPath, {
+    flags: appendMode ? "a" : "w",
+  });
   let lastProgressTick = 0;
   const startedAt = Date.now();
+  let lastSampleTime = startedAt;
+  let lastSampleBytes = downloadedBytes;
+  let smoothSpeed = 0;
 
   response.data.on("data", (chunk) => {
     downloadedBytes += chunk.length;
     const now = Date.now();
+    const elapsedChunkSeconds = Math.max((now - lastSampleTime) / 1000, 0.001);
+    const chunkBytes = downloadedBytes - lastSampleBytes;
+    const instantSpeed = chunkBytes / elapsedChunkSeconds;
+    smoothSpeed = smoothSpeed > 0 ? smoothSpeed * 0.72 + instantSpeed * 0.28 : instantSpeed;
+    lastSampleTime = now;
+    lastSampleBytes = downloadedBytes;
+
     if (now - lastProgressTick < 180 && downloadedBytes < totalBytes) {
       return;
     }
     lastProgressTick = now;
-    const elapsedSeconds = Math.max((now - startedAt) / 1000, 0.1);
     const percent = totalBytes > 0 ? (downloadedBytes / totalBytes) * 100 : 0;
+    const remainingBytes = Math.max(totalBytes - downloadedBytes, 0);
+    const etaSeconds = smoothSpeed > 0 ? remainingBytes / smoothSpeed : 0;
     setUpdateProgressState({
       percent,
       statusText:
         current_locales?.update_downloading_status ||
         "Downloading the latest installer...",
-      speedText: `${formatByteSize(downloadedBytes)}${
+      speedText: formatSpeedText(smoothSpeed),
+      etaText: formatEtaText(etaSeconds),
+      transferredText: `${formatByteSize(downloadedBytes)}${
         totalBytes > 0 ? ` / ${formatByteSize(totalBytes)}` : ""
-      }  ${formatSpeedText(downloadedBytes / elapsedSeconds)}`,
+      }`,
+      isFailed: false,
+      canResume: false,
+      canRestart: false,
+      errorText: "",
     });
   });
 
@@ -368,7 +556,7 @@ function launchInstallerAndQuit(installerPath) {
   app.quit();
 }
 
-async function downloadAndInstallRelease(release) {
+async function downloadAndInstallRelease(release, options = {}) {
   const asset = pickWindowsInstallerAsset(release);
   if (!asset) {
     await dialog.showMessageBox(mainWindow, {
@@ -391,7 +579,11 @@ async function downloadAndInstallRelease(release) {
   }
 
   updateDownloadInProgress = true;
+  activeUpdateRelease = release;
+  activeInstallerAsset = asset;
   const latestVersion = normalizeVersion(release.tag_name || release.name || "");
+  const resumePath = buildInstallerTempPath(latestVersion);
+  const hasPartial = fs.existsSync(resumePath) && fs.statSync(resumePath).size > 0;
   setUpdateProgressState({
     currentVersion: getCurrentAppVersion(),
     latestVersion,
@@ -400,11 +592,22 @@ async function downloadAndInstallRelease(release) {
       current_locales?.update_download_starting ||
       "Preparing the update download...",
     speedText: "--",
+    etaText: "--",
+    transferredText: hasPartial && options.resume
+      ? `${formatByteSize(fs.statSync(resumePath).size)} / --`
+      : "--",
+    isFailed: false,
+    canResume: false,
+    canRestart: false,
+    errorText: "",
+    manualUrl: MANUAL_UPDATE_URL,
   });
+  closeUpdatePromptWindow();
   createUpdateProgressWindow();
 
   try {
-    const installerPath = await downloadReleaseAssetToTemp(asset, latestVersion);
+    const installerPath = await downloadReleaseAssetToTemp(asset, latestVersion, options);
+    activeInstallerPath = installerPath;
     setUpdateProgressState({
       percent: 100,
       statusText:
@@ -412,28 +615,29 @@ async function downloadAndInstallRelease(release) {
         "Download complete. Starting installer...",
       speedText:
         current_locales?.update_installing_speed || "Launching installer...",
+      etaText: current_locales?.update_eta_ready || "--",
+      transferredText: current_locales?.update_download_completed || "Download completed",
+      isFailed: false,
+      canResume: false,
+      canRestart: false,
+      errorText: "",
     });
     await timeout(800);
     launchInstallerAndQuit(installerPath);
   } catch (error) {
     updateDownloadInProgress = false;
+    const partialExists = fs.existsSync(resumePath) && fs.statSync(resumePath).size > 0;
     setUpdateProgressState({
       statusText:
         current_locales?.update_download_failed_status ||
         "Failed to download the latest installer.",
       speedText: "--",
+      etaText: "--",
+      isFailed: true,
+      canResume: partialExists,
+      canRestart: true,
+      errorText: String(error && error.message ? error.message : error),
     });
-    await dialog.showMessageBox(mainWindow, {
-      type: "error",
-      buttons: [current_locales?.confirm || "OK"],
-      defaultId: 0,
-      title: current_locales?.update_download_failed_title || "Update Download Failed",
-      message:
-        current_locales?.update_download_failed_message ||
-        "The update download failed. You can continue using the current version.",
-      detail: String(error && error.message ? error.message : error),
-    });
-    closeUpdateProgressWindow();
   }
 }
 
@@ -807,8 +1011,40 @@ ipcMain.handle("get-current-locales", () => {
   return current_locales;
 });
 
+ipcMain.handle("get-update-prompt-state", () => {
+  return latestUpdatePromptState;
+});
+
 ipcMain.handle("get-update-progress-state", () => {
   return latestUpdateProgressState;
+});
+
+ipcMain.on("update-window-action", async (_event, payload = {}) => {
+  const action = payload.action;
+  if (action === "auto-update" && activeUpdateRelease) {
+    await downloadAndInstallRelease(activeUpdateRelease, { resume: true });
+    return;
+  }
+  if (action === "manual-download") {
+    closeUpdatePromptWindow();
+    electronShell.openExternal(MANUAL_UPDATE_URL);
+    return;
+  }
+  if (action === "later") {
+    closeUpdatePromptWindow();
+    return;
+  }
+  if (action === "resume-download" && activeUpdateRelease) {
+    await downloadAndInstallRelease(activeUpdateRelease, { resume: true });
+    return;
+  }
+  if (action === "restart-download" && activeUpdateRelease) {
+    await downloadAndInstallRelease(activeUpdateRelease, { resume: false });
+    return;
+  }
+  if (action === "close-download-window") {
+    closeUpdateProgressWindow();
+  }
 });
 
 ipcMain.handle("set-language", async (event, language) => {
