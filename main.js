@@ -1,4 +1,4 @@
-﻿// 原始版权所有 (C) [2020] [Sipeed]
+// 原始版权所有 (C) [2020] [Sipeed]
 // 版权所有 (C) [2024] [珠海威智人工智能有限公司]
 // 根据GPLv3或更高版本的条款进行许可
 // 请参阅LICENSE文件以获取详细信息
@@ -39,7 +39,13 @@ console.log('[MAIN] before language-manager');
 const languageManager = require("./utils_protected/language-manager_loader")
 console.log('[MAIN] after language-manager');
 const path_utils = require("./utils_protected/path_utils_loader")
-const { initSerialManager, connectPort } = require("./utils_protected/serialManager_loader");
+const {
+  initSerialManager,
+  connectPort,
+  startK210Preview,
+  stopK210Preview,
+  getK210PreviewState,
+} = require("./utils_protected/serialManager_loader");
 console.log('[MAIN] after serialManager');
 console.log('[MAIN] before cryptoservice');
 const { validateKey } = require("./cryptoservice_critical_loader");
@@ -103,6 +109,26 @@ let latestUpdatePromptState = {
   releaseBody: "",
   manualUrl: MANUAL_UPDATE_URL,
 };
+
+function getAppMetaPayload() {
+  return {
+    version: getCurrentAppVersion(),
+    buildDate: packageJson.buildInfo?.date || new Date().toISOString().slice(0, 10),
+    environment: app.isPackaged ? "Prod" : "Dev",
+  };
+}
+
+function pushLoadingAppMeta() {
+  const meta = getAppMetaPayload();
+  if (!childWindow || childWindow.isDestroyed()) {
+    return;
+  }
+  childWindow.webContents.send("loading-app-meta", meta);
+  const encoded = JSON.stringify(meta).replace(/</g, "\\u003c");
+  childWindow.webContents.executeJavaScript(
+    `(function(){ if (typeof applyAppMeta === "function") { applyAppMeta(${encoded}); } })();`
+  ).catch(() => {});
+}
 
 function normalizeVersion(versionValue) {
   return String(versionValue || "")
@@ -722,6 +748,8 @@ const { setAppMenu, getCurrentView } = require("./menu_loader");
 let childWindow;
 let mainWindow;
 let mainWindow_views = {};
+let allowStartupWindowsToShow = false;
+let isStartupRevealComplete = false;
 
 
 
@@ -730,6 +758,14 @@ const createWindow = () => {
     frame: false,
     transparent: true,
     icon: path.join(__dirname, "icons", "visionwiz_logo.ico"),
+    show: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    webPreferences: {
+      preload: path.join(__dirname, "preload_loader.js"),
+      nodeIntegration: false,
+      contextIsolation: false,
+    },
   });
   // Create the browser window.
   mainWindow = new BrowserWindow({
@@ -740,6 +776,7 @@ const createWindow = () => {
     resizable: true,
     transparent: false, // 是否透明
     show: false,
+    opacity: 0,
     autoHideMenuBar: false,
     title: "威智慧眼" + VisionWiz_version, //程序窗口名字
     icon: path.join(__dirname, "icons", "visionwiz_logo.ico"), //程序的图标
@@ -750,8 +787,26 @@ const createWindow = () => {
       contextIsolation: false,
     },
   });
+  mainWindow.setSkipTaskbar(true);
+  mainWindow.maximize();
+  mainWindow.on("show", () => {
+    if (!allowStartupWindowsToShow && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.hide();
+    }
+  });
 
   childWindow.loadFile("loading.html");
+  childWindow.once("ready-to-show", () => {
+    if (childWindow && !childWindow.isDestroyed()) {
+      childWindow.show();
+      pushLoadingAppMeta();
+    }
+  });
+  childWindow.webContents.on("did-finish-load", () => {
+    if (childWindow && !childWindow.isDestroyed()) {
+      pushLoadingAppMeta();
+    }
+  });
   // 加载 所有窗口，之后显示主页html内容
   mainWindow_views["Wizhome"] = new BrowserView({
     resizable: true,
@@ -906,31 +961,40 @@ const createWindow = () => {
 
     // TODO: 调整 Splash → Main → Auth 的顺序控制
     // 延迟 3 秒（Splash 停留时间），销毁 childWindow 后显示主窗口，再创建验证窗口
+    const revealMainExperience = () => {
+      if (isStartupRevealComplete) {
+        return;
+      }
+      isStartupRevealComplete = true;
+      allowStartupWindowsToShow = true;
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.setSkipTaskbar(false);
+        mainWindow.setOpacity(1);
+        mainWindow.show();
+      }
+      createAuthWindow();
+      if (authWindow && !authWindow.isDestroyed()) {
+        authWindow.show();
+        authWindow.focus();
+      }
+    };
+
     setTimeout(() => {
       if (childWindow && !childWindow.isDestroyed()) {
-        childWindow.destroy();
-        childWindow = null; // ← 可选：释放引用
+        childWindow.once("closed", () => {
+          childWindow = null;
+          setTimeout(revealMainExperience, 60);
+        });
+        childWindow.close();
+      } else {
+        revealMainExperience();
       }
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        // 先展示主窗口
-        mainWindow.show();
-
-        // 再创建验证窗口，确保以 mainWindow 为父且 modal
-        // TODO: 将 createAuthWindow 的调用移动到这里
-        createAuthWindow();
-
-        // 确保 authWindow 在前台并获取焦点
-        if (authWindow && !authWindow.isDestroyed()) {
-          authWindow.focus();
-        }
-      }
-    }, 1500); // 需要更短可改为 1000~1500ms
+    }, 1500);
   });
 
 
 
   // mainWindow.loadFile('mainpage.html')
-  childWindow.show();
   console.log('setAppMenu')
   // 设置应用菜单，并传递主窗口的引用
   setAppMenu(
@@ -978,10 +1042,16 @@ function createAuthWindow() {
     maximizable: false,
     closable: true,
     frame: true,
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, "authpreload.js"),
       backgroundThrottling: false // 防止被后台挂起
     },
+  });
+  authWindow.on("show", () => {
+    if (!allowStartupWindowsToShow && authWindow && !authWindow.isDestroyed()) {
+      authWindow.hide();
+    }
   });
   authWindow.loadFile("auth.html");
   authWindow.setMenuBarVisibility(false);        // 阻断 Ctrl+W / Alt 键菜单
@@ -1004,6 +1074,10 @@ ipcMain.handle("get-language", () => {
 
 ipcMain.handle("get-app-version", () => {
   return getCurrentAppVersion();
+});
+
+ipcMain.handle("get-app-meta", () => {
+  return getAppMetaPayload();
 });
 
 ipcMain.handle("get-current-locales", () => {
@@ -1064,6 +1138,10 @@ ipcMain.handle("get-ports", () => initSerialManager());
 
 // 处理连接请求
 ipcMain.handle("connect-port", (_, path) => connectPort(path));
+ipcMain.handle("disconnect-port", () => require("./utils_protected/serialManager_loader").disconnectPort());
+ipcMain.handle("start-k210-preview", () => startK210Preview());
+ipcMain.handle("stop-k210-preview", () => stopK210Preview());
+ipcMain.handle("get-k210-preview-state", () => getK210PreviewState());
 
 function afterAuthSuccess() {
   if (authWindow) {
@@ -1073,6 +1151,11 @@ function afterAuthSuccess() {
     }, 1000);
   }
   if (mainWindow) mainWindow.setEnabled(true);
+  sendMessageToView(mainWindow_views, "dataCollect", "k210-preview-status", {
+    authenticated: true,
+    previewActive: false,
+    error: "",
+  });
   if (!hasCheckedForUpdates) {
     setTimeout(() => {
       checkForUpdatesOnce().catch((error) => {
@@ -1146,6 +1229,11 @@ ipcMain.on("auth-failure", (arg) => {
     authWindow.webContents.send("auth-failure", arg.error);
     authWindow.focus();
   }
+  sendMessageToView(mainWindow_views, "dataCollect", "k210-preview-error", {
+    error: arg.error,
+    authenticated: false,
+    previewActive: false,
+  });
 })
 ipcMain.on("disconnected", () => {
   if (mainWindow) mainWindow.setEnabled(false);
@@ -1153,6 +1241,41 @@ ipcMain.on("disconnected", () => {
     authWindow.webContents.send("disconnected");
     authWindow.show();
     authWindow.focus();
+  }
+  sendMessageToView(mainWindow_views, "dataCollect", "k210-preview-status", {
+    authenticated: false,
+    previewActive: false,
+    error: "",
+  });
+});
+
+ipcMain.on("k210-preview-frame-internal", (eventOrPayload, payloadMaybe) => {
+  const payload = payloadMaybe || eventOrPayload;
+  const view = mainWindow_views?.dataCollect;
+  if (payload && view?.webContents && !view.webContents.isDestroyed()) {
+    sendMessageToView(mainWindow_views, "dataCollect", "k210-preview-frame", payload);
+  } else {
+    console.warn("[K210 PREVIEW] dataCollect view unavailable for frame event");
+  }
+});
+
+ipcMain.on("k210-preview-status-internal", (eventOrPayload, payloadMaybe) => {
+  const payload = payloadMaybe || eventOrPayload;
+  const view = mainWindow_views?.dataCollect;
+  if (payload && view?.webContents && !view.webContents.isDestroyed()) {
+    sendMessageToView(mainWindow_views, "dataCollect", "k210-preview-status", payload);
+  } else {
+    console.warn("[K210 PREVIEW] dataCollect view unavailable for status event");
+  }
+});
+
+ipcMain.on("k210-preview-error-internal", (eventOrPayload, payloadMaybe) => {
+  const payload = payloadMaybe || eventOrPayload;
+  const view = mainWindow_views?.dataCollect;
+  if (payload && view?.webContents && !view.webContents.isDestroyed()) {
+    sendMessageToView(mainWindow_views, "dataCollect", "k210-preview-error", payload);
+  } else {
+    console.warn("[K210 PREVIEW] dataCollect view unavailable for error event");
   }
 });
 
@@ -1786,6 +1909,24 @@ ipcMain.on("open_dir", function (event, arg) {
   });
 });
 
+ipcMain.on("open-path", function (_event, targetPath) {
+  const normalizedPath = path.normalize(String(targetPath || ""));
+  if (!normalizedPath) {
+    return;
+  }
+  fs.access(normalizedPath, fs.constants.F_OK, (err) => {
+    if (err) {
+      console.error("Path does not exist:", normalizedPath);
+      return;
+    }
+    exec(`explorer.exe "${normalizedPath}"`, (error) => {
+      if (error) {
+        console.error("Error opening path:", error);
+      }
+    });
+  });
+});
+
 ipcMain.on("del_dir", function (event, arg) {
   //收到删除文件夹指令后进行文件夹及其内部所有内容的删除
   delDirRecurse(process.cwd() + "/trainOutput/" + arg);
@@ -1932,6 +2073,8 @@ function read_config() {
     cls_batch_size: safeGet("cls_batch_size", 8),
     cls_data_aug: safeGet("cls_data_aug", 0),
     cls_input_size: safeGet("cls_input_size", "224x224"),
+    burst_mode: safeGet("burst_mode", false),
+    burst_count: safeGet("burst_count", 10),
     test_img_dir_cls: safeGet("test_img_dir_cls", ""),
     test_img_dir_yolo: safeGet("test_img_dir_yolo", ""),
     current_lang: safeGet("current_lang", "zh"),
@@ -2013,6 +2156,14 @@ ipcMain.on("config_data_aug_cls", function (event, arg) {
 
 ipcMain.on("config_data_aug_yolo", function (event, arg) {
   set_store_value("yolo_data_aug", arg);
+});
+
+ipcMain.on("config_burst_mode", function (event, arg) {
+  set_store_value("burst_mode", !!arg);
+});
+
+ipcMain.on("config_burst_count", function (event, arg) {
+  set_store_value("burst_count", Math.max(1, parseInt(arg, 10) || 10));
 });
 
 ipcMain.on("read_model_detail_and_show", function (event, arg) {

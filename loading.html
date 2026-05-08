@@ -269,8 +269,8 @@
 
   <!-- HUD 顶部信息 -->
   <div class="hud top-left" id="hud-left">
-    <div class="tag">Env: Prod</div>
-    <div class="tag">Build: 2025.10.09-rc3</div>
+    <div class="tag" id="app-env-tag">Env: --</div>
+    <div class="tag" id="app-build-tag">Build: --</div>
     <div class="tag" id="app-version-tag">Version: --</div>
   </div>
   <div class="hud top-right" id="hud-right">
@@ -330,17 +330,27 @@
       }
     })();
 
+    function applyAppMeta(meta) {
+      if (!meta) return;
+      const versionTag = document.getElementById('app-version-tag');
+      const buildTag = document.getElementById('app-build-tag');
+      const envTag = document.getElementById('app-env-tag');
+      if (versionTag && meta.version) versionTag.textContent = `Version: ${meta.version}`;
+      if (buildTag && meta.buildDate) buildTag.textContent = `Build: ${meta.buildDate}`;
+      if (envTag && meta.environment) envTag.textContent = `Env: ${meta.environment}`;
+    }
+
     (async function () {
       try {
-        if (window.app && typeof window.app.getAppVersion === 'function') {
-          const version = await window.app.getAppVersion();
-          const versionTag = document.getElementById('app-version-tag');
-          if (versionTag) {
-            versionTag.textContent = `Version: ${version}`;
-          }
+        if (window.app && typeof window.app.onLoadingAppMeta === 'function') {
+          window.app.onLoadingAppMeta((meta) => applyAppMeta(meta));
+        }
+        if (window.app && typeof window.app.getAppMeta === 'function') {
+          const meta = await window.app.getAppMeta();
+          applyAppMeta(meta);
         }
       } catch (error) {
-        console.warn('Failed to load app version:', error);
+        console.warn('Failed to load app metadata:', error);
       }
     })();
 

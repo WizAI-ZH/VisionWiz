@@ -1,4 +1,4 @@
-﻿// preload.js
+// preload.js
 // 版权所有 (C) [2024] [珠海威智人工智能有限公司]
 // 根据 GPLv3 或更高版本条款进行许可
 // 请参阅 LICENSE 文件获取详细信息
@@ -25,6 +25,8 @@ function stripBom(text) {
 window.app = {
   getLanguage: () => ipcRenderer.invoke('get-language'),
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  getAppMeta: () => ipcRenderer.invoke('get-app-meta'),
+  onLoadingAppMeta: (callback) => ipcRenderer.on('loading-app-meta', (_event, payload) => callback(payload)),
   setLanguage: (language) => ipcRenderer.invoke('set-language', language),
   loadLanguageFile: async (language) => {
     try {

@@ -1,44 +1,53 @@
+# 威智慧眼 / VisionWiz
 
-# 威智慧眼 (VisionWiz)
+威智慧眼（VisionWiz）是一款面向 K210 与轻量视觉模型工作流的桌面 AI 工具，集成图像采集、数据标注、图像分类训练、目标检测训练、模型测试与结果查看等能力。
 
-威智慧眼（VisionWiz）是一款开源的AI工具软件，专为人工智能模型的高效开发和优化而设计。它集成了一整套功能，涵盖了模型训练、数据采集、数据标注以及模型测试等多个关键环节。
+VisionWiz is a desktop AI tool focused on K210 and lightweight vision model workflows. It combines image collection, annotation, image classification training, object detection training, model testing, and result inspection in one application.
 
-VisionWiz is an open-source AI tool software designed for the efficient development and optimization of AI models. It integrates a suite of functions covering key aspects such as model training, data collection, data annotation, and model testing.
+## 功能概览 / Features
 
-## 软件特点 / Features
+- 图像采集 / Image Collection  
+  支持电脑摄像头采集、K210 主控预览采集、连拍保存与拍摄记录管理。  
+  Supports PC camera capture, K210 controller preview capture, burst capture, and capture history management.
 
-- **集成开发环境 / Integrated Development Environment**：提供了一个集成式的开发环境，便于用户进行模型训练和优化。
-   
-   Provides an integrated development environment that facilitates model training and optimization.
-  ![image](https://github.com/user-attachments/assets/05614037-81ff-406d-b291-7a2a5cab3ebc)
+- 数据标注 / Data Annotation  
+  集成慧标（Make-Sense）标注工具，便于整理训练数据。  
+  Includes the HuiBiao (Make-Sense) annotation tool for dataset preparation.
 
-- **数据处理工具 / Data Processing Tools**：内置数据采集和数据标注工具，支持多种数据格式。
+- 图像分类 / Image Classification  
+  提供数据集配置、训练过程查看、日志分析与结果导出。  
+  Includes dataset setup, training progress views, log inspection, and export tools.
 
-  Built-in data collection and annotation tools that support multiple data formats.
-  ![image](https://github.com/user-attachments/assets/66c7fd95-8860-45f9-9a7c-c8560295fa7c)
-  ![image](https://github.com/user-attachments/assets/94d35c35-f147-4566-bcf1-1e2ee5d8baad)
+- 目标检测 / Object Detection  
+  支持输入尺寸选择、训练历史查看、测试结果展示与模型导出。  
+  Supports input-size selection, training history review, test result inspection, and model export.
 
-- **模型测试工具 / Model Testing Tools**：支持模型的实时测试与评估，帮助开发者快速验证模型性能。
+- 自动更新 / Auto Update  
+  软件启动后可检查 GitHub Releases 更新，并支持自动下载安装包。  
+  The app can check GitHub Releases on startup and download the installer automatically.
 
-  Supports real-time testing and evaluation of models to help developers quickly verify model performance.
-  ![image](https://github.com/user-attachments/assets/0c0187bb-f2c6-47ca-a7f7-6d7a342b7ec7)
+## 1.4.0 更新亮点 / Highlights
 
-- **支持中英双语 / Bilingual Support**：目前软件提供简体中文、繁体中文以及英文的支持，基本所有页面都能自由切换。
+- 新增 K210 实时预览接入图像采集页。  
+  Added K210 live preview inside the data collection page.
 
-  The software is available in Simplified Chinese, Traditional Chinese, and English, allowing for seamless language switching throughout all pages.
-  ![image](https://github.com/user-attachments/assets/aa3a158f-c764-416d-abe5-1c3b4d065ce5)
-  ![image](https://github.com/user-attachments/assets/c9928cf9-2e90-4aa3-b1cc-878b5e086b75)
+- 新增连拍模式与拍摄记录打开路径按钮。  
+  Added burst capture mode and a quick action to open capture folders.
 
-## 开源许可证 / Open Source License
+- 修复串口认证与预览状态同步问题。  
+  Fixed serial authentication and preview status synchronization issues.
 
-这款软件遵循GPL-3.0许可证 - 具体详情请参见LICENSE文件。  
-版权所有 © 2024 珠海威智人工智能有限公司.  
-
-This software is licensed under the GPL-3.0 License - see the LICENSE file for details.  
-Copyright © 2024 Zhuhai Wiz Artificial Intelligence Co., Ltd.
+- 优化启动加载流程与一批 UTF-8 编码问题。  
+  Improved startup loading flow and cleaned up a batch of UTF-8 encoding issues.
 
 ## 安装 / Installation
 
-请访问我们的[官方下载网站](https://vesibit.yuque.com/ednd8n/rp34u1/cw5ignmloda92t0f/edit)下载最新版的威智慧眼。安装指南详见官方网站。
+请访问以下页面获取最新安装包与更新说明：  
+Please visit the following page for the latest installer and release guidance:
 
-Please visit our [official download site](https://vesibit.yuque.com/ednd8n/rp34u1/cw5ignmloda92t0f/edit) to download the latest version of VisionWiz. Refer to the website for installation instructions.
+- https://vesibit.yuque.com/ednd8n/visionwiz/intro
+
+## 开源许可 / License
+
+本项目遵循 GPL-3.0-or-later 许可证，详细信息请参阅 [LICENSE](./LICENSE)。  
+This project is licensed under GPL-3.0-or-later. See [LICENSE](./LICENSE) for details.
