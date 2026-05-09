@@ -13,6 +13,9 @@ const PREVIEW_DEFAULTS = Object.freeze({
 console.log('[serialmanager] module loaded');
 
 let currentAuth = null;
+let currentPortPath = '';
+let disconnectHandled = false;
+let portWatchTimer = null;
 let previewState = {
   connected: false,
   authenticated: false,
@@ -25,6 +28,32 @@ let previewState = {
   fps: PREVIEW_DEFAULTS.fps,
   error: '',
 };
+
+function stopPortWatch() {
+  if (portWatchTimer) {
+    clearInterval(portWatchTimer);
+    portWatchTimer = null;
+  }
+}
+
+function startPortWatch(path) {
+  stopPortWatch();
+  if (!path) {
+    return;
+  }
+  portWatchTimer = setInterval(async () => {
+    try {
+      const ports = await refreshPortList();
+      const stillPresent = ports.some((item) => item.path === path);
+      if (!stillPresent) {
+        console.warn('[SERIAL] monitored port disappeared:', path);
+        handleUnexpectedDisconnect(new Error('serial device disconnected'));
+      }
+    } catch (error) {
+      console.warn('[SERIAL] port watch failed:', error.message);
+    }
+  }, 300);
+}
 
 async function refreshPortList() {
   const all = await SerialPort.list();
@@ -64,10 +93,54 @@ function emitPreviewError(error) {
   });
 }
 
+function resetConnectionState() {
+  stopPortWatch();
+  currentPortPath = '';
+  disconnectHandled = false;
+}
+
+function clearCurrentAuthReference(authInstance) {
+  if (!authInstance || currentAuth === authInstance) {
+    currentAuth = null;
+  }
+}
+
+function handleUnexpectedDisconnect(error) {
+  if (disconnectHandled) {
+    return;
+  }
+  disconnectHandled = true;
+  console.warn('[SERIAL] unexpected disconnect:', error ? error.message : 'unknown');
+  const authInstance = currentAuth;
+  stopPortWatch();
+  if (authInstance) {
+    authInstance.stopPreview({ skipCommand: true }).catch(() => {});
+    authInstance.cleanup();
+  }
+  clearCurrentAuthReference(authInstance);
+  emitPreviewStatus({
+    connected: false,
+    authenticated: false,
+    previewActive: false,
+    portPath: '',
+    lastFrameId: -1,
+    error: '',
+  });
+  ipcMain.emit('disconnected', {
+    status: 'disconnected',
+    reason: error instanceof Error ? error.message : String(error || 'serial device disconnected'),
+  });
+}
+
 exports.initSerialManager = async () => refreshPortList();
 
 exports.connectPort = async (path) => {
   try {
+    if (currentAuth) {
+      exports.disconnectPort();
+    }
+    disconnectHandled = false;
+    currentPortPath = path;
     console.log('[RST] hardware reset');
     await hardwareReset(path);
 
@@ -85,9 +158,11 @@ exports.connectPort = async (path) => {
       },
       onStatus: (payload) => emitPreviewStatus(payload),
       onError: (error) => emitPreviewError(error),
+      onDisconnect: ({ error }) => handleUnexpectedDisconnect(error),
     });
 
     await currentAuth.connectPort(path);
+    startPortWatch(path);
     emitPreviewStatus({
       connected: true,
       authenticated: false,
@@ -121,6 +196,13 @@ exports.connectPort = async (path) => {
 
     return true;
   } catch (err) {
+    if (currentAuth) {
+      try {
+        currentAuth.cleanup();
+      } catch (_cleanupError) {}
+    }
+    resetConnectionState();
+    clearCurrentAuthReference(currentAuth);
     throw err;
   }
 };
@@ -162,6 +244,8 @@ exports.stopK210Preview = async () => {
 exports.getK210PreviewState = () => ({ ...previewState });
 
 exports.disconnectPort = () => {
+  disconnectHandled = true;
+  stopPortWatch();
   if (currentAuth) {
     currentAuth.stopPreview({ skipCommand: true }).catch(() => {});
   }
@@ -169,6 +253,7 @@ exports.disconnectPort = () => {
     currentAuth.cleanup();
     currentAuth = null;
   }
+  currentPortPath = '';
   emitPreviewStatus({
     connected: false,
     authenticated: false,
@@ -178,5 +263,6 @@ exports.disconnectPort = () => {
     error: '',
   });
   ipcMain.emit('disconnected', { status: 'disconnected' });
+  disconnectHandled = false;
 };
 

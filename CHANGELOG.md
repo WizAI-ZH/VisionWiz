@@ -2,6 +2,18 @@
 
 All notable changes to VisionWiz are documented in this file.
 
+## 1.4.1 - 2026-05-09
+
+### 中文
+- 优化串口物理断开后的失效判定速度，缩短验证弹窗重新出现的等待时间。
+- 为当前已认证串口增加更高频的存在性巡检，降低“短时间断开后快速重连绕过重新验证”的概率。
+- 在串口 `close/error` 回调中立即清空预览与认证状态，避免旧连接残留。
+
+### English
+- Improved how quickly physical serial disconnects are invalidated, so the authentication dialog returns sooner.
+- Added higher-frequency presence monitoring for the currently authenticated serial port to reduce quick replug bypass cases.
+- Cleared preview and authentication state immediately on serial `close/error` events to avoid stale session carry-over.
+
 ## 1.4.0 - 2026-05-08
 
 ### 中文
