@@ -9,5 +9,5 @@ example continue reusing the same UARTHS port for image preview sync.
 from visionwiz_image_sync import VisionWizImageSync
 
 
-bridge = VisionWizImageSync()
+bridge = VisionWizImageSync(show_lcd=True)
 bridge.run_forever()

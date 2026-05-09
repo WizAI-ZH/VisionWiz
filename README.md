@@ -10,11 +10,21 @@ VisionWiz 是一款面向 K210 与轻量视觉模型工作流的桌面 AI 工具
 - Added faster presence monitoring for the currently authenticated serial port.
 - Cleared preview and authentication state immediately when the serial connection closes or errors out.
 
+## 1.4.2 Update
+
+- Improved the capture history dialog layout so footer actions remain fully visible even when many images are listed.
+- Added a board-LCD display toggle to the VisionWiz image sync library and Mixly blocks, enabled by default.
+
 ## 1.4.1 更新
 
 - 优化主控串口物理断开后的认证失效速度，降低短时间拔插后绕过重新验证的情况。
 - 为当前已认证串口增加更高频的存在性巡检。
 - 在串口关闭或异常时立即清空预览与认证状态。
+
+## 1.4.2 更新
+
+- 优化拍摄记录弹窗布局，在图片较多时底部按钮仍能完整显示。
+- 为 VisionWiz 图传同步库和 Mixly 积木新增主板 LCD 显示开关，并默认开启。
 
 ## Features
 

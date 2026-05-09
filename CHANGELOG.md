@@ -2,6 +2,16 @@
 
 All notable changes to VisionWiz are documented in this file.
 
+## 1.4.2 - 2026-05-09
+
+### 中文
+- 优化数据采集页拍摄记录弹窗布局，在图片较多时也能完整显示底部“打开文件夹”“退出”按钮。
+- 为 VisionWiz 图传同步库新增“主板屏幕是否显示图像”参数，默认开启，并同步接入 Mixly 积木与示例库。
+
+### English
+- Improved the capture history dialog layout on the data collection page so the footer actions remain fully visible even with many images.
+- Added a new “show image on board LCD” parameter to the VisionWiz image sync library, enabled by default, and wired it into the Mixly blocks and sample library.
+
 ## 1.4.1 - 2026-05-09
 
 ### 中文

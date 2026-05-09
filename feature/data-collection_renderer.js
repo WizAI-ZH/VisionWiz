@@ -193,14 +193,14 @@ document.getElementById('open_capture_path').addEventListener('click', () => {
 
 ipcRenderer.on('readimgdir', function (_event, arg) {
   const path = document.getElementById('sender').value;
-  let html = "<div class='row row-cols-2 row-cols-lg-5 g-2 g-lg-3'>";
+  let html = "<div class='capture-grid'>";
   document.getElementById('imgModalLabel').innerHTML = `${current_locales_local.captureRecord} ( ${arg.length} ${current_locales_local.img_num} )`;
   if (arg.length === 0) {
     document.getElementById('imglist').innerHTML = `<div>${current_locales_local.noFiles}</div>`;
   } else {
     for (const f of arg) {
-      html += `<div style="display:flex;flex-direction:column;align-items:center;">
-                <img src="${path}/${f}" style="width:140px" class="rounded float-start" alt="${f}">
+      html += `<div class="capture-item">
+                <img src="${path}/${f}" class="rounded" alt="${f}">
                 <p>${f}</p></div>`;
     }
     html += '</div>';

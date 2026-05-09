@@ -34,6 +34,7 @@ class VisionWizImageSync(object):
         height=DEFAULT_HEIGHT,
         quality=DEFAULT_QUALITY,
         fps=DEFAULT_FPS,
+        show_lcd=True,
         display_width=DISPLAY_WIDTH,
         display_height=DISPLAY_HEIGHT,
     ):
@@ -46,6 +47,7 @@ class VisionWizImageSync(object):
         self.current_width = int(width)
         self.current_height = int(height)
         self.current_quality = int(quality)
+        self.show_lcd = bool(show_lcd)
         self.display_width = int(display_width)
         self.display_height = int(display_height)
         self._line_buffer = b""
@@ -80,7 +82,8 @@ class VisionWizImageSync(object):
 
     def send_frame(self):
         img = sensor.snapshot()
-        lcd.display(img)
+        if self.show_lcd:
+            lcd.display(img)
         tx_img = img
         if self.current_width != self.display_width or self.current_height != self.display_height:
             try:
@@ -116,17 +119,20 @@ class VisionWizImageSync(object):
         height=DEFAULT_HEIGHT,
         quality=DEFAULT_QUALITY,
         fps=DEFAULT_FPS,
+        show_lcd=None,
     ):
         self.current_width = int(width)
         self.current_height = int(height)
         self.current_quality = int(quality)
+        if show_lcd is not None:
+            self.show_lcd = bool(show_lcd)
         fps = max(1, int(fps))
         self.frame_interval_ms = int(1000 / fps)
         self.frame_id = 0
         self.last_frame_at = 0
         self.init_sensor(self.display_width, self.display_height)
         self.streaming = True
-        print("preview started", self.current_width, self.current_height, self.current_quality, fps)
+        print("preview started", self.current_width, self.current_height, self.current_quality, fps, self.show_lcd)
 
     def stop_preview(self):
         self.streaming = False
@@ -167,6 +173,7 @@ class VisionWizImageSync(object):
                 values.get("height", DEFAULT_HEIGHT),
                 values.get("quality", DEFAULT_QUALITY),
                 values.get("fps", DEFAULT_FPS),
+                values.get("show_lcd", True),
             )
             return True
 
