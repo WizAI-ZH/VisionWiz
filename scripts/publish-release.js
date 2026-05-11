@@ -118,6 +118,40 @@ function getApiHeaders(extra = {}) {
   };
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function shouldRetryUpload(error) {
+  const retryableCodes = new Set([
+    "ECONNRESET",
+    "ETIMEDOUT",
+    "EAI_AGAIN",
+    "ECONNABORTED",
+    "ENOTFOUND",
+  ]);
+  if (retryableCodes.has(error && error.code)) {
+    return true;
+  }
+  if (!error || !error.response) {
+    return true;
+  }
+  return error.response.status >= 500;
+}
+
+function logPublishError(error) {
+  const status = error && error.response && error.response.status;
+  const data = error && error.response && error.response.data;
+  const code = error && error.code;
+  const message = error && error.message ? error.message : String(error);
+  console.error("Release publish failed:", {
+    message,
+    code,
+    status,
+    data,
+  });
+}
+
 function isReleaseAssetCandidate(fileName) {
   const name = String(fileName || "").trim();
   const lowerName = name.toLowerCase();
@@ -378,17 +412,33 @@ async function deleteStaleAssets(release, targetAssetNames) {
 
 async function uploadReleaseAsset(release, artifact) {
   const uploadUrl = String(release.upload_url || "").replace(/\{.*$/, "");
-  const fileBuffer = fs.readFileSync(artifact.path);
   const targetUrl = `${uploadUrl}?name=${encodeURIComponent(artifact.name)}`;
-  await axios.post(targetUrl, fileBuffer, {
-    headers: getApiHeaders({
-      "Content-Type": "application/octet-stream",
-      "Content-Length": String(fileBuffer.length),
-    }),
-    maxBodyLength: Infinity,
-    maxContentLength: Infinity,
-    timeout: 0,
-  });
+  const attempts = 3;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const fileStream = fs.createReadStream(artifact.path);
+      await axios.post(targetUrl, fileStream, {
+        headers: getApiHeaders({
+          "Content-Type": "application/octet-stream",
+          "Content-Length": String(artifact.size),
+        }),
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
+        timeout: 0,
+      });
+      return;
+    } catch (error) {
+      if (attempt >= attempts || !shouldRetryUpload(error)) {
+        throw error;
+      }
+      const delayMs = attempt * 5000;
+      console.warn(
+        `Upload failed for ${artifact.name} (${error.code || error.message}); retrying in ${delayMs / 1000}s...`
+      );
+      await sleep(delayMs);
+    }
+  }
 }
 
 async function main() {
@@ -429,6 +479,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error("Release publish failed:", error);
+  logPublishError(error);
   process.exit(1);
 });
