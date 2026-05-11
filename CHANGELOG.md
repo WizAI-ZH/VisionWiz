@@ -11,12 +11,16 @@ VisionWiz 的重要变更都会记录在此文件中。
 - Added selectable data augmentation modes for image classification and object detection: auto, off, geometry, color, and blur/noise.
 - Added class-level dataset count summaries at training startup. Classification reports valid image counts per class; object detection reports both image counts and bounding-box counts.
 - Improved object detection dataset robustness by skipping unrelated files, subfolders, invalid XML files, missing images, unsupported image files, and invalid boxes with warnings.
+- Fixed packaged language switching when protected language loader scripts were resolved relative to the feature page instead of `utils_protected`.
+- Improved the training-folder guidance layout so long English descriptions no longer overlap the folder input fields.
 
 ### 中文
 
 - 为图像分类和目标检测新增可选择的数据增强模式：自动、关闭、几何变换、颜色/亮度、模糊/噪声。
 - 在训练启动阶段加入类别级数据量汇总。图像分类显示每类有效图片数；目标检测同时显示每类图片数和标注框数。
 - 增强目标检测数据集读取鲁棒性，无关文件、子文件夹、无效 XML、缺失图片、不支持图片和无效标注框会被跳过并记录警告。
+- 修复打包后语言切换时保护版语言 loader 相对页面目录解析，导致找不到 `language-html.jsc` 的问题。
+- 优化训练集说明区域布局，避免英文长说明换行后遮挡文件夹选择输入框。
 
 ## 1.4.2 - 2026-05-09
 

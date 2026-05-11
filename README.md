@@ -11,12 +11,14 @@ VisionWiz 是一款面向 K210 与轻量视觉模型工作流的桌面 AI 工具
 - Added more data augmentation modes for image classification and object detection training.
 - Added class-level dataset counts to the initial training logs so users can spot classes with too few samples.
 - Improved object detection dataset loading so unrelated files, folders, broken XML files, and unsupported images are skipped with warnings instead of stopping training immediately.
+- Fixed packaged language switching by resolving protected language loaders from their actual script path, and improved long training-folder guidance layout in English.
 
 ### 中文
 
 - 为图像分类和目标检测训练新增更多数据增强模式。
 - 在训练初始化日志中加入按类别统计的数据量，方便用户发现样本过少的类别。
 - 增强目标检测数据集读取鲁棒性，无关文件、文件夹、损坏 XML 和不支持的图片会被跳过并记录警告，不再直接中断训练。
+- 修复打包后语言切换加载保护脚本路径错误的问题，并优化英文训练集说明文字换行布局。
 
 ## 1.4.2 Update
 

@@ -12,6 +12,10 @@ yarn-error.log*
 /dist/
 /trainOutput/
 /utils_protected/
+!/utils_protected/
+/utils_protected/*
+!/utils_protected/language-html_loader.js
+!/utils_protected/language-manager_loader.js
 .electron-cache/
 
 #依赖库
