@@ -52,7 +52,8 @@ class Train():
                  batch_size,
                  epoch,
                  out_dir,
-                 input_shape=(224, 224, 3)):
+                 input_shape=(224, 224, 3),
+                 data_aug_mode="auto"):
         '''
             creat /temp/train_temp dir to train
         '''
@@ -61,6 +62,7 @@ class Train():
         self.train_epochs = epoch
         self.train_type = train_type
         self.input_shape = input_shape
+        self.data_aug_mode = data_aug_mode
         self.datasets_cls_dir = datasets_cls_dir
         self.datasets_zip_path = datasets_zip
         self.dataset_img_dir = dataset_img_dir
@@ -249,6 +251,7 @@ class Train():
             log.i("没有GPU，将使用[CPU]。No GPU, will use [CPU].")
         else:
             log.i(f"选择的GPU: {gpu}. Selected GPU: {gpu}.")
+        log.i("数据增强模式(Data augmentation mode): {}".format(self.data_aug_mode))
         # 启动训练
         try:
             classifier = Classifier(datasets_zip=self.datasets_zip_path, datasets_cls_dir=self.datasets_cls_dir,
@@ -263,6 +266,7 @@ class Train():
             raise Exception((TrainFailReason.ERROR_PARAM, "数据集无效: {}. Datasets not valid: {}".format(str(e), str(e))))
         try:
             classifier.train(epochs=self.train_epochs, alpha=float(self.alpha), batch_size=self.batch_size,
+                             data_aug_mode=self.data_aug_mode,
                              progress_cb=self.__on_train_progress)
         except Exception as e:
             log.e("训练错误: {}. Train error: {}".format(e, e))  
@@ -320,6 +324,7 @@ class Train():
             log.i("没有 GPU，将使用 [CPU]。No GPU, will use [CPU].")  
         else:
             log.i("选择的GPU(Selected GPU): {}".format(gpu))
+        log.i("数据增强模式(Data augmentation mode): {}".format(self.data_aug_mode))
         # 启动训练
         # print("-" * 10 + "训练开始前(before train start) " + "-" * 10)
         
@@ -365,7 +370,7 @@ class Train():
                            weights=weights,
                            save_best_weights_path=self.best_h5_model_path,
                            save_final_weights_path=self.final_h5_model_path,
-                           jitter=False,
+                           jitter=self.data_aug_mode,
                            is_only_detect=False,
                            batch_size=self.batch_size,
                            train_times=5,

@@ -280,8 +280,11 @@
             <div class="form-floating">
               <select class="form-select" aria-label="Floating label select example" id="data_aug_cls"
                 data-bs-toggle="tooltip" data-bs-placement="top" title="">
-                <option id="open" value='1'>Open</option>
-                <option id="close" value='0'>Close</option>
+                <option id="open" value='auto'>Open</option>
+                <option id="close" value='off'>Close</option>
+                <option id="data_aug_geometry" value='geometry'>Geometry</option>
+                <option id="data_aug_color" value='color'>Color / Brightness</option>
+                <option id="data_aug_blur_noise" value='blur_noise'>Blur / Noise</option>
               </select>
               <label id="data_augmentation" for="data_aug_cls">Data Augmentation</label>
             </div>

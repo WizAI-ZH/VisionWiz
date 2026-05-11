@@ -19,6 +19,26 @@ yarn-error.log*
 /node_modules/
 /node_modules_backup/
 /maix_train/
+!/maix_train/
+/maix_train/*
+!/maix_train/train/
+/maix_train/train/*
+!/maix_train/train/detector/
+/maix_train/train/detector/*
+!/maix_train/train/detector/yolo/
+/maix_train/train/detector/yolo/*
+!/maix_train/train/detector/yolo/backend/
+/maix_train/train/detector/yolo/backend/*
+!/maix_train/train/detector/yolo/backend/utils/
+/maix_train/train/detector/yolo/backend/utils/*
+!/maix_train/train/detector/yolo/backend/utils/augment.py
+!/maix_train/train/detector/yolo_320/
+/maix_train/train/detector/yolo_320/*
+!/maix_train/train/detector/yolo_320/backend/
+/maix_train/train/detector/yolo_320/backend/*
+!/maix_train/train/detector/yolo_320/backend/utils/
+/maix_train/train/detector/yolo_320/backend/utils/*
+!/maix_train/train/detector/yolo_320/backend/utils/augment.py
 
 #安装包
 /packages/

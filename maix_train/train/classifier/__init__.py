@@ -26,6 +26,9 @@ import itertools
 import random
 
 
+VALID_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".bmp")
+SUPPORTED_DATA_AUG_MODES = {"auto", "off", "geometry", "color", "blur_noise"}
+
 
 class Classifier(Train_Base):
     def __init__(self, input_shape=(224, 224, 3), datasets_cls_dir=None, datasets_zip=None, unpack_dir=None, logger = None,
@@ -71,6 +74,7 @@ class Classifier(Train_Base):
                 self.log.e(err_msg)
                 raise Exception(err_msg)
             self.on_warning_message(err_msg)
+        self.class_image_counts = self._count_valid_images_by_label(self.datasets_dir, self.labels)
             
         class _Train_progress_cb(tf.keras.callbacks.Callback):#剩余训练时间回调
             def __init__(self, epochs, user_progress_callback, logger):
@@ -114,12 +118,16 @@ class Classifier(Train_Base):
                     progress_cb=None,
                     alpha=0.75,
                     weights="mobilenet_7_5_224_tf_no_top.h5",
-                    batch_size = 5
+                    batch_size = 5,
+                    data_aug_mode = "auto"
                     ):
+        data_aug_mode = self._normalize_data_aug_mode(data_aug_mode)
         weights=os.path.join(curr_file_dir, "weights", weights)
         print('='*70)
         self.log.i("标签列表(labels):{}".format(self.labels))
         self.log.d("数据集路径(dataset path):{}".format(self.datasets_dir))
+        self.log.i("数据增强模式(Data augmentation mode): {}".format(data_aug_mode))
+        self.log.i(self._format_class_counts())
         print('='*70)
         
         from mobilenet_sipeed import mobilenet
@@ -149,16 +157,10 @@ class Classifier(Train_Base):
         # datasets process
         from tensorflow.keras.preprocessing.image import ImageDataGenerator
         from tensorflow.keras.applications.mobilenet import preprocess_input
-        train_gen = ImageDataGenerator(
-                preprocessing_function=preprocess_input,
-                rotation_range=180,
-                featurewise_center=True,
-                featurewise_std_normalization=True,
-                width_shift_range=0.2,height_shift_range=0.2,
-                zoom_range=0.5,
-                shear_range=0.5,
-                validation_split=0.2
-            )
+        train_gen = ImageDataGenerator(**self._get_image_data_generator_args(
+                data_aug_mode,
+                preprocess_input
+            ))
 
         train_data = train_gen.flow_from_directory(self.datasets_dir,
                 target_size=(self.input_shape[0], self.input_shape[1]),
@@ -331,10 +333,11 @@ class Classifier(Train_Base):
         num_gen = self._get_sample_num(len(self.labels), sample_num)
         for label in self.labels:
             num = num_gen.__next__()
-            images = os.listdir(os.path.join(self.datasets_dir, label))
+            label_dir = os.path.join(self.datasets_dir, label)
+            images = [name for name in os.listdir(label_dir) if self._is_valid_image_file(os.path.join(label_dir, name))]
             images = random.sample(images, num)
             for image in images:
-                shutil.copyfile(os.path.join(self.datasets_dir, label, image), os.path.join(copy_to_dir, image))
+                shutil.copyfile(os.path.join(label_dir, image), os.path.join(copy_to_dir, image))
 
 
     def _get_confusion_matrix(self, ):
@@ -405,6 +408,86 @@ class Classifier(Train_Base):
                 labels.append(d)
         return labels
 
+    def _normalize_data_aug_mode(self, mode):
+        mode = str(mode or "auto").strip().lower()
+        legacy_modes = {
+            "1": "auto",
+            "true": "auto",
+            "open": "auto",
+            "0": "off",
+            "false": "off",
+            "close": "off",
+            "none": "off",
+        }
+        mode = legacy_modes.get(mode, mode)
+        if mode not in SUPPORTED_DATA_AUG_MODES:
+            self.on_warning_message("未知数据增强模式，已使用自动模式: {} | Unknown data augmentation mode, fallback to auto: {}".format(mode, mode))
+            return "auto"
+        return mode
+
+    def _get_image_data_generator_args(self, mode, preprocess_input):
+        base = {
+            "preprocessing_function": preprocess_input,
+            "validation_split": 0.2,
+        }
+        if mode == "off":
+            return base
+        if mode == "geometry":
+            base.update({
+                "rotation_range": 180,
+                "width_shift_range": 0.2,
+                "height_shift_range": 0.2,
+                "zoom_range": 0.5,
+                "shear_range": 0.5,
+            })
+            return base
+        if mode == "color":
+            base.update({
+                "brightness_range": (0.7, 1.3),
+                "channel_shift_range": 20.0,
+            })
+            return base
+        if mode == "blur_noise":
+            self.on_warning_message("分类训练当前不单独支持模糊/噪声增强，已回退到自动混合增强。Classifier blur/noise augmentation is not independently supported, fallback to auto mixed augmentation.")
+
+        base.update({
+            "rotation_range": 180,
+            "featurewise_center": True,
+            "featurewise_std_normalization": True,
+            "width_shift_range": 0.2,
+            "height_shift_range": 0.2,
+            "zoom_range": 0.5,
+            "shear_range": 0.5,
+        })
+        return base
+
+    def _is_valid_image_file(self, path):
+        return os.path.isfile(path) and path.lower().endswith(VALID_IMAGE_EXTENSIONS)
+
+    def _count_valid_images_by_label(self, datasets_dir, labels):
+        counts = {}
+        for label in labels:
+            label_dir = os.path.join(datasets_dir, label)
+            count = 0
+            for name in os.listdir(label_dir):
+                path = os.path.join(label_dir, name)
+                if self._is_valid_image_file(path):
+                    count += 1
+                    continue
+                self.on_warning_message("已忽略分类数据集中的非图片内容: {} | Ignored non-image item in classifier dataset: {}".format(path, path))
+            counts[label] = count
+        return counts
+
+    def _format_class_counts(self):
+        rows = [
+            "类别统计(Class counts):",
+            "{:<24} {:>14}".format("类别(Class)", "图片数(Images)"),
+            "-" * 41,
+        ]
+        for label in self.labels:
+            rows.append("{:<24} {:>14}".format(label, self.class_image_counts.get(label, 0)))
+        return "\n".join(rows)
+
     def _is_label_data_valid(self, labels, max_classes_num = 15,  min_images_num=40, max_images_num=2000):
         '''
             labels len should >= 2
@@ -421,7 +504,8 @@ class Classifier(Train_Base):
             if not isascii(label):
                 return False, "类名(标签)不应包含特殊字符 | Class name (label) should not contain special letters"
             # check image number
-            files = os.listdir(os.path.join(self.datasets_dir, label))
+            label_dir = os.path.join(self.datasets_dir, label)
+            files = [name for name in os.listdir(label_dir) if self._is_valid_image_file(os.path.join(label_dir, name))]
             if len(files) < min_images_num:
                 return False, "某一类的训练图像数量不足，应该大于 {} | Not enough train images in one class, should be > {}".format(min_images_num, min_images_num)
             if len(files) > max_images_num:
@@ -435,7 +519,8 @@ class Classifier(Train_Base):
         num_gen = self._get_sample_num(len(self.labels), len(self.labels))
         for label in self.labels:
             num = num_gen.__next__()
-            images = os.listdir(os.path.join(self.datasets_dir, label))
+            label_dir = os.path.join(self.datasets_dir, label)
+            images = [name for name in os.listdir(label_dir) if self._is_valid_image_file(os.path.join(label_dir, name))]
             images = random.sample(images, num)
         return ok, msg
 
@@ -482,4 +567,3 @@ if __name__ == "__main__":
         arg: datasets_zip_file out_h5_model_path out_report_image_path
     '''
     test()
-

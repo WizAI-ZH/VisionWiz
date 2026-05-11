@@ -309,6 +309,7 @@ document.getElementById('start_train_cls').addEventListener('click', function ()
         let alpha = t.options[t.selectedIndex].value;
         let batch_size = document.getElementById("batch_size_cls").value
         let input_size = normalizeClsInputSize(document.getElementById('input_size_cls').value)
+        let data_aug = document.getElementById('data_aug_cls').value
         //鍒ゆ柇鏄惁鏈夐€夋嫨璁粌闆嗚矾寰?
         if (img.length == 0) {
             Notiflix.Notify.warning(current_locales.plz_select_img_dir);
@@ -316,7 +317,7 @@ document.getElementById('start_train_cls').addEventListener('click', function ()
         else {
             fitAddon_cls.fit()
             //寮€濮嬭缁?
-            const command = `& "${pythonExec}" "${trainScript}" -t classifier -dc "${img}" -ep ${epoch} -ap ${alpha} -bz ${batch_size} -is ${input_size} train\r`;
+            const command = `& "${pythonExec}" "${trainScript}" -t classifier -dc "${img}" -ep ${epoch} -ap ${alpha} -bz ${batch_size} -is ${input_size} --data_aug ${data_aug} train\r`;
             // 鍙戦€佸紑濮嬭缁冩寚浠? 
             ipcRenderer.send('send_data_terminal_cls', command);
             //璁惧畾寮€濮嬭缁冪姸鎬佷负杩涜涓?

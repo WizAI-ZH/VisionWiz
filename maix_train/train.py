@@ -23,6 +23,25 @@ def parse_input_size(value):
     return width, height
 
 
+def parse_data_aug_mode(value):
+    text = str(value or "auto").strip().lower()
+    legacy_map = {
+        "1": "auto",
+        "true": "auto",
+        "open": "auto",
+        "0": "off",
+        "false": "off",
+        "close": "off",
+        "closed": "off",
+        "none": "off",
+    }
+    text = legacy_map.get(text, text)
+    supported = {"auto", "off", "geometry", "color", "blur_noise"}
+    if text not in supported:
+        raise argparse.ArgumentTypeError("unsupported data augmentation mode: {}".format(value))
+    return text
+
+
 def main():
     default_output_dir_name = 'trainOutput'
     supported_types = ["classifier", "detector"]
@@ -42,6 +61,7 @@ def main():
     parser.add_argument("-ap", "--alpha", type=str, help="train_epochs", default='0.75')
     parser.add_argument("-bz", "--batch_size", type=str, help="batch_size", default='8')
     parser.add_argument("-is", "--input_size", type=parse_input_size, help="detector input size WIDTHxHEIGHT", default=(224, 224))
+    parser.add_argument("--data_aug", type=parse_data_aug_mode, help="data augmentation mode", default="auto")
     parser.add_argument("-c", "--config", type=str, help="config file", default=os.path.join(curr_dir, "train", "config.py"))
     parser.add_argument("cmd", help="command", choices=["train", "init"])
     args = parser.parse_args()
@@ -69,6 +89,7 @@ def main():
         'input_width': args.input_size[0],
         'input_height': args.input_size[1],
         'input_shape': [args.input_size[1], args.input_size[0], 3],
+        'data_aug': args.data_aug,
     }
     print('训练参数信息(Train info): ' + os.path.join(save_dir, 'info.json'))
     file = open(os.path.join(save_dir, 'info.json'), 'w', encoding='utf-8')
@@ -102,9 +123,9 @@ def main():
     from train import Train, TrainType
 
     if args.type == "classifier":
-        train_task = Train(TrainType.CLASSIFIER, args.zip, args.datasets_cls, args.datasets_img, args.datasets_xml, args.alpha, int(args.batch_size), int(args.train_epochs), save_dir, input_shape=(args.input_size[1], args.input_size[0], 3))
+        train_task = Train(TrainType.CLASSIFIER, args.zip, args.datasets_cls, args.datasets_img, args.datasets_xml, args.alpha, int(args.batch_size), int(args.train_epochs), save_dir, input_shape=(args.input_size[1], args.input_size[0], 3), data_aug_mode=args.data_aug)
     elif args.type == "detector":
-        train_task = Train(TrainType.DETECTOR, args.zip, args.datasets_cls, args.datasets_img, args.datasets_xml, args.alpha, int(args.batch_size), int(args.train_epochs), save_dir, input_shape=(args.input_size[1], args.input_size[0], 3))
+        train_task = Train(TrainType.DETECTOR, args.zip, args.datasets_cls, args.datasets_img, args.datasets_xml, args.alpha, int(args.batch_size), int(args.train_epochs), save_dir, input_shape=(args.input_size[1], args.input_size[0], 3), data_aug_mode=args.data_aug)
     else:
         print("[ERROR] train type not support only support: {}".format(", ".join(supported_types)))
         print("[错误] 当前训练类型不受支持，仅支持: {}".format(", ".join(supported_types)))

@@ -385,6 +385,7 @@ document.getElementById('start_train_yolo').addEventListener('click', function (
         let alpha = t.options[t.selectedIndex].value;
         let batch_size = document.getElementById("batch_size_yolo").value
         let inputSize = normalizeInputSize(document.getElementById("input_size_yolo").value)
+        let dataAug = document.getElementById("data_aug_yolo").value
         // 判断是否有选择训练集路径
         if (img.length == 0) {
             Notiflix.Notify.warning(current_locales.plz_select_img_dir);
@@ -395,7 +396,7 @@ document.getElementById('start_train_yolo').addEventListener('click', function (
         else {
             fitAddon_yolo.fit()
             // 开始训练
-            const command = `& "${pythonExec}" "${trainScript}" -t detector -di "${img}" -dx "${xml}" -ep ${epoch} -ap ${alpha} -bz ${batch_size} -is ${inputSize} train\r`;
+            const command = `& "${pythonExec}" "${trainScript}" -t detector -di "${img}" -dx "${xml}" -ep ${epoch} -ap ${alpha} -bz ${batch_size} -is ${inputSize} --data_aug ${dataAug} train\r`;
             ipcRenderer.send('send_data_terminal_yolo', command)
             // 设定开始训练状态为进行中
             train_situation_yolo = true

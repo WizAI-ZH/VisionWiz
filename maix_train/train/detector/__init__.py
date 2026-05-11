@@ -38,6 +38,10 @@ import kmeans
 from train_base import Train_Base
 
 
+VALID_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".bmp")
+SUPPORTED_DATA_AUG_MODES = {"auto", "off", "geometry", "color", "blur_noise"}
+
+
 class Detector(Train_Base):
     def __init__(self, input_shape=(224, 224, 3), datasets_img_dir=None,datasets_xml_dir=None, datasets_zip=None, unpack_dir=None, logger = None,
                 max_classes_limit = 15, one_class_min_images_num=100, one_class_max_images_num=2000,
@@ -67,6 +71,7 @@ class Detector(Train_Base):
         self.model = None
         self.history = None
         self.warning_msg = [] # append warning message here
+        self.classes_image_counts = []
         if logger:
             self.log = logger
         else:
@@ -97,10 +102,11 @@ class Detector(Train_Base):
             traceback.print_exc()
             raise Exception(msg)
         # check datasets
-        ok, err_msg = self._is_datasets_valid(self.labels, classes_data_counts, one_class_min_images_num=self.config_one_class_min_images_num, one_class_max_images_num=self.config_one_class_max_images_num)
+        ok, err_msg = self._is_datasets_valid(self.labels, self.classes_image_counts, one_class_min_images_num=self.config_one_class_min_images_num, one_class_max_images_num=self.config_one_class_max_images_num)
         if not ok:
             self.log.e(err_msg)
             raise Exception(err_msg)
+        self.log.i(self._format_detector_class_counts(classes_data_counts))
         self.log.i("加载数据集完成，检查通过，图像数量：{}，边界框数量：{}。Load datasets complete, check pass, images num: {}, bboxes num: {}.".format(len(datasets_x), sum(classes_data_counts), len(datasets_x), sum(classes_data_counts)))
         self.datasets_x = np.array(datasets_x, dtype='uint8')
         self.datasets_y = datasets_y
@@ -178,6 +184,36 @@ class Detector(Train_Base):
         print('='*70)
         return anchors
 
+    def _normalize_data_aug_mode(self, mode):
+        mode = str(mode or "auto").strip().lower()
+        legacy_modes = {
+            "1": "auto",
+            "true": "auto",
+            "open": "auto",
+            "0": "off",
+            "false": "off",
+            "close": "off",
+            "none": "off",
+        }
+        mode = legacy_modes.get(mode, mode)
+        if mode not in SUPPORTED_DATA_AUG_MODES:
+            self.on_warning_message("未知数据增强模式，已使用自动模式: {} | Unknown data augmentation mode, fallback to auto: {}".format(mode, mode))
+            return "auto"
+        return mode
+
+    def _format_detector_class_counts(self, classes_box_counts):
+        rows = [
+            "类别统计(Class counts):",
+            "{:<24} {:>14} {:>14}".format("类别(Class)", "图片数(Images)", "框数(Boxes)"),
+            "-" * 56,
+        ]
+        image_counts = self.classes_image_counts or [0] * len(self.labels)
+        for i, label in enumerate(self.labels):
+            image_count = image_counts[i] if i < len(image_counts) else 0
+            box_count = classes_box_counts[i] if i < len(classes_box_counts) else 0
+            rows.append("{:<24} {:>14} {:>14}".format(label, image_count, box_count))
+        return "\n".join(rows)
+
     def train(self, epochs= 100,
                     progress_cb=None,
                     weights="mobilenet_7_5_224_tf_no_top.h5",
@@ -190,6 +226,7 @@ class Detector(Train_Base):
                     save_best_weights_path = "out/best_weights.h5",
                     save_final_weights_path = "out/final_weights.h5",
                     ):
+        jitter = self._normalize_data_aug_mode(jitter)
         import tensorflow as tf
         from yolo.frontend import create_yolo
         weights=os.path.join(curr_file_dir, "weights", weights)
@@ -197,6 +234,7 @@ class Detector(Train_Base):
         self.log.i("train, labels:{}".format(self.labels))
         self.log.d("数据集路径(datasets image dir):{}".format(self.datasets_img_dir))
         self.log.d("数据集标注文件路径(datasets xml dir):{}".format(self.datasets_xml_dir))
+        self.log.i("数据增强模式(Data augmentation mode): {}".format(jitter))
         
         # param check
         # TODO: check more param
@@ -529,6 +567,7 @@ class Detector(Train_Base):
         # *.tfrecord file
         tfrecord_files = []
         classes_data_counts = [0] * labels_len
+        classes_image_counts = [0] * labels_len
         for name in os.listdir(datasets_dir):
             path = os.path.join(datasets_dir, name)
             if (name.startswith(".") or name == "__pycache__"
@@ -594,6 +633,7 @@ class Detector(Train_Base):
                     continue
             # bboxes, 
             y_bboxes = []
+            image_label_indexes = set()
             for i in range(len(y_labels)):
                 # check label in labels
                 label_txt = y_labels_txt[i].numpy().decode()
@@ -607,6 +647,7 @@ class Detector(Train_Base):
                 y_bboxes.append([ y_bboxes_xmin[i].numpy(), y_bboxes_ymin[i].numpy(),
                                  y_bboxes_xmax[i].numpy(), y_bboxes_ymax[i].numpy(), y_labels[i].numpy() ])
                 classes_data_counts[y_labels[i].numpy()] += 1
+                image_label_indexes.add(y_labels[i].numpy())
             # no bbox, next
             if len(y_bboxes)  < 1:
                 continue
@@ -627,15 +668,25 @@ class Detector(Train_Base):
                 img, y_bboxes = self._reshape_image(img, self.input_shape, y_bboxes)
             datasets_x.append(img)
             datasets_y.append(y_bboxes)
+            for label_idx in image_label_indexes:
+                classes_image_counts[label_idx] += 1
+        self.classes_image_counts = classes_image_counts
         return True, "ok", labels, classes_data_counts, datasets_x, datasets_y
 
     def get_labels(self,path):
         labels=[]
         files=os.listdir(path)
         for file in files:
+            file_path = os.path.join(path, file)
+            if os.path.isdir(file_path):
+                self.on_warning_message("已忽略标签目录中的子文件夹: {} | Ignored subfolder in annotation directory: {}".format(file_path, file_path))
+                continue
+            if not file.lower().endswith(".xml"):
+                self.on_warning_message("已忽略非 XML 标签文件: {} | Ignored non-XML annotation file: {}".format(file_path, file_path))
+                continue
             try:
                 try:
-                    DOMTree = xml.dom.minidom.parse(os.path.join(path,file))
+                    DOMTree = xml.dom.minidom.parse(file_path)
                 except Exception as e:
                     print(e)
                 collection = DOMTree.documentElement
@@ -645,7 +696,8 @@ class Detector(Train_Base):
                     if name not in labels:
                         labels.append(name)
             except Exception as e:
-                print('错误文件: ' + os.path.join(path, file) + ' | Error File: ' + os.path.join(path, file))
+                print('错误文件: ' + file_path + ' | Error File: ' + file_path)
+                self.on_warning_message("解析标签文件失败，已跳过: {} | Failed to parse annotation file, skipped: {}".format(file_path, file_path))
                 traceback.print_exc()
         return labels
 
@@ -722,18 +774,19 @@ class Detector(Train_Base):
             ), [], None, None, None
 
         classes_data_counts = [0] * labels_len
+        classes_image_counts = [0] * labels_len
 
         # get xml path
         xmls = []
         for name in os.listdir(ann_dir):
-            if name.endswith(".xml"):
-                xmls.append(os.path.join(ann_dir, name))
+            path = os.path.join(ann_dir, name)
+            if os.path.isdir(path):
+                self.on_warning_message("已忽略标签目录中的子文件夹: {} | Ignored subfolder in annotation directory: {}".format(path, path))
                 continue
-            if os.path.isdir(os.path.join(ann_dir, name)):
-                for sub_name in os.listdir(os.path.join(ann_dir, name)):
-                    if sub_name.endswith(".xml"):
-                        path = os.path.join(ann_dir, name, sub_name)
-                        xmls.append(path)
+            if name.lower().endswith(".xml"):
+                xmls.append(path)
+                continue
+            self.on_warning_message("已忽略非 XML 标签文件: {} | Ignored non-XML annotation file: {}".format(path, path))
 
         input_shape_checked = False
 
@@ -778,6 +831,9 @@ class Detector(Train_Base):
                     msg = f"解码 XML 失败(Decode XML failed) {xml_path}，无法找到图像(cannot find image): {result['path']}"
                     self.on_warning_message(msg)
                     continue
+            if not os.path.isfile(img_path) or not img_path.lower().endswith(VALID_IMAGE_EXTENSIONS):
+                self.on_warning_message(f"跳过不支持的图片文件(Skip unsupported image file) {img_path}")
+                continue
 
             # 用PIL读，便于统一mode/resize
             try:
@@ -812,7 +868,6 @@ class Detector(Train_Base):
 
                 # 暂存：先用 label_idx 替换类别
                 y.append([xmin, ymin, xmax, ymax, label_idx])
-                classes_data_counts[label_idx] += 1
 
             if len(y) < 1:
                 msg = f"解码 XML (Decode XML failed) {xml_path}，没有对象，跳过(no object, skip)"
@@ -891,6 +946,13 @@ class Detector(Train_Base):
 
             datasets_x.append(img)
             datasets_y.append(y)
+            image_label_indexes = set()
+            for bbox in y:
+                label_idx = int(bbox[4])
+                classes_data_counts[label_idx] += 1
+                image_label_indexes.add(label_idx)
+            for label_idx in image_label_indexes:
+                classes_image_counts[label_idx] += 1
 
         # 汇总一下shape统计（可选）
         if hasattr(self, "_debug_shape_counter"):
@@ -899,6 +961,7 @@ class Detector(Train_Base):
             except Exception:
                 pass
 
+        self.classes_image_counts = classes_image_counts
         return True, "ok", labels, classes_data_counts, datasets_x, datasets_y
     
     def _decode_pbtxt_file(self, file_path):

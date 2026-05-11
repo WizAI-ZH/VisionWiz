@@ -282,8 +282,11 @@
             <div class="form-floating">
               <select class="form-select" aria-label="Floating label select example" id="data_aug_yolo"
                 data-bs-toggle="tooltip" data-bs-placement="top" title="">
-                <option id="open" value='1'>打开</option>
-                <option id="close" value='0'>关闭</option>
+                <option id="open" value='auto'>打开</option>
+                <option id="close" value='off'>关闭</option>
+                <option id="data_aug_geometry" value='geometry'>几何变换</option>
+                <option id="data_aug_color" value='color'>颜色/亮度</option>
+                <option id="data_aug_blur_noise" value='blur_noise'>模糊/噪声</option>
               </select>
               <label id="data_augmentation" for="data_aug_yolo">数据增强</label>
             </div>

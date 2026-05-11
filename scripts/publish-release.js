@@ -9,6 +9,7 @@ const packageJson = require(path.join(projectRoot, "package.json"));
 const releaseVersion = String(packageJson.version || "").trim();
 const releaseTag = `v${releaseVersion}`;
 const manualUpdateUrl = "https://vesibit.yuque.com/ednd8n/visionwiz/intro";
+const uploadableArtifactExtensions = new Set([".exe", ".zip", ".7z"]);
 const githubToken =
   process.env.VISIONWIZ_GITHUB_TOKEN ||
   process.env.GITHUB_TOKEN ||
@@ -121,7 +122,7 @@ function isReleaseAssetCandidate(fileName) {
   const name = String(fileName || "").trim();
   const lowerName = name.toLowerCase();
   const extension = path.extname(lowerName);
-  if (![".exe", ".zip", ".7z"].includes(extension)) {
+  if (!uploadableArtifactExtensions.has(extension)) {
     return false;
   }
 
@@ -130,7 +131,10 @@ function isReleaseAssetCandidate(fileName) {
   }
 
   if (extension === ".exe") {
-    return new RegExp(`^VisionWiz${escapedReleaseVersion}-win32-x64-Setup.*\\.exe$`, "i").test(name);
+    return new RegExp(
+      `^VisionWiz${escapedReleaseVersion}-win32-x64-Setup.*\\.exe$`,
+      "i"
+    ).test(name);
   }
 
   return new RegExp(escapedReleaseVersion, "i").test(name);
