@@ -488,6 +488,21 @@ function getExpectedInstallerSize(asset) {
   return Number(asset && asset.size ? asset.size : 0);
 }
 
+function quoteCmdArgument(value) {
+  return `"${String(value || "").replace(/"/g, '""')}"`;
+}
+
+function getCurrentInstallDir() {
+  try {
+    if (app.isPackaged && process.execPath) {
+      return path.dirname(process.execPath);
+    }
+  } catch (_error) {
+    // Fall through to the app directory for development builds.
+  }
+  return app.getAppPath ? app.getAppPath() : process.cwd();
+}
+
 async function downloadReleaseAssetToTemp(asset, targetVersion, options = {}) {
   const shouldResume = Boolean(options.resume);
   const tempInstallerPath = buildInstallerTempPath(targetVersion);
@@ -614,35 +629,55 @@ async function downloadReleaseAssetToTemp(asset, targetVersion, options = {}) {
 
 function launchInstallerAndQuit(installerPath) {
   const installerAbsolutePath = path.resolve(installerPath);
-  const quotePowerShellString = (value) => `'${String(value).replace(/'/g, "''")}'`;
-  const waitAndLaunchScript = [
-    `$pidToWait = ${process.pid}`,
-    "try { Wait-Process -Id $pidToWait -Timeout 90 } catch {}",
-    "Start-Sleep -Milliseconds 800",
-    `Start-Process -FilePath ${quotePowerShellString(installerAbsolutePath)}`,
-  ].join("; ");
+  const installDir = path.resolve(getCurrentInstallDir());
+  const helperPath = path.join(
+    ensureUpdateCacheDir(),
+    `VisionWiz-update-helper-${Date.now()}.cmd`
+  );
+  const helperScript = [
+    "@echo off",
+    "chcp 65001 >nul",
+    "title VisionWiz Update Installer",
+    "echo VisionWiz update is ready.",
+    "echo.",
+    `echo Waiting for VisionWiz to close completely, PID: ${process.pid}`,
+    ":wait_for_exit",
+    `tasklist /FI "PID eq ${process.pid}" 2^>nul | find "${process.pid}" >nul`,
+    "if not errorlevel 1 (",
+    "  timeout /t 1 /nobreak >nul",
+    "  goto wait_for_exit",
+    ")",
+    "echo VisionWiz has closed.",
+    `echo Installing update to: ${installDir}`,
+    "echo The installer will run automatically. Please wait...",
+    "echo.",
+    `start "" /wait ${quoteCmdArgument(installerAbsolutePath)} /S /D=${installDir}`,
+    "set INSTALL_EXIT_CODE=%ERRORLEVEL%",
+    "echo.",
+    "if not \"%INSTALL_EXIT_CODE%\"==\"0\" (",
+    "  echo Installer finished with code %INSTALL_EXIT_CODE%.",
+    "  echo If VisionWiz was not updated, please run the downloaded installer manually:",
+    `  echo ${installerAbsolutePath}`,
+    "  pause",
+    ") else (",
+    "  echo Installation completed. This window will close automatically.",
+    "  timeout /t 2 /nobreak >nul",
+    ")",
+    `del ${quoteCmdArgument(helperPath)} >nul 2>nul`,
+    "exit /b %INSTALL_EXIT_CODE%",
+    "",
+  ].join("\r\n");
 
   try {
-    const child = spawn(
-      "powershell.exe",
-      [
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-WindowStyle",
-        "Hidden",
-        "-Command",
-        waitAndLaunchScript,
-      ],
-      {
-        detached: true,
-        stdio: "ignore",
-        windowsHide: true,
-      }
-    );
+    fs.writeFileSync(helperPath, helperScript, "utf8");
+    const child = spawn("cmd.exe", ["/d", "/c", helperPath], {
+      detached: true,
+      stdio: "ignore",
+      windowsHide: false,
+    });
     child.unref();
   } catch (error) {
-    console.error("[UPDATE] delayed installer launch failed:", error);
+    console.error("[UPDATE] update helper launch failed:", error);
     electronShell.openPath(installerAbsolutePath);
   }
 

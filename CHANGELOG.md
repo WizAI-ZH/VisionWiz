@@ -4,6 +4,22 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.4.8 - 2026-05-21
+
+### English
+
+- Reworked automatic update installation to launch a visible update helper window after the installer download completes.
+- The update helper waits for the running VisionWiz process to exit before starting installation.
+- Automatic updates now run the NSIS installer silently with the current VisionWiz installation directory, avoiding manual next-step clicks.
+- If installation fails, the helper window stays open with the installer exit code and cached installer path for troubleshooting.
+
+### 中文
+
+- 重构自动更新安装流程，安装包下载完成后会启动可见的更新助手窗口。
+- 更新助手会等待当前 VisionWiz 进程完全退出后再开始安装。
+- 自动更新现在会使用当前 VisionWiz 安装目录执行 NSIS 静默安装，避免用户手动点击下一步。
+- 如果安装失败，助手窗口会保留安装器退出码和缓存安装包路径，方便排查。
+
 ## 1.4.7 - 2026-05-21
 
 ### English
