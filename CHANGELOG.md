@@ -4,6 +4,20 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.5.0 - 2026-05-21
+
+### English
+
+- Published a test target release for validating automatic updates from VisionWiz 1.4.8.
+- Retained the visible update helper and silent installation into the current VisionWiz directory.
+- No additional training workflow changes were introduced in this test release.
+
+### 中文
+
+- 发布用于验证从 VisionWiz 1.4.8 自动更新的测试目标版本。
+- 保留可见更新助手窗口，以及静默安装到当前 VisionWiz 目录的更新流程。
+- 本测试版本没有额外新增训练工作流变更。
+
 ## 1.4.8 - 2026-05-21
 
 ### English
