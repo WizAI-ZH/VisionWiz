@@ -22,6 +22,192 @@ function getTerminalBufferText(xtermInstance) {
   return lines.join("\n");
 }
 
+function createSearchBar(xtermInstance, container, getLocales) {
+  const wrapper = document.createElement("div");
+  wrapper.style.display = "none";
+  wrapper.style.alignItems = "center";
+  wrapper.style.gap = "6px";
+  wrapper.style.padding = "8px";
+  wrapper.style.background = "#20232d";
+  wrapper.style.border = "1px solid rgba(255, 255, 255, 0.12)";
+  wrapper.style.borderRadius = "8px 8px 0 0";
+  wrapper.style.marginBottom = "4px";
+
+  const input = document.createElement("input");
+  input.type = "search";
+  input.style.flex = "1 1 auto";
+  input.style.minWidth = "120px";
+  input.style.padding = "6px 8px";
+  input.style.border = "1px solid rgba(255, 255, 255, 0.18)";
+  input.style.borderRadius = "6px";
+  input.style.background = "#111827";
+  input.style.color = "#f5f7fb";
+  input.style.outline = "none";
+
+  const counter = document.createElement("span");
+  counter.style.minWidth = "52px";
+  counter.style.color = "#cfd6e4";
+  counter.style.fontSize = "12px";
+  counter.style.textAlign = "center";
+
+  const createButton = () => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.style.padding = "6px 8px";
+    button.style.border = "1px solid rgba(255, 255, 255, 0.14)";
+    button.style.borderRadius = "6px";
+    button.style.background = "#2b3342";
+    button.style.color = "#f5f7fb";
+    button.style.cursor = "pointer";
+    button.style.fontSize = "12px";
+    return button;
+  };
+
+  const previousButton = createButton();
+  const nextButton = createButton();
+  const closeButton = createButton();
+  wrapper.appendChild(input);
+  wrapper.appendChild(counter);
+  wrapper.appendChild(previousButton);
+  wrapper.appendChild(nextButton);
+  wrapper.appendChild(closeButton);
+
+  container.parentNode.insertBefore(wrapper, container);
+
+  let matches = [];
+  let activeIndex = -1;
+
+  function getText(row) {
+    const line = xtermInstance.buffer.active.getLine(row);
+    return line ? line.translateToString(true) : "";
+  }
+
+  function findMatches(query) {
+    const found = [];
+    const needle = String(query || "").toLowerCase();
+    if (!needle) {
+      return found;
+    }
+    const activeBuffer = xtermInstance.buffer.active;
+    for (let row = 0; row < activeBuffer.length; row += 1) {
+      const text = getText(row);
+      const lowerText = text.toLowerCase();
+      let column = lowerText.indexOf(needle);
+      while (column !== -1) {
+        found.push({ row, column, length: query.length });
+        column = lowerText.indexOf(needle, column + Math.max(1, needle.length));
+      }
+    }
+    return found;
+  }
+
+  function updateLabels() {
+    const locales = getLocales ? getLocales() || {} : {};
+    input.placeholder = locales.terminal_search_placeholder || "Search logs";
+    previousButton.textContent = locales.terminal_search_previous || "Previous";
+    nextButton.textContent = locales.terminal_search_next || "Next";
+    closeButton.textContent = locales.terminal_search_close || "Close";
+    if (matches.length === 0) {
+      counter.textContent = input.value
+        ? locales.terminal_search_no_results || "0/0"
+        : "0/0";
+    } else {
+      counter.textContent = `${activeIndex + 1}/${matches.length}`;
+    }
+  }
+
+  function selectActive() {
+    if (activeIndex < 0 || !matches[activeIndex]) {
+      xtermInstance.clearSelection();
+      updateLabels();
+      return;
+    }
+    const match = matches[activeIndex];
+    xtermInstance.scrollToLine(match.row);
+    xtermInstance.select(match.column, match.row, match.length);
+    updateLabels();
+  }
+
+  function refresh(keepPosition) {
+    const previousMatch = matches[activeIndex];
+    matches = findMatches(input.value);
+    if (matches.length === 0) {
+      activeIndex = -1;
+      selectActive();
+      return;
+    }
+    if (keepPosition && previousMatch) {
+      const sameIndex = matches.findIndex(
+        (item) => item.row === previousMatch.row && item.column === previousMatch.column
+      );
+      activeIndex = sameIndex >= 0 ? sameIndex : Math.min(activeIndex, matches.length - 1);
+    } else {
+      activeIndex = 0;
+    }
+    selectActive();
+  }
+
+  function open() {
+    wrapper.style.display = "flex";
+    updateLabels();
+    input.focus();
+    input.select();
+    refresh(true);
+  }
+
+  function close() {
+    wrapper.style.display = "none";
+    xtermInstance.clearSelection();
+    xtermInstance.focus();
+  }
+
+  function next() {
+    if (matches.length === 0) {
+      refresh(false);
+      return;
+    }
+    activeIndex = (activeIndex + 1) % matches.length;
+    selectActive();
+  }
+
+  function previous() {
+    if (matches.length === 0) {
+      refresh(false);
+      return;
+    }
+    activeIndex = (activeIndex - 1 + matches.length) % matches.length;
+    selectActive();
+  }
+
+  input.addEventListener("input", () => refresh(false));
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      if (event.shiftKey) {
+        previous();
+      } else {
+        next();
+      }
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      close();
+    }
+  });
+  previousButton.addEventListener("click", previous);
+  nextButton.addEventListener("click", next);
+  closeButton.addEventListener("click", close);
+
+  return {
+    open,
+    close,
+    refresh: () => {
+      if (wrapper.style.display !== "none") {
+        refresh(true);
+      }
+    },
+  };
+}
+
 function createContextMenu(getLocales) {
   const menu = document.createElement("div");
   menu.style.position = "fixed";
@@ -60,20 +246,26 @@ function createContextMenu(getLocales) {
 
   const copySelectionItem = createItem();
   const copyAllItem = createItem();
+  const searchItem = createItem();
+  const clearItem = createItem();
 
   menu.appendChild(copySelectionItem);
   menu.appendChild(copyAllItem);
+  menu.appendChild(searchItem);
+  menu.appendChild(clearItem);
   document.body.appendChild(menu);
 
   function hide() {
     menu.style.display = "none";
   }
 
-  function show(x, y, hasSelection, onCopySelection, onCopyAll) {
+  function show(x, y, hasSelection, onCopySelection, onCopyAll, onSearch, onClear) {
     const locales = getLocales ? getLocales() || {} : {};
     copySelectionItem.textContent =
       locales.terminal_copy_selection || "Copy Selection";
     copyAllItem.textContent = locales.terminal_copy_all || "Copy All";
+    searchItem.textContent = locales.terminal_search || "Search";
+    clearItem.textContent = locales.terminal_clear || "Clear";
 
     copySelectionItem.disabled = !hasSelection;
     copySelectionItem.style.opacity = hasSelection ? "1" : "0.45";
@@ -87,6 +279,14 @@ function createContextMenu(getLocales) {
     };
     copyAllItem.onclick = () => {
       onCopyAll();
+      hide();
+    };
+    searchItem.onclick = () => {
+      onSearch();
+      hide();
+    };
+    clearItem.onclick = () => {
+      onClear();
       hide();
     };
 
@@ -112,6 +312,7 @@ function setupXtermCopyBehavior(xtermInstance, container, getLocales) {
   }
 
   const contextMenu = createContextMenu(getLocales);
+  const searchBar = createSearchBar(xtermInstance, container, getLocales);
 
   function copySelection() {
     const selection = xtermInstance.getSelection();
@@ -131,6 +332,13 @@ function setupXtermCopyBehavior(xtermInstance, container, getLocales) {
     return true;
   }
 
+  function clearTerminal() {
+    xtermInstance.clearSelection();
+    xtermInstance.clear();
+    searchBar.refresh();
+    return true;
+  }
+
   xtermInstance.attachCustomKeyEventHandler((event) => {
     if (
       event.type === "keydown" &&
@@ -144,6 +352,17 @@ function setupXtermCopyBehavior(xtermInstance, container, getLocales) {
       event.preventDefault();
       return false;
     }
+    if (
+      event.type === "keydown" &&
+      event.ctrlKey &&
+      !event.altKey &&
+      !event.shiftKey &&
+      String(event.key || "").toLowerCase() === "f"
+    ) {
+      searchBar.open();
+      event.preventDefault();
+      return false;
+    }
     return true;
   });
 
@@ -154,7 +373,9 @@ function setupXtermCopyBehavior(xtermInstance, container, getLocales) {
       event.clientY,
       xtermInstance.hasSelection(),
       copySelection,
-      copyAll
+      copyAll,
+      searchBar.open,
+      clearTerminal
     );
   });
 
@@ -166,7 +387,22 @@ function setupXtermCopyBehavior(xtermInstance, container, getLocales) {
     if (event.key === "Escape") {
       contextMenu.hide();
     }
+    if (
+      event.type === "keydown" &&
+      event.ctrlKey &&
+      !event.altKey &&
+      !event.shiftKey &&
+      String(event.key || "").toLowerCase() === "f"
+    ) {
+      event.preventDefault();
+      searchBar.open();
+    }
   });
+
+  return {
+    refreshSearch: searchBar.refresh,
+    openSearch: searchBar.open,
+  };
 }
 
 module.exports = {

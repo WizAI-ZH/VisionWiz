@@ -802,10 +802,11 @@ class Detector(Train_Base):
 
             # xml中的shape（原始标注尺寸）
             xml_h, xml_w, xml_d = int(result['height']), int(result['width']), int(result['depth'])
+            has_xml_shape = xml_h > 0 and xml_w > 0 and xml_d > 0
             img_shape = (xml_h, xml_w, xml_d)
 
             # check first image shape, and switch to proper supported input_shape
-            if not input_shape_checked:
+            if has_xml_shape and not input_shape_checked:
                 if not self._check_update_input_shape(img_shape) and not self.allow_reshape:
                     self.log.i(
                         "不支持的输入大小，支持的尺寸: {} | Not supported input size, supported: {}".format(
@@ -851,6 +852,18 @@ class Detector(Train_Base):
 
             # 图片真实尺寸（以图片为准，不完全相信xml）
             img_w0, img_h0 = im.size  # (W,H)
+            if not has_xml_shape:
+                xml_w, xml_h, xml_d = img_w0, img_h0, 3
+                img_shape = (xml_h, xml_w, xml_d)
+                if not input_shape_checked:
+                    if not self._check_update_input_shape(img_shape) and not self.allow_reshape:
+                        self.log.i(
+                            "XML 缺少尺寸信息，已使用图片实际大小；不支持的输入大小，支持的尺寸: {} | XML has no size, used real image size; not supported input size, supported: {}".format(
+                                self.support_shapes, self.support_shapes
+                            ),
+                            [], None, None, None
+                        )
+                    input_shape_checked = True
 
             # load bndboxes（先按xml读取）
             y = []

@@ -1525,6 +1525,123 @@ const trainStreamState = {
   imgCls: { buffer: "", lastError: null },
   objectDetection: { buffer: "", lastError: null },
 };
+const TRAIN_TRANSCRIPT_MAX_BUFFER = 2 * 1024 * 1024;
+const trainTranscriptState = {
+  imgCls: { active: false, pending: "", logPath: "" },
+  objectDetection: { active: false, pending: "", logPath: "" },
+};
+
+function isTrainCommand(command) {
+  const text = String(command || "");
+  return /train\.py/i.test(text) && /\btrain\s*$/i.test(text.trim());
+}
+
+function trimTranscriptPending(state) {
+  if (state.pending.length > TRAIN_TRANSCRIPT_MAX_BUFFER) {
+    state.pending = state.pending.slice(-TRAIN_TRANSCRIPT_MAX_BUFFER);
+  }
+}
+
+function resolveTrainTranscriptPath(text) {
+  const match = String(text || "").match(/(?:\(Train info\)|Train info):\s*(.+?info\.json)/);
+  if (!match) {
+    return "";
+  }
+  return path.join(path.dirname(path.normalize(match[1].trim())), "terminal_output.log");
+}
+
+function normalizeTrainTranscriptText(data) {
+  let text = String(data || "");
+  text = text
+    .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, "")
+    .replace(/\x1b\][^\x07]*(?:\x07|\x1b\\)/g, "")
+    .replace(/\x1b[()][A-Za-z0-9]/g, "")
+    .replace(/\x1bc/g, "");
+
+  const lines = [];
+  let current = "";
+  for (const char of text) {
+    if (char === "\r") {
+      if (current.trim()) {
+        lines.push(current.replace(/[ \t]+$/g, ""));
+      }
+      current = "";
+      continue;
+    }
+    if (char === "\n") {
+      lines.push(current.replace(/[ \t]+$/g, ""));
+      current = "";
+      continue;
+    }
+    if (char >= " " || char === "\t") {
+      current += char;
+    }
+  }
+  if (current.trim()) {
+    lines.push(current.replace(/[ \t]+$/g, ""));
+  }
+
+  return lines
+    .filter((line) => line.trim() && line.trim().toLowerCase() !== "cls")
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n") + (lines.length ? "\n" : "");
+}
+
+function startTrainTranscript(channel, command) {
+  const state = trainTranscriptState[channel];
+  if (!state) {
+    return;
+  }
+  state.active = true;
+  state.pending = `$ ${String(command || "").replace(/\r?\n$/, "")}\n`;
+  state.logPath = "";
+  trimTranscriptPending(state);
+}
+
+function appendTrainTranscript(channel, data) {
+  const state = trainTranscriptState[channel];
+  if (!state || !state.active) {
+    return;
+  }
+
+  const text = normalizeTrainTranscriptText(data);
+  if (!text) {
+    return;
+  }
+  if (!state.logPath) {
+    state.logPath = resolveTrainTranscriptPath(text);
+    if (state.logPath) {
+      try {
+        fs.mkdirSync(path.dirname(state.logPath), { recursive: true });
+        fs.writeFileSync(state.logPath, state.pending, "utf8");
+        state.pending = "";
+      } catch (error) {
+        console.warn("[TRAIN] failed to initialize terminal transcript:", error);
+        state.logPath = "";
+      }
+    }
+  }
+
+  if (state.logPath) {
+    try {
+      fs.appendFileSync(state.logPath, text, "utf8");
+    } catch (error) {
+      console.warn("[TRAIN] failed to append terminal transcript:", error);
+    }
+  } else {
+    state.pending += text;
+    trimTranscriptPending(state);
+  }
+
+  if (
+    text.includes("Training and testing success") ||
+    text.includes(TRAIN_ERROR_PREFIX) ||
+    text.includes("训练错误:") ||
+    text.includes("Train error:")
+  ) {
+    state.active = false;
+  }
+}
 
 function buildFallbackTrainError(rawText) {
   const text = String(rawText || "");
@@ -1725,16 +1842,25 @@ function extractTrainErrorFromLog(logText) {
 ipcMain.on("send_data_terminal_yolo", function (event, arg) {
   //输入信息到目标检测控制台中
   resetTrainStream("objectDetection");
+  if (isTrainCommand(arg)) {
+    resetTrainStream("objectDetection");
+    startTrainTranscript("objectDetection", arg);
+  }
   ptyProcess_yolo.write(arg);
 });
 
 ipcMain.on("send_data_terminal_cls", function (event, arg) {
   //输入信息到图像分类控制台中
   resetTrainStream("imgCls");
+  if (isTrainCommand(arg)) {
+    resetTrainStream("imgCls");
+    startTrainTranscript("imgCls", arg);
+  }
   ptyProcess_cls.write(arg);
 });
 
 ptyProcess_cls.onData((data) => {
+  appendTrainTranscript("imgCls", data);
   const errorPayload = ingestTrainStream("imgCls", data);
   var pattern = /Epoch [0-9.]+[/][0-9.]+/;
   var patterns = /[0-9.]+[/][0-9.]+/g;
@@ -1777,6 +1903,7 @@ ptyProcess_cls.onData((data) => {
 });
 
 ptyProcess_yolo.onData((data) => {
+  appendTrainTranscript("objectDetection", data);
   const errorPayload = ingestTrainStream("objectDetection", data);
   var pattern = /Epoch [0-9.]+[/][0-9.]+/;
   var patterns = /[0-9.]+[/][0-9.]+/g;
@@ -2170,7 +2297,9 @@ ipcMain.on("read_model_detail_and_show", function (event, arg) {
   //读取并显示当前选择的模型训练详情
   const dir = `trainOutput/${arg}`;
   const modelInfoPath = `${dir}/info.json`;
-  const trainLogPath = `${dir}/train_log.log`;
+  const trainLogPath = fs.existsSync(`${dir}/terminal_output.log`)
+    ? `${dir}/terminal_output.log`
+    : `${dir}/train_log.log`;
   const baseDir = process.cwd();
 
   // Helper function to read file and handle errors
@@ -2264,7 +2393,9 @@ ipcMain.on("read_model_detail_and_show_err", function (event, arg) {
   //读取并显示当前选择的模型(训练失败的)训练详情
   const dir = `trainOutput/${arg}`;
   const modelInfoPath = `${dir}/info.json`;
-  const trainLogPath = `${dir}/train_log.log`;
+  const trainLogPath = fs.existsSync(`${dir}/terminal_output.log`)
+    ? `${dir}/terminal_output.log`
+    : `${dir}/train_log.log`;
   // Helper function to read file and handle errors
   const readFileWithHandling = (path, callback) => {
     fs.readFile(path, "utf8", (err, data) => {

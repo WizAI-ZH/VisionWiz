@@ -29,6 +29,7 @@ yarn-error.log*
 /maix_train/train/*
 !/maix_train/train/detector/
 /maix_train/train/detector/*
+!/maix_train/train/detector/parse_pascal_voc_xml.py
 !/maix_train/train/detector/yolo/
 /maix_train/train/detector/yolo/*
 !/maix_train/train/detector/yolo/backend/

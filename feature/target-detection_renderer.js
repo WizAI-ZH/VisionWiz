@@ -258,7 +258,7 @@ xterm_yolo.loadAddon(fitAddon_yolo)
 xterm_yolo.loadAddon(new WebLinksAddon());
 xterm_yolo.open(document.getElementById('xterm_yolo'));
 xterm_yolo.onData(data => { ipcRenderer.send('send_data_terminal_yolo', data); });
-setupXtermCopyBehavior(
+const xtermTools_yolo = setupXtermCopyBehavior(
     xterm_yolo,
     document.getElementById('xterm_yolo'),
     () => current_locales
@@ -290,7 +290,11 @@ window.addEventListener('load', resizeTerminalLayout);
 
 ipcRenderer.on('write_data_to_xterm_yolo', function (event, arg) {
     // 写入数据 arg 到终端中
-    xterm_yolo.write(arg);
+    xterm_yolo.write(arg, () => {
+      if (xtermTools_yolo) {
+        xtermTools_yolo.refreshSearch();
+      }
+    });
 });
 
 ipcRenderer.on('update_progress_bar', function (event, arg) {
@@ -593,8 +597,8 @@ ipcRenderer.on('update_model_anchors', function (event, arg) {
 });
 
 ipcRenderer.on('update_model_train_log', function (event, arg) {
-    var reg = new RegExp("\r\n", "g");
-    document.getElementById('train_log').innerHTML = arg[0].replaceAll(reg, '<br/>');
+    document.getElementById('train_log').textContent = arg[0];
+    document.getElementById('train_log').style.whiteSpace = 'pre-wrap';
     // console.log(arg)
 });
 
@@ -628,8 +632,8 @@ ipcRenderer.on('update_model_param_err', function (event, arg) {
 });
 
 ipcRenderer.on('update_model_train_log_err', function (event, arg) {
-    var reg = new RegExp("\r\n", "g");
-    document.getElementById('train_log_err').innerHTML = arg[0].replaceAll(reg, '<br/>');
+    document.getElementById('train_log_err').textContent = arg[0];
+    document.getElementById('train_log_err').style.whiteSpace = 'pre-wrap';
     // console.log(arg)
 });
 

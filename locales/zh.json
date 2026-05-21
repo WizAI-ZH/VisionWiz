@@ -186,5 +186,12 @@
     "update_download_failed_status":  "下载最新安装包失败。",
     "update_missing_asset_message":  "最新 Release 中没有找到 Windows 安装包。",
     "terminal_copy_selection":  "复制选中内容",
-    "terminal_copy_all":  "复制全部日志"
+    "terminal_copy_all":  "复制全部日志",
+    "terminal_search":  "搜索",
+    "terminal_clear":  "清屏",
+    "terminal_search_placeholder":  "搜索日志",
+    "terminal_search_previous":  "上一个",
+    "terminal_search_next":  "下一个",
+    "terminal_search_close":  "关闭",
+    "terminal_search_no_results":  "0/0"
 }

@@ -186,5 +186,12 @@
     "update_download_failed_status":  "Failed to download the latest installer.",
     "update_missing_asset_message":  "No Windows installer was found in the latest release.",
     "terminal_copy_selection":  "Copy Selection",
-    "terminal_copy_all":  "Copy All"
+    "terminal_copy_all":  "Copy All",
+    "terminal_search":  "Search",
+    "terminal_clear":  "Clear Screen",
+    "terminal_search_placeholder":  "Search logs",
+    "terminal_search_previous":  "Previous",
+    "terminal_search_next":  "Next",
+    "terminal_search_close":  "Close",
+    "terminal_search_no_results":  "0/0"
 }

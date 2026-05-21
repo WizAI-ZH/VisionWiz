@@ -4,6 +4,24 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.4.5 - 2026-05-21
+
+### English
+
+- Added searchable training consoles for image classification and object detection, with `Ctrl+F`, next/previous result navigation, and a right-click search entry.
+- Added a right-click clear-screen action for training consoles that clears only the visible terminal output without affecting the running process or saved logs.
+- Added complete terminal transcript capture for training records and cleaned saved logs by removing terminal control codes and formatting progress updates as readable lines.
+- Improved object detection XML parsing for annotation files that omit `size` or `difficult`, while preserving standard Pascal VOC compatibility.
+- Added NCC KModel conversion retries so occasional converter process crashes do not immediately fail an otherwise completed training run.
+
+### 中文
+
+- 为图像分类和目标检测训练控制台新增搜索能力，支持 `Ctrl+F`、上一个/下一个结果和右键菜单搜索入口。
+- 为训练控制台新增右键清屏操作，只清空可见终端内容，不影响正在运行的进程和已保存日志。
+- 为训练记录新增完整终端输出保存，并清理日志中的终端控制码，将训练进度输出整理为更易读的多行文本。
+- 优化目标检测 XML 解析，兼容缺少 `size` 或 `difficult` 字段的标注文件，同时保持标准 Pascal VOC 格式兼容。
+- 为 NCC KModel 转换增加自动重试，降低转换器进程偶发崩溃导致整次训练失败的概率。
+
 ## 1.4.3 - 2026-05-11
 
 ### English

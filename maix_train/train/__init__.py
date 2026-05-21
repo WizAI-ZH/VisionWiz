@@ -270,7 +270,7 @@ class Train():
                              progress_cb=self.__on_train_progress)
         except Exception as e:
             log.e("训练错误: {}. Train error: {}".format(e, e))  
-            traceback.print_exc()
+            log.e("(错误跟踪)Traceback:\n" + traceback.format_exc())
             raise Exception((TrainFailReason.ERROR_INTERNAL, "训练时发生错误，错误信息: {}. Error occurred during training, error: {}".format(str(e), str(e))))
         # 训练结束, 生成报告
         log.i("训练完成，现在生成报告。Train completed, now generating report.")
@@ -379,7 +379,7 @@ class Train():
                            )
         except Exception as e:
             log.e("训练错误: {}. Train error: {}".format(e, e))  
-            traceback.print_exc()  
+            log.e("(错误跟踪)Traceback:\n" + traceback.format_exc())
             raise Exception((TrainFailReason.ERROR_INTERNAL, "训练时发生错误，错误信息: {}. Error occurred during training, error: {}".format(str(e), str(e))))
         # 训练结束, 生成报告
         log.i("训练完成，现在生成报告。Train completed, now generating report.")
@@ -477,32 +477,40 @@ class Train():
                 except Exception:
                     return "<unprintable>"
 
-        try:
-            p = subprocess.Popen(
-                cmd,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+        errors = []
+        for attempt in range(1, 4):
+            try:
+                p = subprocess.Popen(
+                    cmd,
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+                output, err = p.communicate()
+                rc = p.returncode
+            except Exception as e:
+                rc = -1
+                output = ""
+                err = f"运行 ncc 失败(run ncc failed): {e}"
+
+            out_s = _to_text(output).strip()
+            err_s = _to_text(err).strip()
+
+            if rc == 0:
+                if attempt > 1:
+                    print(f"ncc convert succeeded after retry {attempt}.")
+                return True, "ok"
+
+            errors.append(
+                "attempt: {}\nreturncode: {}\ncmd: {}\nstdout:\n{}\nstderr:\n{}".format(
+                    attempt, rc, cmd, out_s, err_s
+                )
             )
-            output, err = p.communicate()
-            rc = p.returncode
-        except Exception as e:
-            return False, f"运行 ncc 失败(run ncc failed): {e}\ncmd: {cmd}"
-
-        out_s = _to_text(output).strip()
-        err_s = _to_text(err).strip()
-
-        if rc == 0:
-            return True, "ok"
+            if attempt < 3:
+                time.sleep(2)
 
         # 失败时，把 returncode、stdout、stderr 都带上，且保证不会再因编码问题崩
-        return False, (
-            "ncc convert failed\n"
-            f"returncode: {rc}\n"
-            f"cmd: {cmd}\n"
-            f"stdout:\n{out_s}\n"
-            f"stderr:\n{err_s}\n"
-        )
+        return False, "ncc convert failed\n" + "\n\n".join(errors)
 
 
 if __name__ == "__main__":

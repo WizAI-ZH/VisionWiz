@@ -196,7 +196,7 @@ xterm_cls.loadAddon(fitAddon_cls)
 xterm_cls.loadAddon(new WebLinksAddon());
 xterm_cls.open(document.getElementById('xterm_cls'));
 xterm_cls.onData(data => { ipcRenderer.send('send_data_terminal_cls', data); });
-setupXtermCopyBehavior(
+const xtermTools_cls = setupXtermCopyBehavior(
     xterm_cls,
     document.getElementById('xterm_cls'),
     () => current_locales
@@ -225,7 +225,11 @@ ipcRenderer.on('window-resize', () => {
 
 ipcRenderer.on('write_data_to_xterm_cls', function (event, arg) {
     // 鍐欏叆鏁版嵁arg鍒扮粓绔腑
-    xterm_cls.write(arg);
+    xterm_cls.write(arg, () => {
+      if (xtermTools_cls) {
+        xtermTools_cls.refreshSearch();
+      }
+    });
 });
 
 ipcRenderer.on('update_progress_bar', function (event, arg) {
@@ -502,8 +506,8 @@ ipcRenderer.on('update_model_labels', function (event, arg) {
 });
 
 ipcRenderer.on('update_model_train_log', function (event, arg) {
-    var reg = new RegExp("\r\n", "g");
-    document.getElementById('train_log').innerHTML = arg[0].replaceAll(reg, '<br/>');
+    document.getElementById('train_log').textContent = arg[0];
+    document.getElementById('train_log').style.whiteSpace = 'pre-wrap';
     //console.log(arg)
 });
 
@@ -530,8 +534,8 @@ ipcRenderer.on('update_model_param_err', function (event, arg) {
 });
 
 ipcRenderer.on('update_model_train_log_err', function (event, arg) {
-    var reg = new RegExp("\r\n", "g");
-    document.getElementById('train_log_err').innerHTML = arg[0].replaceAll(reg, '<br/>');
+    document.getElementById('train_log_err').textContent = arg[0];
+    document.getElementById('train_log_err').style.whiteSpace = 'pre-wrap';
     //console.log(arg)
 });
 
