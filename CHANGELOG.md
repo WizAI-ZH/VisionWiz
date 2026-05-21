@@ -4,6 +4,22 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.4.6 - 2026-05-21
+
+### English
+
+- Improved the automatic update install flow so VisionWiz quits first and launches the installer only after the running app process has exited.
+- Changed update installer storage from the system temp directory to a persistent application update cache.
+- Added installer cache validation using the GitHub release asset size so completed downloads can be reused and partial downloads can resume.
+- Added safer handling for abnormal cached installer files and preserved the restart-download path for forcing a clean download.
+
+### 中文
+
+- 优化自动更新安装流程，VisionWiz 会先退出，并在当前应用进程结束后再启动安装程序。
+- 将更新安装包从系统临时目录改为保存到持久化的应用更新缓存目录。
+- 增加基于 GitHub Release 资源大小的安装包缓存校验，完整下载可复用，未完成下载可断点续传。
+- 增强异常缓存安装包的处理，并保留“重新下载”路径，方便用户强制重新获取干净安装包。
+
 ## 1.4.5 - 2026-05-21
 
 ### English

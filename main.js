@@ -453,22 +453,72 @@ async function promptForUpdate(release) {
   createUpdatePromptWindow();
 }
 
+function ensureUpdateCacheDir() {
+  const cacheDir = path.join(app.getPath("userData"), "updates");
+  fs.mkdirSync(cacheDir, { recursive: true });
+  return cacheDir;
+}
+
 function buildInstallerTempPath(targetVersion) {
   return path.join(
-    app.getPath("temp"),
+    ensureUpdateCacheDir(),
     `VisionWiz-Setup-${normalizeVersion(targetVersion)}.exe`
   );
+}
+
+function getFileSizeIfExists(filePath) {
+  try {
+    return fs.existsSync(filePath) ? fs.statSync(filePath).size : 0;
+  } catch (_error) {
+    return 0;
+  }
+}
+
+function removeFileIfExists(filePath) {
+  try {
+    if (fs.existsSync(filePath)) {
+      fs.rmSync(filePath, { force: true });
+    }
+  } catch (error) {
+    console.warn("[UPDATE] failed to remove cached installer:", error.message);
+  }
+}
+
+function getExpectedInstallerSize(asset) {
+  return Number(asset && asset.size ? asset.size : 0);
 }
 
 async function downloadReleaseAssetToTemp(asset, targetVersion, options = {}) {
   const shouldResume = Boolean(options.resume);
   const tempInstallerPath = buildInstallerTempPath(targetVersion);
-  let downloadedBytes = 0;
+  const expectedBytes = getExpectedInstallerSize(asset);
+  let downloadedBytes = getFileSizeIfExists(tempInstallerPath);
 
-  if (shouldResume && fs.existsSync(tempInstallerPath)) {
-    downloadedBytes = fs.statSync(tempInstallerPath).size;
-  } else if (fs.existsSync(tempInstallerPath)) {
-    fs.rmSync(tempInstallerPath, { force: true });
+  if (!shouldResume && downloadedBytes > 0) {
+    removeFileIfExists(tempInstallerPath);
+    downloadedBytes = 0;
+  }
+
+  if (expectedBytes > 0 && downloadedBytes === expectedBytes) {
+    setUpdateProgressState({
+      percent: 100,
+      statusText:
+        current_locales?.update_download_completed ||
+        "Download completed",
+      speedText: current_locales?.update_cache_ready || "Using cached installer",
+      etaText: current_locales?.update_eta_ready || "--",
+      transferredText: `${formatByteSize(downloadedBytes)} / ${formatByteSize(expectedBytes)}`,
+      isFailed: false,
+      canResume: false,
+      canRestart: false,
+      errorText: "",
+    });
+    return tempInstallerPath;
+  }
+
+  if (expectedBytes > 0 && downloadedBytes > expectedBytes) {
+    removeFileIfExists(tempInstallerPath);
+    downloadedBytes = 0;
   }
 
   const headers = buildGitHubHeaders();
@@ -488,7 +538,7 @@ async function downloadReleaseAssetToTemp(asset, targetVersion, options = {}) {
 
   const appendMode = shouldResume && downloadedBytes > 0 && response.status === 206;
   if (!appendMode && downloadedBytes > 0) {
-    fs.rmSync(tempInstallerPath, { force: true });
+    removeFileIfExists(tempInstallerPath);
     downloadedBytes = 0;
   }
 
@@ -552,31 +602,49 @@ async function downloadReleaseAssetToTemp(asset, targetVersion, options = {}) {
     response.data.pipe(writer);
   });
 
+  const finalBytes = getFileSizeIfExists(tempInstallerPath);
+  if (expectedBytes > 0 && finalBytes !== expectedBytes) {
+    throw new Error(
+      `Downloaded installer size mismatch: ${formatByteSize(finalBytes)} / ${formatByteSize(expectedBytes)}`
+    );
+  }
+
   return tempInstallerPath;
 }
 
 function launchInstallerAndQuit(installerPath) {
-  const silentArgs = ["/S"];
-  app.once("will-quit", () => {
-    try {
-      const child = spawn(installerPath, silentArgs, {
+  const installerAbsolutePath = path.resolve(installerPath);
+  const quotePowerShellString = (value) => `'${String(value).replace(/'/g, "''")}'`;
+  const waitAndLaunchScript = [
+    `$pidToWait = ${process.pid}`,
+    "try { Wait-Process -Id $pidToWait -Timeout 90 } catch {}",
+    "Start-Sleep -Milliseconds 800",
+    `Start-Process -FilePath ${quotePowerShellString(installerAbsolutePath)}`,
+  ].join("; ");
+
+  try {
+    const child = spawn(
+      "powershell.exe",
+      [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-WindowStyle",
+        "Hidden",
+        "-Command",
+        waitAndLaunchScript,
+      ],
+      {
         detached: true,
         stdio: "ignore",
-      });
-      child.unref();
-    } catch (error) {
-      console.warn("[UPDATE] silent installer launch failed, fallback to normal launch:", error.message);
-      try {
-        const child = spawn(installerPath, [], {
-          detached: true,
-          stdio: "ignore",
-        });
-        child.unref();
-      } catch (fallbackError) {
-        console.error("[UPDATE] installer launch failed:", fallbackError);
+        windowsHide: true,
       }
-    }
-  });
+    );
+    child.unref();
+  } catch (error) {
+    console.error("[UPDATE] delayed installer launch failed:", error);
+    electronShell.openPath(installerAbsolutePath);
+  }
 
   closeUpdateProgressWindow();
   app.quit();
@@ -609,19 +677,27 @@ async function downloadAndInstallRelease(release, options = {}) {
   activeInstallerAsset = asset;
   const latestVersion = normalizeVersion(release.tag_name || release.name || "");
   const resumePath = buildInstallerTempPath(latestVersion);
-  const hasPartial = fs.existsSync(resumePath) && fs.statSync(resumePath).size > 0;
+  const expectedBytes = getExpectedInstallerSize(asset);
+  const cachedBytes = getFileSizeIfExists(resumePath);
+  const hasCompleteCache = expectedBytes > 0 && cachedBytes === expectedBytes;
+  const hasPartial = cachedBytes > 0 && !hasCompleteCache;
   setUpdateProgressState({
     currentVersion: getCurrentAppVersion(),
     latestVersion,
-    percent: 0,
+    percent: hasCompleteCache ? 100 : 0,
     statusText:
-      current_locales?.update_download_starting ||
-      "Preparing the update download...",
+      hasCompleteCache
+        ? current_locales?.update_download_completed || "Download completed"
+        : current_locales?.update_download_starting ||
+          "Preparing the update download...",
     speedText: "--",
     etaText: "--",
-    transferredText: hasPartial && options.resume
-      ? `${formatByteSize(fs.statSync(resumePath).size)} / --`
-      : "--",
+    transferredText:
+      (hasPartial || hasCompleteCache) && options.resume
+        ? `${formatByteSize(cachedBytes)}${
+            expectedBytes > 0 ? ` / ${formatByteSize(expectedBytes)}` : " / --"
+          }`
+        : "--",
     isFailed: false,
     canResume: false,
     canRestart: false,
@@ -652,7 +728,8 @@ async function downloadAndInstallRelease(release, options = {}) {
     launchInstallerAndQuit(installerPath);
   } catch (error) {
     updateDownloadInProgress = false;
-    const partialExists = fs.existsSync(resumePath) && fs.statSync(resumePath).size > 0;
+    const cachedBytesAfterFailure = getFileSizeIfExists(resumePath);
+    const partialExists = cachedBytesAfterFailure > 0;
     setUpdateProgressState({
       statusText:
         current_locales?.update_download_failed_status ||

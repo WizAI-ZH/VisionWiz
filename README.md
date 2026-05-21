@@ -4,6 +4,22 @@ VisionWiz is a desktop AI tool focused on K210 and lightweight vision model work
 
 VisionWiz 是一款面向 K210 与轻量视觉模型工作流的桌面 AI 工具，集成图像采集、数据标注、图像分类训练、目标检测训练、模型测试与结果查看等能力。
 
+## 1.4.6 Update
+
+### English
+
+- Improved automatic updates so the installer starts only after VisionWiz has fully closed, reducing install failures caused by files still being in use.
+- Moved downloaded update installers into a persistent application update cache instead of the system temp folder.
+- Added cache reuse and resume checks for update downloads. Complete installers are reused, partial downloads can continue, and abnormal cached files are re-downloaded.
+- Kept the manual restart-download action available so users can discard a bad cached installer when needed.
+
+### 中文
+
+- 优化自动更新安装流程，安装程序会在 VisionWiz 完全关闭后再启动，减少程序文件仍被占用导致的安装失败。
+- 将自动更新下载的安装包保存到持久化的应用更新缓存目录，不再依赖系统临时目录。
+- 增加更新下载的缓存复用和断点续传校验：完整安装包会直接复用，未完成下载可继续下载，异常缓存会重新下载。
+- 保留“重新下载”操作，用户在需要时可以丢弃异常缓存并重新获取安装包。
+
 ## 1.4.5 Update
 
 ### English
