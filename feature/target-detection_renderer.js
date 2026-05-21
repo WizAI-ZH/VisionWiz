@@ -3,6 +3,7 @@ const { FitAddon } = require('xterm-addon-fit');
 const { WebLinksAddon } = require('xterm-addon-web-links');
 const echarts = require('echarts');
 const { setupXtermCopyBehavior } = require('./xterm-copy-helper');
+const { setupHistoryLogSearch } = require('./history-log-search-helper');
 let pathModule;
 try {
     pathModule = require('path');
@@ -13,6 +14,10 @@ let current_locales;
 const YOLO_INPUT_SIZES = ['224x224', '240x240', '320x224'];
 let modelGraphChart = null;
 let pendingTrainGraphData = null;
+const historyLogSearch = setupHistoryLogSearch(
+    ['train_log', 'train_log_err'],
+    () => current_locales
+);
 
 function normalizeInputSize(value) {
     return YOLO_INPUT_SIZES.includes(value) ? value : '224x224';
@@ -26,6 +31,20 @@ function formatInputSize(data) {
         return `${data.input_shape[1]}x${data.input_shape[0]}`;
     }
     return '224x224';
+}
+
+function formatDataAugMode(data) {
+    const mode = String(data?.data_aug || 'auto').toLowerCase();
+    const labels = {
+        auto: current_locales?.open || 'Auto',
+        open: current_locales?.open || 'Auto',
+        off: current_locales?.close || 'Off',
+        close: current_locales?.close || 'Off',
+        geometry: current_locales?.data_aug_geometry || 'Geometry',
+        color: current_locales?.data_aug_color || 'Color / Brightness',
+        blur_noise: current_locales?.data_aug_blur_noise || 'Blur / Noise',
+    };
+    return labels[mode] || mode;
 }
 
 function escapeHtml(value) {
@@ -584,6 +603,7 @@ ipcRenderer.on('update_model_param', function (event, arg) {
     document.getElementById("model_epoch").innerHTML = data['epochs']
     document.getElementById("model_batchsize").innerHTML = data['batch_size']
     document.getElementById("model_input_size").innerHTML = formatInputSize(data)
+    document.getElementById("model_data_aug").innerHTML = formatDataAugMode(data)
 });
 
 ipcRenderer.on('update_model_labels', function (event, arg) {
@@ -597,8 +617,7 @@ ipcRenderer.on('update_model_anchors', function (event, arg) {
 });
 
 ipcRenderer.on('update_model_train_log', function (event, arg) {
-    document.getElementById('train_log').textContent = arg[0];
-    document.getElementById('train_log').style.whiteSpace = 'pre-wrap';
+    historyLogSearch.setText('train_log', arg[0]);
     // console.log(arg)
 });
 
@@ -629,11 +648,11 @@ ipcRenderer.on('update_model_param_err', function (event, arg) {
     document.getElementById("model_epoch_err").innerHTML = data['epochs']
     document.getElementById("model_batchsize_err").innerHTML = data['batch_size']
     document.getElementById("model_input_size_err").innerHTML = formatInputSize(data)
+    document.getElementById("model_data_aug_err").innerHTML = formatDataAugMode(data)
 });
 
 ipcRenderer.on('update_model_train_log_err', function (event, arg) {
-    document.getElementById('train_log_err').textContent = arg[0];
-    document.getElementById('train_log_err').style.whiteSpace = 'pre-wrap';
+    historyLogSearch.setText('train_log_err', arg[0]);
     // console.log(arg)
 });
 

@@ -1604,8 +1604,8 @@ const trainStreamState = {
 };
 const TRAIN_TRANSCRIPT_MAX_BUFFER = 2 * 1024 * 1024;
 const trainTranscriptState = {
-  imgCls: { active: false, pending: "", logPath: "" },
-  objectDetection: { active: false, pending: "", logPath: "" },
+  imgCls: { active: false, pending: "", logPath: "", currentEpoch: 0, totalEpochs: 0 },
+  objectDetection: { active: false, pending: "", logPath: "", currentEpoch: 0, totalEpochs: 0 },
 };
 
 function isTrainCommand(command) {
@@ -1627,7 +1627,37 @@ function resolveTrainTranscriptPath(text) {
   return path.join(path.dirname(path.normalize(match[1].trim())), "terminal_output.log");
 }
 
-function normalizeTrainTranscriptText(data) {
+function parseEpochCountFromCommand(command) {
+  const match = String(command || "").match(/(?:^|\s)-(?:ep|epochs?)\s+(\d+)/i);
+  return match ? Number(match[1]) || 0 : 0;
+}
+
+function updateTranscriptEpochState(state, line) {
+  const startMatch = String(line || "").match(/Epoch\s+(\d+)\s+start/i);
+  if (startMatch) {
+    state.currentEpoch = (Number(startMatch[1]) || 0) + 1;
+  }
+}
+
+function formatCompactKerasProgressLine(state, line) {
+  const match = String(line || "").match(/^\s*(\d+)\/(\d+)\s+(\[[=>.]+\]\s+-\s+.*)$/);
+  if (!match) {
+    return null;
+  }
+
+  const currentStep = Number(match[1]) || 0;
+  const totalSteps = Number(match[2]) || 0;
+  if (!totalSteps || currentStep < totalSteps) {
+    return "";
+  }
+
+  if (state && state.currentEpoch && state.totalEpochs) {
+    return `${state.currentEpoch}/${state.totalEpochs} epoch ${match[3]}`;
+  }
+  return line.trim();
+}
+
+function normalizeTrainTranscriptText(data, state = {}) {
   let text = String(data || "");
   text = text
     .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, "")
@@ -1658,10 +1688,31 @@ function normalizeTrainTranscriptText(data) {
     lines.push(current.replace(/[ \t]+$/g, ""));
   }
 
-  return lines
-    .filter((line) => line.trim() && line.trim().toLowerCase() !== "cls")
-    .join("\n")
-    .replace(/\n{3,}/g, "\n\n") + (lines.length ? "\n" : "");
+  const normalizedLines = [];
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    if (!trimmedLine || trimmedLine.toLowerCase() === "cls") {
+      continue;
+    }
+    updateTranscriptEpochState(state, trimmedLine);
+    const compactProgressLine = formatCompactKerasProgressLine(state, trimmedLine);
+    if (compactProgressLine === "") {
+      continue;
+    }
+    normalizedLines.push(compactProgressLine || line);
+  }
+
+  return normalizedLines.join("\n").replace(/\n{3,}/g, "\n\n") +
+    (normalizedLines.length ? "\n" : "");
+}
+
+function normalizeStoredTrainLogForDisplay(data) {
+  const text = String(data || "");
+  const state = {
+    currentEpoch: 0,
+    totalEpochs: parseEpochCountFromCommand(text.split(/\r?\n/, 1)[0] || ""),
+  };
+  return normalizeTrainTranscriptText(text, state);
 }
 
 function startTrainTranscript(channel, command) {
@@ -1672,6 +1723,8 @@ function startTrainTranscript(channel, command) {
   state.active = true;
   state.pending = `$ ${String(command || "").replace(/\r?\n$/, "")}\n`;
   state.logPath = "";
+  state.currentEpoch = 0;
+  state.totalEpochs = parseEpochCountFromCommand(command);
   trimTranscriptPending(state);
 }
 
@@ -1681,7 +1734,7 @@ function appendTrainTranscript(channel, data) {
     return;
   }
 
-  const text = normalizeTrainTranscriptText(data);
+  const text = normalizeTrainTranscriptText(data, state);
   if (!text) {
     return;
   }
@@ -2454,7 +2507,7 @@ ipcMain.on("read_model_detail_and_show", function (event, arg) {
         mainWindow_views,
         viewChannel,
         "update_model_train_log",
-        [trainLogData]
+        [normalizeStoredTrainLogForDisplay(trainLogData)]
       );
     });
     // 更新测试结果图片到详情窗口
@@ -2499,7 +2552,7 @@ ipcMain.on("read_model_detail_and_show_err", function (event, arg) {
         mainWindow_views,
         viewChannel,
         "update_model_train_log_err",
-        [trainLogData]
+        [normalizeStoredTrainLogForDisplay(trainLogData)]
       );
     });
   });

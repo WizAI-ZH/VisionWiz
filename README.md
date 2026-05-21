@@ -4,6 +4,22 @@ VisionWiz is a desktop AI tool focused on K210 and lightweight vision model work
 
 VisionWiz 是一款面向 K210 与轻量视觉模型工作流的桌面 AI 工具，集成图像采集、数据标注、图像分类训练、目标检测训练、模型测试与结果查看等能力。
 
+## 1.4.7 Update
+
+### English
+
+- Added search to historical training logs in image classification and object detection training records, including `Ctrl+F`, previous/next navigation, result counts, and highlighted matches.
+- Reduced noisy saved training progress output by showing only the completed progress line for each epoch instead of every intermediate batch update.
+- Added the selected data augmentation mode to training record model information for both successful and failed runs.
+- Added localized labels for the new data augmentation field in Simplified Chinese, Traditional Chinese, and English.
+
+### 中文
+
+- 为图像分类和目标检测的历史训练日志新增搜索功能，支持 `Ctrl+F`、上一个/下一个、结果计数和命中高亮。
+- 精简训练记录中的进度条输出，只显示每一轮训练完成后的进度摘要，不再保存大量中间 batch 进度行。
+- 在成功和失败训练记录的模型信息中新增“数据增强”字段，显示本次训练实际使用的增强模式。
+- 为新的数据增强字段补充简体中文、繁体中文和英文界面文案。
+
 ## 1.4.6 Update
 
 ### English

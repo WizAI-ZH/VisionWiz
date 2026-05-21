@@ -4,6 +4,24 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.4.7 - 2026-05-21
+
+### English
+
+- Added searchable historical training logs for both image classification and object detection training records.
+- Added `Ctrl+F`, previous/next navigation, result counts, and highlighted current matches in training record log views.
+- Compact saved and displayed training progress logs by keeping only the completed progress line for each epoch.
+- Added the selected data augmentation mode to training record model information, including failed training detail views.
+- Added Simplified Chinese, Traditional Chinese, and English labels for the training-record data augmentation field.
+
+### 中文
+
+- 为图像分类和目标检测训练记录新增历史训练日志搜索功能。
+- 在训练记录日志视图中支持 `Ctrl+F`、上一个/下一个、结果计数和当前命中高亮。
+- 精简保存和展示的训练进度日志，每一轮只保留完成后的进度行，减少中间 batch 进度刷屏。
+- 在训练记录模型信息中新增本次训练选择的数据增强模式，失败训练详情也同步显示。
+- 为训练记录中的数据增强字段补充简体中文、繁体中文和英文文案。
+
 ## 1.4.6 - 2026-05-21
 
 ### English
