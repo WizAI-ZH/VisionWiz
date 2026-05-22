@@ -4,6 +4,20 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.5.6 - 2026-05-22
+
+### English
+
+- Published a test target release for validating automatic updates from VisionWiz 1.5.5.
+- Retained the graphical update helper, hidden PowerShell host, local update test script, and protected-entry recompilation flow.
+- No additional training workflow changes were introduced in this test release.
+
+### 中文
+
+- 发布用于验证从 VisionWiz 1.5.5 自动更新的测试目标版本。
+- 保留图形更新助手、隐藏 PowerShell 宿主、本地更新测试脚本和受保护入口重新编译流程。
+- 本测试版本没有额外新增训练工作流变更。
+
 ## 1.5.5 - 2026-05-22
 
 ### English
