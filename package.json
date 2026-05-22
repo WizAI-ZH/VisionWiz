@@ -1,6 +1,6 @@
 {
   "name": "VisionWiz",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "VisionWiz AI toolset",
   "main": "main_bootstrap.js",
   "author": "VisionWiz Team",
@@ -18,6 +18,10 @@
     "compile:inc": "node scripts/compile-in-electron-incremental.js",
     "compile:full": "npx electron scripts/compile-in-electron.js",
     "start": "electron .",
+    "preupdate:test": "npx electron scripts/compile-in-electron-incremental.js",
+    "update:test": "node scripts/update-test.js",
+    "preupdate:test:install": "npx electron scripts/compile-in-electron-incremental.js",
+    "update:test:install": "node scripts/update-test.js --install",
     "start2": "nodemon --watch main.js --exec npm run build",
     "rebuild-nodepty": "electron-rebuild -f -w node-pty",
     "rebuild-rob": "electron-rebuild -f -w robotjs",

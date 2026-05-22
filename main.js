@@ -85,6 +85,7 @@ let hasCheckedForUpdates = false;
 let updatePromptWindow = null;
 let updateProgressWindow = null;
 let updateDownloadInProgress = false;
+let updateExitInProgress = false;
 let activeUpdateRelease = null;
 let activeInstallerAsset = null;
 let activeInstallerPath = "";
@@ -242,16 +243,18 @@ function createUpdatePromptWindow() {
     return updatePromptWindow;
   }
 
+  const isInternalUpdateTest = getEnvFlag("VISIONWIZ_UPDATE_TEST");
   updatePromptWindow = new BrowserWindow({
     width: 760,
     height: 660,
     minWidth: 760,
     minHeight: 660,
-    parent: mainWindow || null,
-    modal: true,
+    parent: isInternalUpdateTest ? null : mainWindow || null,
+    modal: !isInternalUpdateTest,
     resizable: true,
     minimizable: false,
     maximizable: false,
+    alwaysOnTop: isInternalUpdateTest,
     autoHideMenuBar: true,
     show: false,
     title: current_locales?.update_available_title || "Update Available",
@@ -265,6 +268,7 @@ function createUpdatePromptWindow() {
   updatePromptWindow.once("ready-to-show", () => {
     if (updatePromptWindow && !updatePromptWindow.isDestroyed()) {
       updatePromptWindow.show();
+      updatePromptWindow.focus();
       updatePromptWindow.webContents.send("update-prompt-state", latestUpdatePromptState);
     }
   });
@@ -435,6 +439,59 @@ function pickWindowsInstallerAsset(release) {
   return assets.find((asset) => /\.exe$/i.test(asset.name || "")) || null;
 }
 
+function getEnvFlag(name) {
+  const value = String(process.env[name] || "").trim().toLowerCase();
+  return ["1", "true", "yes", "on"].includes(value);
+}
+
+function buildTestUpdateRelease() {
+  if (!getEnvFlag("VISIONWIZ_UPDATE_TEST")) {
+    return null;
+  }
+
+  const localInstaller = String(process.env.VISIONWIZ_UPDATE_TEST_INSTALLER || "").trim();
+  const downloadUrl = String(process.env.VISIONWIZ_UPDATE_TEST_URL || "").trim();
+  const source = localInstaller || downloadUrl;
+  if (!source) {
+    console.warn("[UPDATE] VISIONWIZ_UPDATE_TEST is enabled but no installer source was provided.");
+    return null;
+  }
+
+  const latestVersion = normalizeVersion(
+    process.env.VISIONWIZ_UPDATE_TEST_VERSION ||
+      `${getCurrentAppVersion()}.test`
+  );
+  const assetName = path.basename(localInstaller || downloadUrl) || `VisionWiz${latestVersion}-Setup.exe`;
+  const assetSize = localInstaller ? getFileSizeIfExists(localInstaller) : 0;
+
+  return {
+    tag_name: `v${latestVersion}`,
+    name: `VisionWiz ${latestVersion} Internal Update Test`,
+    draft: false,
+    prerelease: false,
+    body: [
+      "### English",
+      "- Internal automatic update test release.",
+      "- Uses a local installer or custom download URL from environment variables.",
+      "- This release is only visible when VISIONWIZ_UPDATE_TEST=1 is set.",
+      "",
+      "### 中文",
+      "- 自动更新内测版本。",
+      "- 使用环境变量指定的本地安装包或自定义下载链接。",
+      "- 只有设置 VISIONWIZ_UPDATE_TEST=1 时才会显示这个测试更新。",
+    ].join("\n"),
+    assets: [
+      {
+        name: assetName,
+        size: assetSize,
+        browser_download_url: downloadUrl || localInstaller,
+        local_path: localInstaller,
+        dry_run: getEnvFlag("VISIONWIZ_UPDATE_TEST_DRY_RUN"),
+      },
+    ],
+  };
+}
+
 async function promptForUpdate(release) {
   if (!mainWindow || !release) {
     return;
@@ -501,6 +558,50 @@ function getCurrentInstallDir() {
 
 function quotePowerShellString(value) {
   return `'${String(value || "").replace(/'/g, "''")}'`;
+}
+
+function launchPowerShellHelper(helperPath) {
+  const timestamp = Date.now();
+  const launcherLogPath = path.join(
+    ensureUpdateCacheDir(),
+    `VisionWiz-update-launcher-${timestamp}.log`
+  );
+  fs.writeFileSync(
+    launcherLogPath,
+    `[${new Date().toISOString()}] launching helper\r\nhelper=${helperPath}\r\n`,
+    "utf8"
+  );
+  const child = spawn("powershell.exe", [
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-STA",
+    "-WindowStyle",
+    "Hidden",
+    "-File",
+    helperPath,
+  ], {
+    detached: true,
+    stdio: "ignore",
+    windowsHide: true,
+  });
+  child.on("error", (error) => {
+    try {
+      fs.appendFileSync(launcherLogPath, `error=${error.message}\r\n`, "utf8");
+    } catch (_appendError) {
+      // Ignore logging failures during shutdown.
+    }
+  });
+  child.unref();
+}
+
+function exitAppForUpdate() {
+  updateExitInProgress = true;
+  closeUpdatePromptWindow();
+  closeUpdateProgressWindow();
+  setTimeout(() => {
+    app.exit(0);
+  }, 500);
 }
 
 async function downloadReleaseAssetToTemp(asset, targetVersion, options = {}) {
@@ -679,25 +780,13 @@ function launchInstallerAndQuit(installerPath) {
 
   try {
     fs.writeFileSync(helperPath, helperScript, "utf8");
-    const child = spawn("powershell.exe", [
-      "-NoProfile",
-      "-ExecutionPolicy",
-      "Bypass",
-      "-File",
-      helperPath,
-    ], {
-      detached: true,
-      stdio: "ignore",
-      windowsHide: false,
-    });
-    child.unref();
+    launchPowerShellHelper(helperPath);
   } catch (error) {
     console.error("[UPDATE] update helper launch failed:", error);
     electronShell.openPath(installerAbsolutePath);
   }
 
-  closeUpdateProgressWindow();
-  app.quit();
+  exitAppForUpdate();
 }
 
 function launchUpdateHelperAndQuit(release, options = {}) {
@@ -720,6 +809,8 @@ function launchUpdateHelperAndQuit(release, options = {}) {
   const latestVersion = normalizeVersion(release.tag_name || release.name || "");
   const installerPath = buildInstallerTempPath(latestVersion);
   const expectedBytes = getExpectedInstallerSize(asset);
+  const localInstallerPath = String(asset.local_path || "").trim();
+  const dryRun = Boolean(asset.dry_run || getEnvFlag("VISIONWIZ_UPDATE_TEST_DRY_RUN"));
   const installDir = path.resolve(getCurrentInstallDir());
   const appExePath = app.isPackaged && process.execPath
     ? path.resolve(process.execPath)
@@ -737,12 +828,103 @@ function launchUpdateHelperAndQuit(release, options = {}) {
     "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12",
     `$pidToWait = ${process.pid}`,
     `$downloadUrl = ${quotePowerShellString(asset.browser_download_url)}`,
+    `$localInstaller = ${quotePowerShellString(localInstallerPath)}`,
     `$installer = ${quotePowerShellString(installerPath)}`,
     `$expectedBytes = ${expectedBytes}`,
+    `$dryRun = $${dryRun ? "true" : "false"}`,
     `$installDir = ${quotePowerShellString(installDir)}`,
     `$appExe = ${quotePowerShellString(appExePath)}`,
     `$helperPath = ${quotePowerShellString(helperPath)}`,
     `$script:resumeDownload = $${shouldResume ? "true" : "false"}`,
+    `$uiLogPath = ${quotePowerShellString(path.join(ensureUpdateCacheDir(), `VisionWiz-update-helper-${Date.now()}.log`))}`,
+    "",
+    "Add-Type -AssemblyName System.Windows.Forms",
+    "Add-Type -AssemblyName System.Drawing",
+    "[System.Windows.Forms.Application]::EnableVisualStyles()",
+    "$script:closeRequested = $false",
+    "$form = New-Object System.Windows.Forms.Form",
+    "$form.Text = 'VisionWiz Update Installer'",
+    "$form.StartPosition = 'CenterScreen'",
+    "$form.Size = New-Object System.Drawing.Size(640, 430)",
+    "$form.MinimumSize = New-Object System.Drawing.Size(560, 380)",
+    "$form.BackColor = [System.Drawing.Color]::FromArgb(248, 250, 252)",
+    "$form.Font = New-Object System.Drawing.Font('Microsoft YaHei UI', 9)",
+    "$titleLabel = New-Object System.Windows.Forms.Label",
+    "$titleLabel.Text = 'VisionWiz Update Installer'",
+    "$titleLabel.Font = New-Object System.Drawing.Font('Microsoft YaHei UI', 16, [System.Drawing.FontStyle]::Bold)",
+    "$titleLabel.ForeColor = [System.Drawing.Color]::FromArgb(15, 23, 42)",
+    "$titleLabel.Location = New-Object System.Drawing.Point(24, 22)",
+    "$titleLabel.Size = New-Object System.Drawing.Size(560, 34)",
+    "$form.Controls.Add($titleLabel)",
+    "$statusLabel = New-Object System.Windows.Forms.Label",
+    "$statusLabel.Text = 'Preparing update...'",
+    "$statusLabel.ForeColor = [System.Drawing.Color]::FromArgb(51, 65, 85)",
+    "$statusLabel.Location = New-Object System.Drawing.Point(26, 68)",
+    "$statusLabel.Size = New-Object System.Drawing.Size(570, 24)",
+    "$form.Controls.Add($statusLabel)",
+    "$progressBar = New-Object System.Windows.Forms.ProgressBar",
+    "$progressBar.Location = New-Object System.Drawing.Point(28, 104)",
+    "$progressBar.Size = New-Object System.Drawing.Size(568, 18)",
+    "$progressBar.Style = 'Continuous'",
+    "$progressBar.Minimum = 0",
+    "$progressBar.Maximum = 100",
+    "$form.Controls.Add($progressBar)",
+    "$logBox = New-Object System.Windows.Forms.TextBox",
+    "$logBox.Location = New-Object System.Drawing.Point(28, 144)",
+    "$logBox.Size = New-Object System.Drawing.Size(568, 178)",
+    "$logBox.Anchor = 'Top,Bottom,Left,Right'",
+    "$logBox.Multiline = $true",
+    "$logBox.ReadOnly = $true",
+    "$logBox.ScrollBars = 'Vertical'",
+    "$logBox.BackColor = [System.Drawing.Color]::White",
+    "$logBox.ForeColor = [System.Drawing.Color]::FromArgb(30, 41, 59)",
+    "$form.Controls.Add($logBox)",
+    "$closeButton = New-Object System.Windows.Forms.Button",
+    "$closeButton.Text = 'Close'",
+    "$closeButton.Enabled = $false",
+    "$closeButton.Location = New-Object System.Drawing.Point(496, 340)",
+    "$closeButton.Size = New-Object System.Drawing.Size(100, 34)",
+    "$closeButton.Anchor = 'Bottom,Right'",
+    "$closeButton.Add_Click({ $script:closeRequested = $true; $form.Close() })",
+    "$form.Controls.Add($closeButton)",
+    "$form.Add_FormClosing({ $script:closeRequested = $true })",
+    "$form.Show() | Out-Null",
+    "[System.Windows.Forms.Application]::DoEvents()",
+    "function Set-UpdateStatus([string]$message, [int]$percent = -1) {",
+    "  if ($statusLabel -and -not $statusLabel.IsDisposed) { $statusLabel.Text = $message }",
+    "  if ($percent -ge 0 -and $progressBar -and -not $progressBar.IsDisposed) { $progressBar.Value = [Math]::Max(0, [Math]::Min(100, $percent)) }",
+    "  [System.Windows.Forms.Application]::DoEvents()",
+    "}",
+    "function Write-Host {",
+    "  param([Parameter(ValueFromRemainingArguments=$true)] [object[]] $Object)",
+    "  $text = ($Object | ForEach-Object { [string]$_ }) -join ' '",
+    "  if ($text.Length -eq 0) { $text = '' }",
+    "  try { Add-Content -LiteralPath $uiLogPath -Value $text -Encoding UTF8 } catch { }",
+    "  if ($logBox -and -not $logBox.IsDisposed) {",
+    "    $logBox.AppendText($text + [Environment]::NewLine)",
+    "    $logBox.SelectionStart = $logBox.TextLength",
+    "    $logBox.ScrollToCaret()",
+    "  }",
+    "  [System.Windows.Forms.Application]::DoEvents()",
+    "}",
+    "function Write-Progress {",
+    "  param([string]$Activity, [string]$Status, [int]$PercentComplete, [switch]$Completed)",
+    "  if ($Completed) { Set-UpdateStatus $Activity 100; return }",
+    "  $label = if ($Status) { $Activity + ' - ' + $Status } else { $Activity }",
+    "  Set-UpdateStatus $label $PercentComplete",
+    "}",
+    "function Read-Host {",
+    "  param([string]$Prompt)",
+    "  Write-Host $Prompt",
+    "  Set-UpdateStatus $Prompt",
+    "  $closeButton.Enabled = $true",
+    "  while (-not $script:closeRequested -and $form.Visible) {",
+    "    [System.Windows.Forms.Application]::DoEvents()",
+    "    Start-Sleep -Milliseconds 80",
+    "  }",
+    "  return ''",
+    "}",
+    "Set-UpdateStatus 'Preparing update...' 3",
     "",
     "function Format-Bytes([double]$bytes) {",
     "  if ($bytes -ge 1GB) { return ('{0:N2} GB' -f ($bytes / 1GB)) }",
@@ -759,6 +941,20 @@ function launchUpdateHelperAndQuit(release, options = {}) {
     "function Download-Installer {",
     "  $parent = Split-Path -Parent $installer",
     "  New-Item -ItemType Directory -Force -Path $parent | Out-Null",
+    "  if ($localInstaller -and (Test-Path -LiteralPath $localInstaller)) {",
+    "    Set-UpdateStatus 'Preparing local installer...' 12",
+    "    $sourceSize = (Get-Item -LiteralPath $localInstaller).Length",
+    "    if ((Test-Path -LiteralPath $installer) -and ((Get-Item -LiteralPath $installer).Length -eq $sourceSize)) {",
+    "      Set-UpdateStatus 'Using cached installer...' 100",
+    "      Write-Host ('Using cached local test installer: ' + $installer)",
+    "      return",
+    "    }",
+    "    Write-Host ('Copying local test installer: ' + $localInstaller)",
+    "    Set-UpdateStatus 'Copying local installer...' 30",
+    "    Copy-Item -LiteralPath $localInstaller -Destination $installer -Force",
+    "    Set-UpdateStatus 'Installer is ready.' 100",
+    "    return",
+    "  }",
     "  $downloaded = Get-Size $installer",
     "  if (-not $script:resumeDownload -and $downloaded -gt 0) {",
     "    Remove-Item -LiteralPath $installer -Force -ErrorAction SilentlyContinue",
@@ -832,21 +1028,33 @@ function launchUpdateHelperAndQuit(release, options = {}) {
     "",
     "while ($true) {",
     "  try {",
-    "    Clear-Host",
+    "    Set-UpdateStatus 'Preparing update...' 5",
     "    Write-Host 'VisionWiz update helper is running.'",
     "    Write-Host ('Target version: ' + " + quotePowerShellString(latestVersion) + ")",
     "    Write-Host ''",
     "    Download-Installer",
     "    Write-Host ''",
+    "    Set-UpdateStatus 'Waiting for VisionWiz to close...' 100",
     "    Write-Host ('Waiting for VisionWiz to close completely, PID: ' + $pidToWait)",
     "    try { Wait-Process -Id $pidToWait -Timeout 120 } catch { }",
     "    Start-Sleep -Seconds 1",
+    "    if ($dryRun) {",
+    "      Write-Host ''",
+    "      Set-UpdateStatus 'Dry run complete. Installer launch skipped.' 100",
+    "      Write-Host 'Dry run enabled. Installer launch is skipped.'",
+    "      Write-Host ('Cached installer path: ' + $installer)",
+    "      Read-Host 'Press Enter to close this test helper window'",
+    "      Remove-Item -LiteralPath $helperPath -Force -ErrorAction SilentlyContinue",
+    "      exit 0",
+    "    }",
+    "    Set-UpdateStatus 'Installing update...' 100",
     "    Write-Host ('Installing update to: ' + $installDir)",
     "    Write-Host 'The installer will run silently. Please wait...'",
     "    $arguments = @('/S', ('/D=' + $installDir))",
     "    $process = Start-Process -FilePath $installer -ArgumentList $arguments -Wait -PassThru",
     "    $exitCode = if ($null -eq $process.ExitCode) { 0 } else { $process.ExitCode }",
     "    if ($exitCode -ne 0) { throw ('Installer finished with code ' + $exitCode) }",
+    "    Set-UpdateStatus 'Installation completed.' 100",
     "    Write-Host 'Installation completed.'",
     "    if (Test-Path $appExe) {",
     "      Write-Host 'Starting VisionWiz...'",
@@ -870,27 +1078,14 @@ function launchUpdateHelperAndQuit(release, options = {}) {
 
   try {
     fs.writeFileSync(helperPath, helperScript, "utf8");
-    const child = spawn("powershell.exe", [
-      "-NoProfile",
-      "-ExecutionPolicy",
-      "Bypass",
-      "-File",
-      helperPath,
-    ], {
-      detached: true,
-      stdio: "ignore",
-      windowsHide: false,
-    });
-    child.unref();
+    launchPowerShellHelper(helperPath);
   } catch (error) {
     console.error("[UPDATE] update helper launch failed:", error);
     electronShell.openExternal(asset.browser_download_url || MANUAL_UPDATE_URL);
     return;
   }
 
-  closeUpdatePromptWindow();
-  closeUpdateProgressWindow();
-  app.quit();
+  exitAppForUpdate();
 }
 
 async function downloadAndInstallRelease(release, options = {}) {
@@ -990,6 +1185,13 @@ async function checkForUpdatesOnce() {
     return;
   }
   hasCheckedForUpdates = true;
+
+  const testRelease = buildTestUpdateRelease();
+  if (testRelease) {
+    console.log("[UPDATE TEST] internal update prompt requested");
+    await promptForUpdate(testRelease);
+    return;
+  }
 
   const latestRelease = await fetchLatestGitHubRelease();
   if (!latestRelease) {
@@ -1376,11 +1578,17 @@ function createAuthWindow() {
   // authWindow.openDevTools({ mode: "detach" });
 
   authWindow.on('close', e => {
+    if (updateExitInProgress) {
+      return;
+    }
     app.quit();
   });
 
   authWindow.webContents.on('render-process-gone', (_e, details) => { // ★★  
     console.warn('[SEC] auth renderer gone:', details);
+    if (updateExitInProgress) {
+      return;
+    }
     app.quit();                      // ★★ 立即退出  
   });
 }
@@ -1483,12 +1691,25 @@ function afterAuthSuccess() {
   }
 }
 
+function scheduleInternalUpdateTestPrompt() {
+  if (!getEnvFlag("VISIONWIZ_UPDATE_TEST")) {
+    return;
+  }
+  console.log("[UPDATE TEST] scheduling internal update prompt");
+  setTimeout(() => {
+    checkForUpdatesOnce().catch((error) => {
+      console.warn("[UPDATE TEST] check failed:", error.message);
+    });
+  }, 2600);
+}
+
 // 这段程序将会在 Electron 结束初始化
 // 和创建浏览器窗口的时候调用
 // 部分 API 在 ready 事件触发后才能使用。
 app.whenReady().then(async () => {
   await bootstrap();
   createWindow();
+  scheduleInternalUpdateTestPrompt();
   // createAuthWindow();
   initSerialManager();
   globalShortcut.register("Control+Shift+I", () => {
@@ -1522,6 +1743,9 @@ app.whenReady().then(async () => {
 // 直到用户使用 Cmd + Q 明确退出
 app.on("window-all-closed", () => {
   console.log("9---->window-all-closed");
+  if (updateExitInProgress) {
+    return;
+  }
   if (process.platform !== "darwin") app.quit();
 });
 

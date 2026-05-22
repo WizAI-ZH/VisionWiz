@@ -4,6 +4,22 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.5.5 - 2026-05-22
+
+### English
+
+- Replaced the console-style automatic update helper with a graphical Windows helper window.
+- Added status, progress, visible helper logs, and a controlled close action to the update helper.
+- Added `npm run update:test` and `npm run update:test:install` for internal automatic update validation using local installers.
+- Internal update tests now recompile the protected entry before launch and preserve the hardware authentication flow.
+
+### 中文
+
+- 将控制台样式的自动更新助手替换为 Windows 图形更新助手窗口。
+- 为更新助手增加状态文字、进度条、可见日志和受控关闭操作。
+- 新增 `npm run update:test` 和 `npm run update:test:install`，用于通过本地安装包验证自动更新流程。
+- 内测更新测试会在启动前重新编译受保护入口，并保留硬件认证流程。
+
 ## 1.5.4 - 2026-05-22
 
 ### English
