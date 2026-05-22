@@ -108,11 +108,11 @@ function applyState(payload) {
   }
   const resumeButton = document.getElementById("resume_button");
   if (resumeButton) {
-    resumeButton.hidden = !payload.canResume;
+    resumeButton.hidden = !(payload.canResume || payload.isFailed);
   }
   const restartButton = document.getElementById("restart_button");
   if (restartButton) {
-    restartButton.hidden = !payload.canRestart;
+    restartButton.hidden = !(payload.canRestart || payload.isFailed);
   }
   if (payload.percent !== undefined) {
     setProgress(payload.percent);

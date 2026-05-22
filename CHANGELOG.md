@@ -4,6 +4,22 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.5.3 - 2026-05-22
+
+### English
+
+- Reworked automatic updates so the external update helper opens immediately after Auto Update is clicked, before the main app exits.
+- Moved update download, resume, cache reuse, silent install, and app restart into the helper process so installation no longer depends on the main app staying alive.
+- Added helper-side retry and resume prompts for failed downloads.
+- Kept in-app failed-download controls visible and made the update progress window scrollable for long error messages.
+
+### 中文
+
+- 重构自动更新流程，点击“自动更新”后会立即打开外部更新助手，然后再退出主程序。
+- 将更新下载、断点续传、缓存复用、静默安装和应用重启交给更新助手处理，安装流程不再依赖主程序继续运行。
+- 为更新助手增加下载失败后的重试和继续下载提示。
+- 保持应用内下载失败后的操作按钮可见，并让更新进度窗口在错误信息较长时可以滚动查看。
+
 ## 1.5.2 - 2026-05-22
 
 ### English

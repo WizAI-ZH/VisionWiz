@@ -700,6 +700,199 @@ function launchInstallerAndQuit(installerPath) {
   app.quit();
 }
 
+function launchUpdateHelperAndQuit(release, options = {}) {
+  const asset = pickWindowsInstallerAsset(release);
+  if (!asset) {
+    dialog.showMessageBox(mainWindow, {
+      type: "warning",
+      buttons: [current_locales?.confirm || "OK"],
+      defaultId: 0,
+      title: current_locales?.update_download_failed_title || "Update Download Failed",
+      message:
+        current_locales?.update_missing_asset_message ||
+        "No Windows installer was found in the latest release.",
+      detail: MANUAL_UPDATE_URL,
+    });
+    electronShell.openExternal(MANUAL_UPDATE_URL);
+    return;
+  }
+
+  const latestVersion = normalizeVersion(release.tag_name || release.name || "");
+  const installerPath = buildInstallerTempPath(latestVersion);
+  const expectedBytes = getExpectedInstallerSize(asset);
+  const installDir = path.resolve(getCurrentInstallDir());
+  const appExePath = app.isPackaged && process.execPath
+    ? path.resolve(process.execPath)
+    : path.join(installDir, "VisionWiz.exe");
+  const helperPath = path.join(
+    ensureUpdateCacheDir(),
+    `VisionWiz-update-helper-${Date.now()}.ps1`
+  );
+  const shouldResume = options.resume !== false;
+  const helperScript = [
+    "$Host.UI.RawUI.WindowTitle = 'VisionWiz Update Installer'",
+    "$ErrorActionPreference = 'Stop'",
+    "$ProgressPreference = 'Continue'",
+    "Add-Type -AssemblyName System.Net.Http",
+    "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12",
+    `$pidToWait = ${process.pid}`,
+    `$downloadUrl = ${quotePowerShellString(asset.browser_download_url)}`,
+    `$installer = ${quotePowerShellString(installerPath)}`,
+    `$expectedBytes = ${expectedBytes}`,
+    `$installDir = ${quotePowerShellString(installDir)}`,
+    `$appExe = ${quotePowerShellString(appExePath)}`,
+    `$helperPath = ${quotePowerShellString(helperPath)}`,
+    `$script:resumeDownload = $${shouldResume ? "true" : "false"}`,
+    "",
+    "function Format-Bytes([double]$bytes) {",
+    "  if ($bytes -ge 1GB) { return ('{0:N2} GB' -f ($bytes / 1GB)) }",
+    "  if ($bytes -ge 1MB) { return ('{0:N2} MB' -f ($bytes / 1MB)) }",
+    "  if ($bytes -ge 1KB) { return ('{0:N2} KB' -f ($bytes / 1KB)) }",
+    "  return ('{0:N0} B' -f $bytes)",
+    "}",
+    "",
+    "function Get-Size([string]$path) {",
+    "  if (Test-Path -LiteralPath $path) { return (Get-Item -LiteralPath $path).Length }",
+    "  return 0",
+    "}",
+    "",
+    "function Download-Installer {",
+    "  $parent = Split-Path -Parent $installer",
+    "  New-Item -ItemType Directory -Force -Path $parent | Out-Null",
+    "  $downloaded = Get-Size $installer",
+    "  if (-not $script:resumeDownload -and $downloaded -gt 0) {",
+    "    Remove-Item -LiteralPath $installer -Force -ErrorAction SilentlyContinue",
+    "    $downloaded = 0",
+    "  }",
+    "  if ($expectedBytes -gt 0 -and $downloaded -eq $expectedBytes) {",
+    "    Write-Host ('Using cached installer: ' + $installer)",
+    "    return",
+    "  }",
+    "  if ($expectedBytes -gt 0 -and $downloaded -gt $expectedBytes) {",
+    "    Remove-Item -LiteralPath $installer -Force -ErrorAction SilentlyContinue",
+    "    $downloaded = 0",
+    "  }",
+    "  Write-Host ('Downloading update to: ' + $installer)",
+    "  $client = [System.Net.Http.HttpClient]::new()",
+    "  try {",
+    "    $request = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Get, $downloadUrl)",
+    "    $request.Headers.UserAgent.ParseAdd('VisionWiz-Updater')",
+    "    if ($script:resumeDownload -and $downloaded -gt 0) {",
+    "      $request.Headers.Range = [System.Net.Http.Headers.RangeHeaderValue]::new($downloaded, $null)",
+    "      Write-Host ('Resuming from: ' + (Format-Bytes $downloaded))",
+    "    }",
+    "    $response = $client.SendAsync($request, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead).GetAwaiter().GetResult()",
+    "    $status = [int]$response.StatusCode",
+    "    if ($status -eq 416) {",
+    "      Remove-Item -LiteralPath $installer -Force -ErrorAction SilentlyContinue",
+    "      $downloaded = 0",
+    "      $script:resumeDownload = $false",
+    "      Download-Installer",
+    "      return",
+    "    }",
+    "    if ($status -ne 200 -and $status -ne 206) { throw ('Download failed with HTTP status ' + $status) }",
+    "    $append = $script:resumeDownload -and $downloaded -gt 0 -and $status -eq 206",
+    "    if (-not $append -and $downloaded -gt 0) {",
+    "      Remove-Item -LiteralPath $installer -Force -ErrorAction SilentlyContinue",
+    "      $downloaded = 0",
+    "    }",
+    "    $contentLength = $response.Content.Headers.ContentLength",
+    "    $totalBytes = if ($expectedBytes -gt 0) { $expectedBytes } elseif ($contentLength) { $downloaded + [int64]$contentLength } else { 0 }",
+    "    $inputStream = $response.Content.ReadAsStreamAsync().GetAwaiter().GetResult()",
+    "    $mode = if ($append) { [System.IO.FileMode]::Append } else { [System.IO.FileMode]::Create }",
+    "    $outputStream = [System.IO.FileStream]::new($installer, $mode, [System.IO.FileAccess]::Write, [System.IO.FileShare]::Read)",
+    "    try {",
+    "      $buffer = New-Object byte[] 1048576",
+    "      $lastTick = Get-Date",
+    "      while (($read = $inputStream.Read($buffer, 0, $buffer.Length)) -gt 0) {",
+    "        $outputStream.Write($buffer, 0, $read)",
+    "        $downloaded += $read",
+    "        $now = Get-Date",
+    "        if (($now - $lastTick).TotalMilliseconds -ge 500 -or ($totalBytes -gt 0 -and $downloaded -ge $totalBytes)) {",
+    "          $percent = if ($totalBytes -gt 0) { [Math]::Min(100, [Math]::Round(($downloaded / $totalBytes) * 100, 1)) } else { 0 }",
+    "          $statusText = if ($totalBytes -gt 0) { ((Format-Bytes $downloaded) + ' / ' + (Format-Bytes $totalBytes)) } else { Format-Bytes $downloaded }",
+    "          Write-Progress -Activity 'Downloading VisionWiz update' -Status $statusText -PercentComplete $percent",
+    "          Write-Host ('Download progress: ' + $percent + '%  ' + $statusText)",
+    "          $lastTick = $now",
+    "        }",
+    "      }",
+    "    } finally {",
+    "      $outputStream.Close()",
+    "      $inputStream.Close()",
+    "    }",
+    "  } finally {",
+    "    $client.Dispose()",
+    "  }",
+    "  Write-Progress -Activity 'Downloading VisionWiz update' -Completed",
+    "  $finalBytes = Get-Size $installer",
+    "  if ($expectedBytes -gt 0 -and $finalBytes -ne $expectedBytes) {",
+    "    throw ('Downloaded installer size mismatch: ' + (Format-Bytes $finalBytes) + ' / ' + (Format-Bytes $expectedBytes))",
+    "  }",
+    "}",
+    "",
+    "while ($true) {",
+    "  try {",
+    "    Clear-Host",
+    "    Write-Host 'VisionWiz update helper is running.'",
+    "    Write-Host ('Target version: ' + " + quotePowerShellString(latestVersion) + ")",
+    "    Write-Host ''",
+    "    Download-Installer",
+    "    Write-Host ''",
+    "    Write-Host ('Waiting for VisionWiz to close completely, PID: ' + $pidToWait)",
+    "    try { Wait-Process -Id $pidToWait -Timeout 120 } catch { }",
+    "    Start-Sleep -Seconds 1",
+    "    Write-Host ('Installing update to: ' + $installDir)",
+    "    Write-Host 'The installer will run silently. Please wait...'",
+    "    $arguments = @('/S', ('/D=' + $installDir))",
+    "    $process = Start-Process -FilePath $installer -ArgumentList $arguments -Wait -PassThru",
+    "    $exitCode = if ($null -eq $process.ExitCode) { 0 } else { $process.ExitCode }",
+    "    if ($exitCode -ne 0) { throw ('Installer finished with code ' + $exitCode) }",
+    "    Write-Host 'Installation completed.'",
+    "    if (Test-Path $appExe) {",
+    "      Write-Host 'Starting VisionWiz...'",
+    "      Start-Process -FilePath $appExe",
+    "    }",
+    "    Start-Sleep -Seconds 2",
+    "    Remove-Item -LiteralPath $helperPath -Force -ErrorAction SilentlyContinue",
+    "    exit 0",
+    "  } catch {",
+    "    Write-Host ''",
+    "    Write-Host ('Update failed: ' + $_.Exception.Message)",
+    "    Write-Host ('Cached installer path: ' + $installer)",
+    "    $choice = Read-Host 'Press R to retry/resume, O to open installer folder, or Enter to close'",
+    "    if ($choice -match '^[Rr]$') { $script:resumeDownload = $true; continue }",
+    "    if ($choice -match '^[Oo]$') { explorer.exe /select, $installer; continue }",
+    "    exit 1",
+    "  }",
+    "}",
+    "",
+  ].join("\r\n");
+
+  try {
+    fs.writeFileSync(helperPath, helperScript, "utf8");
+    const child = spawn("powershell.exe", [
+      "-NoProfile",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      helperPath,
+    ], {
+      detached: true,
+      stdio: "ignore",
+      windowsHide: false,
+    });
+    child.unref();
+  } catch (error) {
+    console.error("[UPDATE] update helper launch failed:", error);
+    electronShell.openExternal(asset.browser_download_url || MANUAL_UPDATE_URL);
+    return;
+  }
+
+  closeUpdatePromptWindow();
+  closeUpdateProgressWindow();
+  app.quit();
+}
+
 async function downloadAndInstallRelease(release, options = {}) {
   const asset = pickWindowsInstallerAsset(release);
   if (!asset) {
@@ -778,8 +971,6 @@ async function downloadAndInstallRelease(release, options = {}) {
     launchInstallerAndQuit(installerPath);
   } catch (error) {
     updateDownloadInProgress = false;
-    const cachedBytesAfterFailure = getFileSizeIfExists(resumePath);
-    const partialExists = cachedBytesAfterFailure > 0;
     setUpdateProgressState({
       statusText:
         current_locales?.update_download_failed_status ||
@@ -787,7 +978,7 @@ async function downloadAndInstallRelease(release, options = {}) {
       speedText: "--",
       etaText: "--",
       isFailed: true,
-      canResume: partialExists,
+      canResume: true,
       canRestart: true,
       errorText: String(error && error.message ? error.message : error),
     });
@@ -1223,7 +1414,7 @@ ipcMain.handle("get-update-progress-state", () => {
 ipcMain.on("update-window-action", async (_event, payload = {}) => {
   const action = payload.action;
   if (action === "auto-update" && activeUpdateRelease) {
-    await downloadAndInstallRelease(activeUpdateRelease, { resume: true });
+    launchUpdateHelperAndQuit(activeUpdateRelease, { resume: true });
     return;
   }
   if (action === "manual-download") {
@@ -1236,11 +1427,11 @@ ipcMain.on("update-window-action", async (_event, payload = {}) => {
     return;
   }
   if (action === "resume-download" && activeUpdateRelease) {
-    await downloadAndInstallRelease(activeUpdateRelease, { resume: true });
+    launchUpdateHelperAndQuit(activeUpdateRelease, { resume: true });
     return;
   }
   if (action === "restart-download" && activeUpdateRelease) {
-    await downloadAndInstallRelease(activeUpdateRelease, { resume: false });
+    launchUpdateHelperAndQuit(activeUpdateRelease, { resume: false });
     return;
   }
   if (action === "close-download-window") {
