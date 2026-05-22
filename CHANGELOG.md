@@ -4,6 +4,20 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.5.2 - 2026-05-22
+
+### English
+
+- Published a test target release for validating automatic updates from VisionWiz 1.5.1.
+- Retained the PowerShell update helper, silent current-directory installation, and automatic app restart behavior.
+- No additional training workflow changes were introduced in this test release.
+
+### 中文
+
+- 发布用于验证从 VisionWiz 1.5.1 自动更新的测试目标版本。
+- 保留 PowerShell 更新助手、当前目录静默安装和安装成功后自动重启应用的流程。
+- 本测试版本没有额外新增训练工作流变更。
+
 ## 1.5.1 - 2026-05-22
 
 ### English

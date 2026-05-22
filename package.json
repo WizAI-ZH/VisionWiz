@@ -1,6 +1,6 @@
 {
   "name": "VisionWiz",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "VisionWiz AI toolset",
   "main": "main_bootstrap.js",
   "author": "VisionWiz Team",
