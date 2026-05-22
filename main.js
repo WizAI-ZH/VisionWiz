@@ -488,10 +488,6 @@ function getExpectedInstallerSize(asset) {
   return Number(asset && asset.size ? asset.size : 0);
 }
 
-function quoteCmdArgument(value) {
-  return `"${String(value || "").replace(/"/g, '""')}"`;
-}
-
 function getCurrentInstallDir() {
   try {
     if (app.isPackaged && process.execPath) {
@@ -501,6 +497,10 @@ function getCurrentInstallDir() {
     // Fall through to the app directory for development builds.
   }
   return app.getAppPath ? app.getAppPath() : process.cwd();
+}
+
+function quotePowerShellString(value) {
+  return `'${String(value || "").replace(/'/g, "''")}'`;
 }
 
 async function downloadReleaseAssetToTemp(asset, targetVersion, options = {}) {
@@ -630,47 +630,62 @@ async function downloadReleaseAssetToTemp(asset, targetVersion, options = {}) {
 function launchInstallerAndQuit(installerPath) {
   const installerAbsolutePath = path.resolve(installerPath);
   const installDir = path.resolve(getCurrentInstallDir());
+  const appExePath = app.isPackaged && process.execPath
+    ? path.resolve(process.execPath)
+    : path.join(installDir, "VisionWiz.exe");
   const helperPath = path.join(
     ensureUpdateCacheDir(),
-    `VisionWiz-update-helper-${Date.now()}.cmd`
+    `VisionWiz-update-helper-${Date.now()}.ps1`
   );
   const helperScript = [
-    "@echo off",
-    "chcp 65001 >nul",
-    "title VisionWiz Update Installer",
-    "echo VisionWiz update is ready.",
-    "echo.",
-    `echo Waiting for VisionWiz to close completely, PID: ${process.pid}`,
-    ":wait_for_exit",
-    `tasklist /FI "PID eq ${process.pid}" 2^>nul | find "${process.pid}" >nul`,
-    "if not errorlevel 1 (",
-    "  timeout /t 1 /nobreak >nul",
-    "  goto wait_for_exit",
-    ")",
-    "echo VisionWiz has closed.",
-    `echo Installing update to: ${installDir}`,
-    "echo The installer will run automatically. Please wait...",
-    "echo.",
-    `start "" /wait ${quoteCmdArgument(installerAbsolutePath)} /S /D=${installDir}`,
-    "set INSTALL_EXIT_CODE=%ERRORLEVEL%",
-    "echo.",
-    "if not \"%INSTALL_EXIT_CODE%\"==\"0\" (",
-    "  echo Installer finished with code %INSTALL_EXIT_CODE%.",
-    "  echo If VisionWiz was not updated, please run the downloaded installer manually:",
-    `  echo ${installerAbsolutePath}`,
-    "  pause",
-    ") else (",
-    "  echo Installation completed. This window will close automatically.",
-    "  timeout /t 2 /nobreak >nul",
-    ")",
-    `del ${quoteCmdArgument(helperPath)} >nul 2>nul`,
-    "exit /b %INSTALL_EXIT_CODE%",
+    "$Host.UI.RawUI.WindowTitle = 'VisionWiz Update Installer'",
+    "$ErrorActionPreference = 'Stop'",
+    "$ProgressPreference = 'SilentlyContinue'",
+    `$pidToWait = ${process.pid}`,
+    `$installer = ${quotePowerShellString(installerAbsolutePath)}`,
+    `$installDir = ${quotePowerShellString(installDir)}`,
+    `$appExe = ${quotePowerShellString(appExePath)}`,
+    `$helperPath = ${quotePowerShellString(helperPath)}`,
+    "Write-Host 'VisionWiz update is ready.'",
+    "Write-Host ''",
+    "Write-Host ('Waiting for VisionWiz to close completely, PID: ' + $pidToWait)",
+    "try { Wait-Process -Id $pidToWait -Timeout 120 } catch { }",
+    "Start-Sleep -Seconds 1",
+    "Write-Host 'VisionWiz has closed.'",
+    "Write-Host ('Installing update to: ' + $installDir)",
+    "Write-Host 'The installer will run silently. Please wait...'",
+    "Write-Host ''",
+    "$arguments = @('/S', ('/D=' + $installDir))",
+    "$process = Start-Process -FilePath $installer -ArgumentList $arguments -Wait -PassThru",
+    "$exitCode = if ($null -eq $process.ExitCode) { 0 } else { $process.ExitCode }",
+    "Write-Host ''",
+    "if ($exitCode -ne 0) {",
+    "  Write-Host ('Installer finished with code ' + $exitCode + '.')",
+    "  Write-Host 'If VisionWiz was not updated, please run the downloaded installer manually:'",
+    "  Write-Host $installer",
+    "  Read-Host 'Press Enter to close this window'",
+    "  exit $exitCode",
+    "}",
+    "Write-Host 'Installation completed.'",
+    "if (Test-Path $appExe) {",
+    "  Write-Host 'Starting VisionWiz...'",
+    "  Start-Process -FilePath $appExe",
+    "}",
+    "Start-Sleep -Seconds 2",
+    "Remove-Item -LiteralPath $helperPath -Force -ErrorAction SilentlyContinue",
+    "exit 0",
     "",
   ].join("\r\n");
 
   try {
     fs.writeFileSync(helperPath, helperScript, "utf8");
-    const child = spawn("cmd.exe", ["/d", "/c", helperPath], {
+    const child = spawn("powershell.exe", [
+      "-NoProfile",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      helperPath,
+    ], {
       detached: true,
       stdio: "ignore",
       windowsHide: false,

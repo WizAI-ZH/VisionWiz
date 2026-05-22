@@ -4,6 +4,22 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.5.1 - 2026-05-22
+
+### English
+
+- Fixed the automatic update helper getting stuck as a `find "PID"` command window after closing VisionWiz.
+- Replaced the command-file update helper with a visible PowerShell helper that waits for VisionWiz through `Wait-Process`.
+- Kept silent installation into the current VisionWiz install directory and added automatic app restart after successful installation.
+- Kept failure diagnostics visible by showing the installer exit code and cached installer path when installation fails.
+
+### 中文
+
+- 修复关闭 VisionWiz 后自动更新助手卡成 `find "PID"` 命令窗口的问题。
+- 将 `.cmd` 更新助手替换为可见的 PowerShell 更新助手，通过 `Wait-Process` 等待 VisionWiz 退出。
+- 保留静默安装到当前 VisionWiz 安装目录的流程，并在安装成功后自动重新启动应用。
+- 安装失败时继续保留诊断信息，显示安装器退出码和缓存安装包路径。
+
 ## 1.5.0 - 2026-05-21
 
 ### English

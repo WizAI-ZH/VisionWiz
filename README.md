@@ -4,6 +4,20 @@ VisionWiz is a desktop AI tool focused on K210 and lightweight vision model work
 
 VisionWiz 是一款面向 K210 与轻量视觉模型工作流的桌面 AI 工具，集成图像采集、数据标注、图像分类训练、目标检测训练、模型测试与结果查看等能力。
 
+## 1.5.1 Update
+
+### English
+
+- Fixed the automatic update helper window that could get stuck as a `find "PID"` command window when updating from 1.4.8 to 1.5.0.
+- Replaced the old command-file update helper with a visible PowerShell helper that uses `Wait-Process` instead of `tasklist | find`.
+- The helper now shows clear update status, runs the installer silently into the current VisionWiz install directory, and restarts VisionWiz after a successful update.
+
+### 中文
+
+- 修复从 1.4.8 更新到 1.5.0 时，自动更新助手可能卡成 `find "PID"` 黑窗口的问题。
+- 将旧的命令行 `.cmd` 更新助手替换为可见的 PowerShell 更新助手，使用 `Wait-Process` 等待程序退出，不再使用 `tasklist | find`。
+- 更新助手现在会显示清晰的更新状态，静默安装到当前 VisionWiz 安装目录，并在更新成功后自动启动 VisionWiz。
+
 ## 1.5.0 Update
 
 ### English
