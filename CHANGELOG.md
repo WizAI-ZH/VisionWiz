@@ -4,6 +4,20 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.5.4 - 2026-05-22
+
+### English
+
+- Published a test target release for validating automatic updates from VisionWiz 1.5.3.
+- Retained the helper-first update flow, helper-side download resume, cached installer reuse, silent install, and automatic restart behavior.
+- No additional training workflow changes were introduced in this test release.
+
+### 中文
+
+- 发布用于验证从 VisionWiz 1.5.3 自动更新的测试目标版本。
+- 保留先打开更新助手的更新流程，以及助手端断点续传、缓存复用、静默安装和自动重启行为。
+- 本测试版本没有额外新增训练工作流变更。
+
 ## 1.5.3 - 2026-05-22
 
 ### English
