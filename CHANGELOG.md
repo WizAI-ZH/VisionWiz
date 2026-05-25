@@ -4,6 +4,20 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.5.8 - 2026-05-25
+
+### English
+
+- Published a test target release for validating automatic updates from VisionWiz 1.5.7.
+- Retained the independent graphical update-helper launch flow, helper-side PowerShell console hiding, foreground activation, and helper startup logging.
+- No additional training workflow changes were introduced in this test release.
+
+### 中文
+
+- 发布用于验证从 VisionWiz 1.5.7 自动更新的测试目标版本。
+- 保留独立图形化更新助手启动流程、助手侧隐藏 PowerShell 控制台、窗口置前和助手启动日志。
+- 本测试版本没有额外新增训练工作流变更。
+
 ## 1.5.7 - 2026-05-25
 
 ### English

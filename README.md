@@ -4,6 +4,20 @@ VisionWiz is a desktop AI tool focused on K210 and lightweight vision model work
 
 VisionWiz 是一款面向 K210 与轻量视觉模型工作流的桌面 AI 工具，集成图像采集、数据标注、图像分类训练、目标检测训练、模型测试与结果查看等能力。
 
+## 1.5.8 Update
+
+### English
+
+- Test release for validating automatic updates from VisionWiz 1.5.7.
+- Keeps the independent graphical update-helper launch flow, helper-side PowerShell console hiding, foreground activation, and helper startup logging from 1.5.7.
+- No additional training workflow changes are included in this test release.
+
+### 中文
+
+- 用于验证从 VisionWiz 1.5.7 自动更新流程的测试版本。
+- 保留 1.5.7 引入的独立图形化更新助手启动流程、助手侧隐藏 PowerShell 控制台、窗口置前和助手启动日志。
+- 本测试版本没有额外新增训练工作流变更。
+
 ## 1.5.7 Update
 
 ### English
