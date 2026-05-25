@@ -233,7 +233,7 @@ async function buildReleaseNotes(tagName) {
     `${releaseVersion}.md`
   );
   if (fs.existsSync(customReleaseNotesPath)) {
-    return fs.readFileSync(customReleaseNotesPath, "utf8").trim();
+    return normalizeReleaseBody(fs.readFileSync(customReleaseNotesPath, "utf8").trim());
   }
 
   const tagsOutput = await runCapture("git", ["tag", "--sort=-version:refname"]).catch(() => "");
@@ -261,7 +261,7 @@ async function buildReleaseNotes(tagName) {
     )
     .join("\n");
 
-  return [
+  return normalizeReleaseBody([
     `## VisionWiz ${releaseVersion}`,
     "",
     "### English",
@@ -279,7 +279,51 @@ async function buildReleaseNotes(tagName) {
     "",
     "### 更新亮点",
     translatedHighlights || "- 维护版本更新",
-  ].join("\n");
+  ].join("\n"));
+}
+
+function normalizeLanguageHeading(value) {
+  const text = String(value || "")
+    .replace(/^#+\s*/, "")
+    .trim()
+    .toLowerCase();
+  if (text === "english" || text === "en" || text === "英文") {
+    return "english";
+  }
+  if (text === "中文" || text === "chinese" || text === "zh") {
+    return "chinese";
+  }
+  return "";
+}
+
+function normalizeReleaseBody(body) {
+  const lines = String(body || "").split(/\r?\n/);
+  const output = [];
+  const seenLanguageSections = new Set();
+  let skippingDuplicateLanguageSection = false;
+
+  for (const line of lines) {
+    const heading = line.match(/^(#{1,6})\s+(.+?)\s*$/);
+    if (heading) {
+      const languageKey = normalizeLanguageHeading(heading[2]);
+      if (languageKey) {
+        if (seenLanguageSections.has(languageKey)) {
+          skippingDuplicateLanguageSection = true;
+          continue;
+        }
+        seenLanguageSections.add(languageKey);
+        skippingDuplicateLanguageSection = false;
+      } else {
+        skippingDuplicateLanguageSection = false;
+      }
+    }
+
+    if (!skippingDuplicateLanguageSection) {
+      output.push(line);
+    }
+  }
+
+  return output.join("\n").trim();
 }
 
 function findRecentArtifacts(buildStartedAt) {
