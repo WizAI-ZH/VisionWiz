@@ -4,6 +4,22 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.6.1 - 2026-05-25
+
+### English
+
+- Fixed the capture record modal so many captured images no longer push the Open Folder and Close buttons below the visible window area.
+- Limited the capture image grid to a dedicated middle scroll region and added safer bottom spacing for Windows taskbar layouts.
+- Reduced capture thumbnails slightly to improve browsing density.
+- Applied the same safe modal layout to image classification and object detection training detail windows.
+
+### 中文
+
+- 修复拍摄记录弹窗中图片过多时，“打开文件夹”和“退出”按钮被挤到可视区域外的问题。
+- 将拍摄图片网格限制在中间滚动区域，并为 Windows 任务栏场景增加更安全的底部间距。
+- 适当缩小拍摄记录缩略图，提高大量图片浏览时的信息密度。
+- 同步将相同的安全弹窗布局应用到图像分类和目标检测训练详情窗口。
+
 ## 1.6.0 - 2026-05-25
 
 ### English

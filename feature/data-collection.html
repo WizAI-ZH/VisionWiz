@@ -217,45 +217,52 @@
 
     #ImgModal .modal-dialog {
       max-width: min(1200px, calc(100vw - 24px));
-      margin: 12px auto;
-      height: calc(100vh - 24px);
+      margin: 36px auto 72px;
+      height: min(760px, calc(100vh - 132px));
+      max-height: calc(100vh - 132px);
+      display: flex;
+      align-items: stretch;
     }
 
     #ImgModal .modal-content {
-      height: 100%;
-      display: flex;
-      overflow: hidden;
+      height: 100% !important;
+      max-height: 100% !important;
+      display: grid !important;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      overflow: hidden !important;
     }
 
     #ImgModal .modal-header,
     #ImgModal .modal-footer {
-      flex: 0 0 auto;
+      min-height: 0;
     }
 
     #ImgModal .modal-body {
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow-y: auto;
+      min-height: 0 !important;
+      max-height: min(560px, calc(100vh - 260px));
+      overflow-y: auto !important;
       padding-bottom: 16px;
+      overscroll-behavior: contain;
     }
 
     #ImgModal .modal-footer {
-      position: relative;
-      z-index: 1;
+      z-index: 2;
       gap: 10px;
       justify-content: flex-end;
       border-top: 1px solid #dee2e6;
       background: #fff;
+      box-shadow: 0 -8px 18px rgba(15, 23, 42, 0.06);
     }
 
     #imglist {
       min-height: 120px;
+      max-height: min(560px, calc(100vh - 260px));
     }
 
     #imglist .capture-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+      gap: 12px;
     }
 
     #imglist .capture-item {
@@ -268,7 +275,7 @@
 
     #imglist .capture-item img {
       width: 100%;
-      max-width: 160px;
+      max-width: 132px;
       aspect-ratio: 1 / 1;
       object-fit: cover;
     }
@@ -280,6 +287,29 @@
       line-height: 1.35;
       text-align: center;
       overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 576px) {
+      #ImgModal .modal-dialog {
+        max-width: calc(100vw - 12px);
+        height: calc(100vh - 96px);
+        max-height: calc(100vh - 96px);
+        margin: 24px auto 72px;
+      }
+
+      #ImgModal .modal-body,
+      #imglist {
+        max-height: calc(100vh - 220px);
+      }
+
+      #ImgModal .modal-footer {
+        justify-content: stretch;
+      }
+
+      #ImgModal .modal-footer .btn {
+        flex: 1 1 0;
+        min-width: 0;
+      }
     }
   </style>
 </head>
@@ -343,7 +373,7 @@
   <a id="cam"></a>
 
   <div class="modal fade" id="ImgModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl">
       <div class="modal-content">
         <div class="modal-header">
           <h1 class="modal-title fs-5" id="imgModalLabel">Capture Record</h1>

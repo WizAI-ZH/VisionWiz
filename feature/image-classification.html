@@ -201,6 +201,43 @@
         height: 400px;
       }
 
+      .model-detail-modal .modal-dialog {
+        max-width: min(1200px, calc(100vw - 24px));
+        margin: 36px auto 72px;
+        height: min(760px, calc(100vh - 132px));
+        max-height: calc(100vh - 132px);
+        display: flex;
+        align-items: stretch;
+      }
+
+      .model-detail-modal .modal-content {
+        height: 100% !important;
+        max-height: 100% !important;
+        display: grid !important;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        overflow: hidden !important;
+      }
+
+      .model-detail-modal .modal-header,
+      .model-detail-modal .modal-footer {
+        min-height: 0;
+      }
+
+      .model-detail-modal .modal-body {
+        min-height: 0 !important;
+        max-height: min(560px, calc(100vh - 260px));
+        overflow-y: auto !important;
+        overscroll-behavior: contain;
+      }
+
+      .model-detail-modal .modal-footer {
+        z-index: 2;
+        gap: 10px;
+        border-top: 1px solid #dee2e6;
+        background: #fff;
+        box-shadow: 0 -8px 18px rgba(15, 23, 42, 0.06);
+      }
+
       @media (max-width: 1200px) {
         .train-panel-right {
           flex: 1 1 100%;
@@ -239,6 +276,26 @@
 
         .action-buttons {
           flex-direction: column;
+        }
+
+        .model-detail-modal .modal-dialog {
+          max-width: calc(100vw - 12px);
+          height: calc(100vh - 96px);
+          max-height: calc(100vh - 96px);
+          margin: 24px auto 72px;
+        }
+
+        .model-detail-modal .modal-body {
+          max-height: calc(100vh - 220px);
+        }
+
+        .model-detail-modal .modal-footer {
+          justify-content: stretch;
+        }
+
+        .model-detail-modal .modal-footer .btn {
+          flex: 1 1 0;
+          min-width: 0;
         }
       }
     </style>
@@ -358,9 +415,9 @@
   </div>
 
   <!-- 显示模型训练详情窗口（训练成功版） -->
-  <div class="modal fade" id="model_info_tab_window" tabindex="-1" aria-labelledby="model_infoModalLabel"
+  <div class="modal fade model-detail-modal" id="model_info_tab_window" tabindex="-1" aria-labelledby="model_infoModalLabel"
     aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl">
       <div class="modal-content">
         <div class="modal-header">
           <h1 class="modal-title fs-5" id="train_detail">Training Information</h1>
@@ -477,9 +534,9 @@
   </div>
 
   <!-- 显示模型训练详情窗口（训练失败版） -->
-  <div class="modal fade" id="model_info_tab_window_err" tabindex="-1" aria-labelledby="model_infoModalLabel"
+  <div class="modal fade model-detail-modal" id="model_info_tab_window_err" tabindex="-1" aria-labelledby="model_infoModalLabel"
     aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl">
       <div class="modal-content">
         <div class="modal-header">
           <h1 class="modal-title fs-5" id="train_detail_err">Training Information</h1>

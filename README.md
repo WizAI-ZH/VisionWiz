@@ -4,6 +4,22 @@ VisionWiz is a desktop AI tool focused on K210 and lightweight vision model work
 
 VisionWiz 是一款面向 K210 与轻量视觉模型工作流的桌面 AI 工具，集成图像采集、数据标注、图像分类训练、目标检测训练、模型测试与结果查看等能力。
 
+## 1.6.1 Update
+
+### English
+
+- Fixed the capture record window so the image list is constrained to the middle scroll area and the bottom actions stay visible.
+- Added safer bottom spacing for Windows taskbar and window edge layouts, preventing the Open Folder and Close buttons from being clipped.
+- Reduced capture-record thumbnail size slightly so large photo sets remain easier to scan.
+- Applied the same modal safe-area layout pattern to training detail dialogs.
+
+### 中文
+
+- 修复拍摄记录窗口中图片过多时底部操作按钮不可见的问题，让图片列表只在中间区域滚动。
+- 为 Windows 任务栏和窗口底部边缘预留更安全的底部空间，避免“打开文件夹”和“退出”按钮被遮挡。
+- 适当缩小拍摄记录缩略图尺寸，让大量照片更容易浏览。
+- 同步将相同的弹窗安全区布局应用到训练详情弹窗。
+
 ## 1.6.0 Update
 
 ### English
