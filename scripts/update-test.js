@@ -59,6 +59,7 @@ const env = {
   VISIONWIZ_UPDATE_TEST_VERSION: targetVersion,
   VISIONWIZ_UPDATE_TEST_DRY_RUN: dryRun ? "1" : "0",
 };
+delete env.ELECTRON_RUN_AS_NODE;
 
 if (updateUrl) {
   env.VISIONWIZ_UPDATE_TEST_URL = updateUrl;

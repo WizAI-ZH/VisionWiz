@@ -4,6 +4,22 @@ VisionWiz is a desktop AI tool focused on K210 and lightweight vision model work
 
 VisionWiz 是一款面向 K210 与轻量视觉模型工作流的桌面 AI 工具，集成图像采集、数据标注、图像分类训练、目标检测训练、模型测试与结果查看等能力。
 
+## 1.5.7 Update
+
+### English
+
+- Fixed the graphical automatic update helper not appearing after the main VisionWiz window closed.
+- The helper is now launched through an independent Windows start command, then hides only the PowerShell host console while keeping the graphical progress window visible.
+- Added helper-side foreground activation and a startup log entry so update-helper visibility issues are easier to diagnose.
+- Improved `npm run update:test` by clearing `ELECTRON_RUN_AS_NODE` before launching Electron, preventing the internal update test from starting in the wrong runtime mode.
+
+### 中文
+
+- 修复主程序关闭后图形化自动更新助手没有显示的问题。
+- 更新助手现在通过独立的 Windows start 命令启动，再由助手脚本只隐藏 PowerShell 宿主控制台，保留图形化进度窗口可见。
+- 增加更新助手窗口置前逻辑和启动日志，方便排查助手窗口是否已经成功创建。
+- 优化 `npm run update:test`，启动 Electron 前会清除 `ELECTRON_RUN_AS_NODE`，避免内测更新流程进入错误的运行模式。
+
 ## 1.5.6 Update
 
 ### English

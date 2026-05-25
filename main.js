@@ -566,24 +566,32 @@ function launchPowerShellHelper(helperPath) {
     ensureUpdateCacheDir(),
     `VisionWiz-update-launcher-${timestamp}.log`
   );
-  fs.writeFileSync(
-    launcherLogPath,
-    `[${new Date().toISOString()}] launching helper\r\nhelper=${helperPath}\r\n`,
-    "utf8"
-  );
-  const child = spawn("powershell.exe", [
+  const powershellArgs = [
     "-NoProfile",
     "-ExecutionPolicy",
     "Bypass",
     "-STA",
-    "-WindowStyle",
-    "Hidden",
     "-File",
     helperPath,
+  ];
+  fs.writeFileSync(
+    launcherLogPath,
+    `[${new Date().toISOString()}] launching helper\r\nhelper=${helperPath}\r\nargs=${powershellArgs.join(" ")}\r\n`,
+    "utf8"
+  );
+  const child = spawn("cmd.exe", [
+    "/d",
+    "/s",
+    "/c",
+    "start",
+    '""',
+    "/min",
+    "powershell.exe",
+    ...powershellArgs,
   ], {
     detached: true,
     stdio: "ignore",
-    windowsHide: true,
+    windowsHide: false,
   });
   child.on("error", (error) => {
     try {
@@ -838,6 +846,20 @@ function launchUpdateHelperAndQuit(release, options = {}) {
     `$script:resumeDownload = $${shouldResume ? "true" : "false"}`,
     `$uiLogPath = ${quotePowerShellString(path.join(ensureUpdateCacheDir(), `VisionWiz-update-helper-${Date.now()}.log`))}`,
     "",
+    "try {",
+    "  Add-Type @'",
+    "using System;",
+    "using System.Runtime.InteropServices;",
+    "public static class VisionWizNativeWindow {",
+    "  [DllImport(\"kernel32.dll\")] public static extern IntPtr GetConsoleWindow();",
+    "  [DllImport(\"user32.dll\")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);",
+    "  [DllImport(\"user32.dll\")] public static extern bool SetForegroundWindow(IntPtr hWnd);",
+    "}",
+    "'@",
+    "  $consoleHandle = [VisionWizNativeWindow]::GetConsoleWindow()",
+    "  if ($consoleHandle -ne [IntPtr]::Zero) { [VisionWizNativeWindow]::ShowWindow($consoleHandle, 0) | Out-Null }",
+    "} catch { }",
+    "",
     "Add-Type -AssemblyName System.Windows.Forms",
     "Add-Type -AssemblyName System.Drawing",
     "[System.Windows.Forms.Application]::EnableVisualStyles()",
@@ -849,6 +871,8 @@ function launchUpdateHelperAndQuit(release, options = {}) {
     "$form.MinimumSize = New-Object System.Drawing.Size(560, 380)",
     "$form.BackColor = [System.Drawing.Color]::FromArgb(248, 250, 252)",
     "$form.Font = New-Object System.Drawing.Font('Microsoft YaHei UI', 9)",
+    "$form.ShowInTaskbar = $true",
+    "$form.TopMost = $true",
     "$titleLabel = New-Object System.Windows.Forms.Label",
     "$titleLabel.Text = 'VisionWiz Update Installer'",
     "$titleLabel.Font = New-Object System.Drawing.Font('Microsoft YaHei UI', 16, [System.Drawing.FontStyle]::Bold)",
@@ -889,7 +913,13 @@ function launchUpdateHelperAndQuit(release, options = {}) {
     "$form.Controls.Add($closeButton)",
     "$form.Add_FormClosing({ $script:closeRequested = $true })",
     "$form.Show() | Out-Null",
+    "$form.Activate()",
+    "$form.BringToFront()",
+    "try { [VisionWizNativeWindow]::SetForegroundWindow($form.Handle) | Out-Null } catch { }",
+    "Start-Sleep -Milliseconds 300",
+    "$form.TopMost = $false",
     "[System.Windows.Forms.Application]::DoEvents()",
+    "try { Add-Content -LiteralPath $uiLogPath -Value 'Update helper UI shown.' -Encoding UTF8 } catch { }",
     "function Set-UpdateStatus([string]$message, [int]$percent = -1) {",
     "  if ($statusLabel -and -not $statusLabel.IsDisposed) { $statusLabel.Text = $message }",
     "  if ($percent -ge 0 -and $progressBar -and -not $progressBar.IsDisposed) { $progressBar.Value = [Math]::Max(0, [Math]::Min(100, $percent)) }",

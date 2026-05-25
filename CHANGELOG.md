@@ -4,6 +4,22 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.5.7 - 2026-05-25
+
+### English
+
+- Fixed the automatic update helper launch path so the graphical helper appears reliably after VisionWiz exits.
+- Changed helper startup to use an independent Windows start command and hide only the PowerShell host console from inside the helper script.
+- Added foreground activation and a `Update helper UI shown.` helper log entry for easier update troubleshooting.
+- Fixed internal update testing by clearing `ELECTRON_RUN_AS_NODE` before launching Electron.
+
+### 中文
+
+- 修复自动更新助手启动链路，让 VisionWiz 退出后图形化更新助手能够稳定显示。
+- 将助手启动方式改为独立的 Windows start 命令，并在助手脚本内部只隐藏 PowerShell 宿主控制台。
+- 增加窗口置前逻辑和 `Update helper UI shown.` 助手日志，方便排查更新助手显示问题。
+- 修复内测自动更新脚本，启动 Electron 前会清除 `ELECTRON_RUN_AS_NODE`。
+
 ## 1.5.6 - 2026-05-22
 
 ### English
