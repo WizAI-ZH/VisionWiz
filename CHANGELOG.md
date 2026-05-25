@@ -4,6 +4,22 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.6.0 - 2026-05-25
+
+### English
+
+- Localized the graphical automatic update helper according to the current VisionWiz language setting.
+- Added Simplified Chinese, Traditional Chinese, and English helper text for status, download, cache, install, failure, and log messages.
+- Passed localized helper text into PowerShell through UTF-8 Base64 decoding to keep Chinese text readable on Windows.
+- Verified the internal update test flow with localized helper output.
+
+### 中文
+
+- 图形化自动更新助手现在会根据 VisionWiz 当前语言设置显示对应语言。
+- 为助手窗口的状态、下载、缓存、安装、失败处理和日志信息增加简体中文、繁体中文和英文文案。
+- 本地化文案通过 UTF-8 Base64 解码传入 PowerShell，确保 Windows 下中文显示正常。
+- 已通过内测自动更新流程验证本地化助手输出。
+
 ## 1.5.8 - 2026-05-25
 
 ### English

@@ -4,6 +4,22 @@ VisionWiz is a desktop AI tool focused on K210 and lightweight vision model work
 
 VisionWiz 是一款面向 K210 与轻量视觉模型工作流的桌面 AI 工具，集成图像采集、数据标注、图像分类训练、目标检测训练、模型测试与结果查看等能力。
 
+## 1.6.0 Update
+
+### English
+
+- The automatic update helper now follows the language selected in VisionWiz: Simplified Chinese, Traditional Chinese, or English.
+- Localized the helper title, progress status, download/cache messages, install messages, failure prompt, and diagnostic log output.
+- Helper text is passed to PowerShell through UTF-8 Base64 decoding to avoid garbled Chinese text on Windows PowerShell.
+- Verified the internal update test flow with Simplified Chinese helper output.
+
+### 中文
+
+- 自动更新助手现在会跟随 VisionWiz 当前选择的语言，支持简体中文、繁体中文和英文。
+- 本地化更新助手标题、进度状态、下载/缓存提示、安装提示、失败处理提示和诊断日志输出。
+- 更新助手文案通过 UTF-8 Base64 方式传递给 PowerShell，避免 Windows PowerShell 中中文乱码。
+- 已通过内测自动更新流程验证简体中文更新助手输出。
+
 ## 1.5.8 Update
 
 ### English
