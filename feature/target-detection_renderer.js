@@ -290,9 +290,17 @@ function resizeTerminalLayout() {
     }
     terminalElement.style.width = '100%';
     terminalElement.style.height = Math.max(360, Math.floor(window.innerHeight * 0.58)) + 'px';
-    terminalElement.style.marginLeft = 'auto';
-    terminalElement.style.marginRight = 'auto';
-    requestAnimationFrame(() => fitAddon_yolo.fit());
+    requestAnimationFrame(() => {
+        fitAddon_yolo.fit();
+        const safeCols = Math.max(80, xterm_yolo.cols - 6);
+        if (safeCols < xterm_yolo.cols) {
+            xterm_yolo.resize(safeCols, xterm_yolo.rows);
+        }
+        ipcRenderer.send('resize_terminal_yolo', {
+            cols: xterm_yolo.cols,
+            rows: xterm_yolo.rows,
+        });
+    });
 }
 
 ipcRenderer.on('window-resize', () => {

@@ -674,6 +674,7 @@ class Detector(Train_Base):
         return True, "ok", labels, classes_data_counts, datasets_x, datasets_y
 
     def get_labels(self,path):
+        from parse_pascal_voc_xml import decode_pascal_voc_xml
         labels=[]
         files=os.listdir(path)
         for file in files:
@@ -685,16 +686,16 @@ class Detector(Train_Base):
                 self.on_warning_message("已忽略非 XML 标签文件: {} | Ignored non-XML annotation file: {}".format(file_path, file_path))
                 continue
             try:
-                try:
-                    DOMTree = xml.dom.minidom.parse(file_path)
-                except Exception as e:
-                    print(e)
-                collection = DOMTree.documentElement
-                objects = collection.getElementsByTagName("object")
-                for obj in objects:
-                    name=obj.getElementsByTagName('name')[0].childNodes[0].data
-                    if name not in labels:
-                        labels.append(name)
+                ok, result = decode_pascal_voc_xml(file_path)
+                if not ok:
+                    self.on_warning_message("解析标签文件失败，已跳过: {} | Failed to parse annotation file, skipped: {}".format(file_path, file_path))
+                    continue
+                results = result if isinstance(result, list) else [result]
+                for item in results:
+                    for bbox in item.get("bboxes", []):
+                        name = bbox[4]
+                        if name not in labels:
+                            labels.append(name)
             except Exception as e:
                 print('错误文件: ' + file_path + ' | Error File: ' + file_path)
                 self.on_warning_message("解析标签文件失败，已跳过: {} | Failed to parse annotation file, skipped: {}".format(file_path, file_path))
@@ -799,173 +800,180 @@ class Detector(Train_Base):
                 msg = f"解码 XML (Decode XML) {xml_path} 失败(fail)，原因(reason): {result}"
                 self.on_warning_message(msg)
                 continue
+            xml_results = result if isinstance(result, list) else [result]
 
+            for result in xml_results:
             # xml中的shape（原始标注尺寸）
-            xml_h, xml_w, xml_d = int(result['height']), int(result['width']), int(result['depth'])
-            has_xml_shape = xml_h > 0 and xml_w > 0 and xml_d > 0
-            img_shape = (xml_h, xml_w, xml_d)
+                xml_h, xml_w, xml_d = int(result['height']), int(result['width']), int(result['depth'])
+                has_xml_shape = xml_h > 0 and xml_w > 0 and xml_d > 0
+                img_shape = (xml_h, xml_w, xml_d)
 
             # check first image shape, and switch to proper supported input_shape
-            if has_xml_shape and not input_shape_checked:
-                if not self._check_update_input_shape(img_shape) and not self.allow_reshape:
-                    self.log.i(
-                        "不支持的输入大小，支持的尺寸: {} | Not supported input size, supported: {}".format(
-                            self.support_shapes, self.support_shapes
-                        ),
-                        [], None, None, None
-                    )
-                    self.log.i("开始调整图片尺寸..... | Start resizing VOC.....")
-                    if revoc.re(img_dir, ann_dir):
-                        self.log.i("调整图片尺寸成功。 | Resize VOC is OK.")
-                    else:
-                        self.log.e("错误：调整图片尺寸出错 | ERROR: Resize VOC error")
-                input_shape_checked = True
-
-            # load image path
-            dir_name = os.path.split(os.path.split(result['path'])[0])[-1]  # class1 / images
-            img_path = os.path.join(img_dir, dir_name, result['filename'])
-            if not os.path.exists(img_path):
-                img_path2 = os.path.join(img_dir, result['filename'])
-                if os.path.exists(img_path2):
-                    img_path = img_path2
-                else:
-                    msg = f"解码 XML 失败(Decode XML failed) {xml_path}，无法找到图像(cannot find image): {result['path']}"
-                    self.on_warning_message(msg)
-                    continue
-            if not os.path.isfile(img_path) or not img_path.lower().endswith(VALID_IMAGE_EXTENSIONS):
-                self.on_warning_message(f"跳过不支持的图片文件(Skip unsupported image file) {img_path}")
-                continue
-
-            # 用PIL读，便于统一mode/resize
-            try:
-                im = Image.open(img_path)
-            except Exception as e:
-                self.on_warning_message(f"打开图片失败(Open image failed) {img_path}: {e}")
-                continue
-
-            # 统一到RGB三通道
-            try:
-                im = im.convert("RGB")
-            except Exception as e:
-                self.on_warning_message(f"图片转RGB失败(Convert RGB failed) {img_path}: {e}")
-                continue
-
-            # 图片真实尺寸（以图片为准，不完全相信xml）
-            img_w0, img_h0 = im.size  # (W,H)
-            if not has_xml_shape:
-                xml_w, xml_h, xml_d = img_w0, img_h0, 3
-                img_shape = (xml_h, xml_w, xml_d)
-                if not input_shape_checked:
+                if has_xml_shape and not input_shape_checked:
                     if not self._check_update_input_shape(img_shape) and not self.allow_reshape:
                         self.log.i(
-                            "XML 缺少尺寸信息，已使用图片实际大小；不支持的输入大小，支持的尺寸: {} | XML has no size, used real image size; not supported input size, supported: {}".format(
+                            "不支持的输入大小，支持的尺寸: {} | Not supported input size, supported: {}".format(
                                 self.support_shapes, self.support_shapes
                             ),
                             [], None, None, None
                         )
+                        self.log.i("开始调整图片尺寸..... | Start resizing VOC.....")
+                        if revoc.re(img_dir, ann_dir):
+                            self.log.i("调整图片尺寸成功。 | Resize VOC is OK.")
+                        else:
+                            self.log.e("错误：调整图片尺寸出错 | ERROR: Resize VOC error")
                     input_shape_checked = True
 
-            # load bndboxes（先按xml读取）
-            y = []
-            for bbox in result['bboxes']:
-                if bbox[4] not in labels:
-                    self.on_warning_message(
-                        f"解码 XML (Decode XML failed) {xml_path}，标签不在labels.txt中(label not in labels): {bbox[4]}"
-                    )
-                    continue
-
-                label_idx = labels.index(bbox[4])
-
-                # 原始bbox（通常是以xml尺寸为坐标系）
-                xmin, ymin, xmax, ymax = float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3])
-
-                # 暂存：先用 label_idx 替换类别
-                y.append([xmin, ymin, xmax, ymax, label_idx])
-
-            if len(y) < 1:
-                msg = f"解码 XML (Decode XML failed) {xml_path}，没有对象，跳过(no object, skip)"
-                self.on_warning_message(msg)
-                continue
-
-            # 如果 xml尺寸 与 实际图片尺寸不一致，先把bbox从xml坐标系映射到真实图片坐标系
-            # （避免存在xml写2304但图片实际不是2304的情况）
-            if (xml_w != img_w0) or (xml_h != img_h0):
-                sx0 = img_w0 / max(1.0, float(xml_w))
-                sy0 = img_h0 / max(1.0, float(xml_h))
-                y_mapped = []
-                for xmin, ymin, xmax, ymax, cls in y:
-                    y_mapped.append([xmin * sx0, ymin * sy0, xmax * sx0, ymax * sy0, cls])
-                y = y_mapped
-
-            # 若尺寸不符合，resize到expected，并同步缩放bbox
-            if (img_h0 != expected_h) or (img_w0 != expected_w):
-                sx = expected_w / float(img_w0)
-                sy = expected_h / float(img_h0)
-
-                # resize图片
-                try:
-                    im = im.resize((expected_w, expected_h), resample=Image.BILINEAR)
-                except Exception as e:
-                    self.on_warning_message(f"图片resize失败(Resize failed) {img_path}: {e}")
-                    continue
-
-                # 缩放bbox并裁剪到边界
-                y_resized = []
-                for xmin, ymin, xmax, ymax, cls in y:
-                    xmin2 = xmin * sx
-                    xmax2 = xmax * sx
-                    ymin2 = ymin * sy
-                    ymax2 = ymax * sy
-
-                    # clip
-                    xmin2 = max(0.0, min(xmin2, expected_w - 1.0))
-                    xmax2 = max(0.0, min(xmax2, expected_w - 1.0))
-                    ymin2 = max(0.0, min(ymin2, expected_h - 1.0))
-                    ymax2 = max(0.0, min(ymax2, expected_h - 1.0))
-
-                    # 保证 xmin<xmax, ymin<ymax（过滤异常框）
-                    if xmax2 <= xmin2 or ymax2 <= ymin2:
+            # load image path
+                dir_name = os.path.split(os.path.split(result['path'])[0])[-1]  # class1 / images
+                img_path = os.path.join(img_dir, dir_name, result['filename'])
+                if not os.path.exists(img_path):
+                    img_path2 = os.path.join(img_dir, result['filename'])
+                    img_path3 = os.path.join(img_dir, os.path.basename(result['filename']))
+                    if os.path.exists(img_path2):
+                        img_path = img_path2
+                    elif os.path.exists(img_path3):
+                        img_path = img_path3
+                    elif os.path.isabs(result['path']) and os.path.exists(result['path']):
+                        img_path = result['path']
+                    else:
+                        msg = f"解码 XML 失败(Decode XML failed) {xml_path}，无法找到图像(cannot find image): {result['path']}"
+                        self.on_warning_message(msg)
                         continue
-
-                    y_resized.append([xmin2, ymin2, xmax2, ymax2, cls])
-
-                if len(y_resized) < 1:
-                    self.on_warning_message(f"resize后bbox无效，跳过(skip) {xml_path}")
+                if not os.path.isfile(img_path) or not img_path.lower().endswith(VALID_IMAGE_EXTENSIONS):
+                    self.on_warning_message(f"跳过不支持的图片文件(Skip unsupported image file) {img_path}")
                     continue
 
-                y = y_resized
-
-            # 转成numpy
-            img = np.asarray(im, dtype='uint8')
-
-            # --- DEBUG: 检查每张图的shape/mode是否一致 ---
-            if not hasattr(self, "_debug_shape_counter"):
-                self._debug_shape_counter = {}
-
-            shape = getattr(img, "shape", None)
-            mode = "RGB"
-
-            key = (shape, mode)
-            self._debug_shape_counter[key] = self._debug_shape_counter.get(key, 0) + 1
-
-            expected = (expected_h, expected_w, expected_c)
-            if shape != expected:
-                self.log.e(
-                    f"[(图片形状不符合)SHAPE MISMATCH] img_path={img_path} mode={mode} shape={shape} expected={expected} xml={xml_path}"
-                )
-                # 这里继续也行，但后面np.array会炸；直接跳过更安全
-                continue
-            # --- DEBUG END ---
-
-            datasets_x.append(img)
-            datasets_y.append(y)
-            image_label_indexes = set()
-            for bbox in y:
-                label_idx = int(bbox[4])
-                classes_data_counts[label_idx] += 1
-                image_label_indexes.add(label_idx)
-            for label_idx in image_label_indexes:
-                classes_image_counts[label_idx] += 1
+                # 用PIL读，便于统一mode/resize
+                try:
+                    im = Image.open(img_path)
+                except Exception as e:
+                    self.on_warning_message(f"打开图片失败(Open image failed) {img_path}: {e}")
+                    continue
+    
+                # 统一到RGB三通道
+                try:
+                    im = im.convert("RGB")
+                except Exception as e:
+                    self.on_warning_message(f"图片转RGB失败(Convert RGB failed) {img_path}: {e}")
+                    continue
+    
+                # 图片真实尺寸（以图片为准，不完全相信xml）
+                img_w0, img_h0 = im.size  # (W,H)
+                if not has_xml_shape:
+                    xml_w, xml_h, xml_d = img_w0, img_h0, 3
+                    img_shape = (xml_h, xml_w, xml_d)
+                    if not input_shape_checked:
+                        if not self._check_update_input_shape(img_shape) and not self.allow_reshape:
+                            self.log.i(
+                                "XML 缺少尺寸信息，已使用图片实际大小；不支持的输入大小，支持的尺寸: {} | XML has no size, used real image size; not supported input size, supported: {}".format(
+                                    self.support_shapes, self.support_shapes
+                                ),
+                                [], None, None, None
+                            )
+                        input_shape_checked = True
+    
+                # load bndboxes（先按xml读取）
+                y = []
+                for bbox in result['bboxes']:
+                    if bbox[4] not in labels:
+                        self.on_warning_message(
+                            f"解码 XML (Decode XML failed) {xml_path}，标签不在labels.txt中(label not in labels): {bbox[4]}"
+                        )
+                        continue
+    
+                    label_idx = labels.index(bbox[4])
+    
+                    # 原始bbox（通常是以xml尺寸为坐标系）
+                    xmin, ymin, xmax, ymax = float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3])
+    
+                    # 暂存：先用 label_idx 替换类别
+                    y.append([xmin, ymin, xmax, ymax, label_idx])
+    
+                if len(y) < 1:
+                    msg = f"解码 XML (Decode XML failed) {xml_path}，没有对象，跳过(no object, skip)"
+                    self.on_warning_message(msg)
+                    continue
+    
+                # 如果 xml尺寸 与 实际图片尺寸不一致，先把bbox从xml坐标系映射到真实图片坐标系
+                # （避免存在xml写2304但图片实际不是2304的情况）
+                if (xml_w != img_w0) or (xml_h != img_h0):
+                    sx0 = img_w0 / max(1.0, float(xml_w))
+                    sy0 = img_h0 / max(1.0, float(xml_h))
+                    y_mapped = []
+                    for xmin, ymin, xmax, ymax, cls in y:
+                        y_mapped.append([xmin * sx0, ymin * sy0, xmax * sx0, ymax * sy0, cls])
+                    y = y_mapped
+    
+                # 若尺寸不符合，resize到expected，并同步缩放bbox
+                if (img_h0 != expected_h) or (img_w0 != expected_w):
+                    sx = expected_w / float(img_w0)
+                    sy = expected_h / float(img_h0)
+    
+                    # resize图片
+                    try:
+                        im = im.resize((expected_w, expected_h), resample=Image.BILINEAR)
+                    except Exception as e:
+                        self.on_warning_message(f"图片resize失败(Resize failed) {img_path}: {e}")
+                        continue
+    
+                    # 缩放bbox并裁剪到边界
+                    y_resized = []
+                    for xmin, ymin, xmax, ymax, cls in y:
+                        xmin2 = xmin * sx
+                        xmax2 = xmax * sx
+                        ymin2 = ymin * sy
+                        ymax2 = ymax * sy
+    
+                        # clip
+                        xmin2 = max(0.0, min(xmin2, expected_w - 1.0))
+                        xmax2 = max(0.0, min(xmax2, expected_w - 1.0))
+                        ymin2 = max(0.0, min(ymin2, expected_h - 1.0))
+                        ymax2 = max(0.0, min(ymax2, expected_h - 1.0))
+    
+                        # 保证 xmin<xmax, ymin<ymax（过滤异常框）
+                        if xmax2 <= xmin2 or ymax2 <= ymin2:
+                            continue
+    
+                        y_resized.append([xmin2, ymin2, xmax2, ymax2, cls])
+    
+                    if len(y_resized) < 1:
+                        self.on_warning_message(f"resize后bbox无效，跳过(skip) {xml_path}")
+                        continue
+    
+                    y = y_resized
+    
+                # 转成numpy
+                img = np.asarray(im, dtype='uint8')
+    
+                # --- DEBUG: 检查每张图的shape/mode是否一致 ---
+                if not hasattr(self, "_debug_shape_counter"):
+                    self._debug_shape_counter = {}
+    
+                shape = getattr(img, "shape", None)
+                mode = "RGB"
+    
+                key = (shape, mode)
+                self._debug_shape_counter[key] = self._debug_shape_counter.get(key, 0) + 1
+    
+                expected = (expected_h, expected_w, expected_c)
+                if shape != expected:
+                    self.log.e(
+                        f"[(图片形状不符合)SHAPE MISMATCH] img_path={img_path} mode={mode} shape={shape} expected={expected} xml={xml_path}"
+                    )
+                    # 这里继续也行，但后面np.array会炸；直接跳过更安全
+                    continue
+                # --- DEBUG END ---
+    
+                datasets_x.append(img)
+                datasets_y.append(y)
+                image_label_indexes = set()
+                for bbox in y:
+                    label_idx = int(bbox[4])
+                    classes_data_counts[label_idx] += 1
+                    image_label_indexes.add(label_idx)
+                for label_idx in image_label_indexes:
+                    classes_image_counts[label_idx] += 1
 
         # 汇总一下shape统计（可选）
         if hasattr(self, "_debug_shape_counter"):

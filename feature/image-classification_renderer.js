@@ -228,9 +228,17 @@ function resizeTerminalLayout() {
     }
     terminalElement.style.width = '100%';
     terminalElement.style.height = Math.max(360, Math.floor(window.innerHeight * 0.58)) + 'px';
-    terminalElement.style.marginLeft = 'auto';
-    terminalElement.style.marginRight = 'auto';
-    requestAnimationFrame(() => fitAddon_cls.fit());
+    requestAnimationFrame(() => {
+        fitAddon_cls.fit();
+        const safeCols = Math.max(80, xterm_cls.cols - 6);
+        if (safeCols < xterm_cls.cols) {
+            xterm_cls.resize(safeCols, xterm_cls.rows);
+        }
+        ipcRenderer.send('resize_terminal_cls', {
+            cols: xterm_cls.cols,
+            rows: xterm_cls.rows,
+        });
+    });
 }
 
 ipcRenderer.on('window-resize', () => {

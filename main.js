@@ -2228,7 +2228,7 @@ const { main } = require("@popperjs/core");
 const shell = os.platform() === "win32" ? "powershell.exe" : "bash";
 const ptyProcess_yolo = pty.spawn(shell, [], {
   name: "xterm-color",
-  cols: 500,
+  cols: 120,
   rows: 20,
   cwd: process.env.PWD,
   env: process.env,
@@ -2236,7 +2236,7 @@ const ptyProcess_yolo = pty.spawn(shell, [], {
 
 const ptyProcess_cls = pty.spawn(shell, [], {
   name: "xterm_cls",
-  cols: 500,
+  cols: 120,
   rows: 20,
   cwd: process.env.PWD,
   env: process.env,
@@ -2634,6 +2634,27 @@ ipcMain.on("send_data_terminal_cls", function (event, arg) {
   ptyProcess_cls.write(arg);
 });
 
+function resizePtyProcess(ptyProcess, size) {
+  if (!ptyProcess || typeof ptyProcess.resize !== "function") {
+    return;
+  }
+  const cols = Math.max(80, Math.min(300, Number(size && size.cols) || 120));
+  const rows = Math.max(10, Math.min(80, Number(size && size.rows) || 20));
+  try {
+    ptyProcess.resize(cols, rows);
+  } catch (error) {
+    console.warn("[PTY] resize failed:", error);
+  }
+}
+
+ipcMain.on("resize_terminal_yolo", function (event, size) {
+  resizePtyProcess(ptyProcess_yolo, size);
+});
+
+ipcMain.on("resize_terminal_cls", function (event, size) {
+  resizePtyProcess(ptyProcess_cls, size);
+});
+
 ptyProcess_cls.onData((data) => {
   appendTrainTranscript("imgCls", data);
   const errorPayload = ingestTrainStream("imgCls", data);
@@ -2882,35 +2903,63 @@ ipcMain.on("update_test_result_yolo", function (event, current_tab_dir) {
   );
 });
 
+const IMAGE_FILE_EXTENSIONS = new Set([
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".bmp",
+  ".gif",
+  ".webp",
+]);
+
 function read_img_dir(path) {
   let imageList = [];
   getFileList(path).forEach((item) => {
-    let ms = image(fs.readFileSync(item.path + "/" + item.filename));
-    ms.mimeType && imageList.push(item.filename);
+    try {
+      let ms = image(fs.readFileSync(item.fullPath));
+      ms.mimeType && imageList.push(item.filename);
+    } catch (error) {
+      console.warn("[IMG] skip unreadable image:", item.fullPath, error.message);
+    }
   });
   console.log(imageList);
   return imageList;
 }
 
-function getFileList(path) {
+function getFileList(dirPath) {
   let filesList = [];
-  readFileList(path, filesList);
+  readFileList(dirPath, filesList);
   return filesList;
 }
 
-function readFileList(path, filesList) {
-  let files = fs.readdirSync(path);
-  files.forEach(function (itm, index) {
-    let stat = fs.statSync(path + "/" + itm);
-    if (stat.isDirectory()) {
-      //递归读取文件
-      readFileList(path + itm + "/", filesList);
-    } else {
-      let obj = {}; //定义一个对象存放文件的路径和名字
-      obj.path = path; //路径
-      obj.filename = itm; //名字
-      filesList.push(obj);
+function readFileList(dirPath, filesList) {
+  let entries = [];
+  try {
+    entries = fs.readdirSync(dirPath, { withFileTypes: true });
+  } catch (error) {
+    console.warn("[IMG] read image directory failed:", dirPath, error.message);
+    return;
+  }
+
+  entries.forEach(function (entry) {
+    const fullPath = path.join(dirPath, entry.name);
+    if (entry.isDirectory()) {
+      console.warn("[IMG] skip sub directory in image list:", fullPath);
+      return;
     }
+    if (!entry.isFile()) {
+      console.warn("[IMG] skip non-file entry in image list:", fullPath);
+      return;
+    }
+    if (!IMAGE_FILE_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
+      console.warn("[IMG] skip non-image file in image list:", fullPath);
+      return;
+    }
+    filesList.push({
+      path: dirPath,
+      fullPath,
+      filename: entry.name,
+    });
   });
 }
 

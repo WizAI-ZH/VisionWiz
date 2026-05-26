@@ -4,6 +4,22 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.6.2 - 2026-05-26
+
+### English
+
+- Improved image classification and object detection training consoles by syncing xterm dimensions to the backend pty process and moving side action buttons away from the terminal scrollbar.
+- Made capture-record image loading more robust by skipping unrelated folders, non-image files, unreadable images, and missing directories with warnings instead of crashing the main process.
+- Added CVAT native XML support for object detection annotations using `image` and `box` entries with `label`, `xtl`, `ytl`, `xbr`, and `ybr`.
+- Kept compatibility with Pascal VOC, LabelImg, and existing relaxed VOC XML files, including XML files without explicit size metadata.
+
+### 中文
+
+- 优化图像分类和目标检测训练控制台，将 xterm 尺寸同步给后台 pty 进程，并将右侧悬浮操作按钮左移，避免遮挡控制台滚动条。
+- 增强图片拍摄记录读取鲁棒性，遇到无关文件夹、非图片文件、坏图片或不存在的目录时会跳过并记录警告，不再导致主进程崩溃。
+- 新增目标检测 CVAT 原生 XML 标注兼容，支持 `image` 和 `box` 结构中的 `label`、`xtl`、`ytl`、`xbr`、`ybr` 字段。
+- 保留 Pascal VOC、LabelImg 和已有宽松 VOC XML 文件兼容能力，包括缺少显式尺寸信息的 XML。
+
 ## 1.6.1 - 2026-05-25
 
 ### English

@@ -4,6 +4,22 @@ VisionWiz is a desktop AI tool focused on K210 and lightweight vision model work
 
 VisionWiz 是一款面向 K210 与轻量视觉模型工作流的桌面 AI 工具，集成图像采集、数据标注、图像分类训练、目标检测训练、模型测试与结果查看等能力。
 
+## 1.6.2 Update
+
+### English
+
+- Improved image classification and object detection training consoles so terminal width is synchronized with the backend process and side action buttons no longer overlap the terminal scrollbar.
+- Improved capture-record loading so unrelated folders, non-image files, and unreadable images are skipped instead of crashing the main process.
+- Added support for CVAT native XML annotations while keeping Pascal VOC, LabelImg, and existing relaxed VOC XML compatibility.
+- CVAT XML files containing multiple images are now split and loaded image by image during object detection training.
+
+### 中文
+
+- 优化图像分类和目标检测训练控制台，同步前端终端宽度与后台进程宽度，并避免右侧悬浮操作按钮遮挡控制台滚动条。
+- 增强图片拍摄记录读取鲁棒性，遇到无关文件夹、非图片文件或坏图片时会自动跳过，不再导致主进程报错。
+- 新增兼容 CVAT 原生 XML 标注格式，同时保留 Pascal VOC、LabelImg 以及已有宽松 VOC XML 格式兼容。
+- 当 CVAT XML 文件中包含多张图片标注时，目标检测训练会按图片逐条读取。
+
 ## 1.6.1 Update
 
 ### English
