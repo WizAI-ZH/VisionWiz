@@ -4,6 +4,24 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.6.5 - 2026-05-27
+
+### English
+
+- Prevented duplicate training result dialogs by deduplicating training success, failure, and test-success IPC notifications per run.
+- Added renderer-side guards so stale or repeated training result messages do not reopen success/failure dialogs after the user closes them or opens training history.
+- Made object detection anchor generation deterministic and more stable by using seeded multi-attempt k-means and sorted anchors.
+- Made train/validation split deterministic and fixed 320x224 object detection resizing so validation loss is consistent for the same data and parameters.
+- Improved training console layout, resizing, search accuracy, history-log search visibility, and remembered input-size selection.
+
+### 中文
+
+- 为每轮训练的成功、失败和测试成功 IPC 通知增加去重，避免训练结果弹窗连续出现多次。
+- 前端增加训练状态保护，关闭弹窗后或打开训练记录时收到旧消息不会再次弹出成功/失败提示。
+- 目标检测 anchors 生成改为固定随机种子、多次聚类取最佳结果并排序，让同一数据和参数的训练更稳定。
+- 训练/验证集拆分改为确定性流程，并修正 320x224 目标检测缩放逻辑，让同一数据和参数下的验证损失更一致。
+- 优化训练控制台布局、窗口缩放、搜索选中准确性、历史日志搜索栏固定显示和输入分辨率选择记忆。
+
 ## 1.6.2 - 2026-05-26
 
 ### English

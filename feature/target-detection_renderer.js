@@ -288,14 +288,13 @@ function resizeTerminalLayout() {
     if (!terminalElement) {
         return;
     }
+    const rect = terminalElement.getBoundingClientRect();
+    const availableHeight = Math.max(260, window.innerHeight - rect.top - 72);
+    const terminalHeight = Math.max(280, Math.min(460, availableHeight));
     terminalElement.style.width = '100%';
-    terminalElement.style.height = Math.max(360, Math.floor(window.innerHeight * 0.58)) + 'px';
+    terminalElement.style.height = Math.floor(terminalHeight) + 'px';
     requestAnimationFrame(() => {
         fitAddon_yolo.fit();
-        const safeCols = Math.max(80, xterm_yolo.cols - 6);
-        if (safeCols < xterm_yolo.cols) {
-            xterm_yolo.resize(safeCols, xterm_yolo.rows);
-        }
         ipcRenderer.send('resize_terminal_yolo', {
             cols: xterm_yolo.cols,
             rows: xterm_yolo.rows,
@@ -303,8 +302,14 @@ function resizeTerminalLayout() {
     });
 }
 
-ipcRenderer.on('window-resize', () => {
+function scheduleResizeTerminalLayout() {
     resizeTerminalLayout();
+    setTimeout(resizeTerminalLayout, 80);
+    setTimeout(resizeTerminalLayout, 240);
+}
+
+ipcRenderer.on('window-resize', () => {
+    scheduleResizeTerminalLayout();
     if (modelGraphChart) {
         requestAnimationFrame(() => {
             modelGraphChart.resize();
@@ -312,8 +317,14 @@ ipcRenderer.on('window-resize', () => {
     }
 })
 
-window.addEventListener('resize', resizeTerminalLayout);
-window.addEventListener('load', resizeTerminalLayout);
+window.addEventListener('resize', scheduleResizeTerminalLayout);
+window.addEventListener('load', scheduleResizeTerminalLayout);
+window.addEventListener('focus', scheduleResizeTerminalLayout);
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        scheduleResizeTerminalLayout();
+    }
+});
 
 ipcRenderer.on('write_data_to_xterm_yolo', function (event, arg) {
     // 写入数据 arg 到终端中
@@ -369,12 +380,14 @@ ipcRenderer.on('update_train_history', function (event, arg) {
             let name = d['name'].split('_')[0]
             let year = d['name'].split('_')[1]
             let time = d['name'].split('_')[2].replace('-', ':').replace('-', ':')
+            const dirName = d['name'];
+            const deleteButton = '<button type="button" class="btn-close train-delete-button" aria-label="Close" data-dir="' + dirName + '"></button>';
             if (name == 'yolo') {
                 if (d['train_result'] == "success") {
-                    html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail("' + d['name'] + '")>' + current_locales.target_detection + '</button><a>' + year + ' ' + time + '</a> <button type="button" class="btn-close" aria-label="Close" onclick="del_dir(\'' + d['name'] + '\')"></button></div>'
+                    html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail("' + dirName + '")>' + current_locales.target_detection + '</button><a>' + year + ' ' + time + '</a> ' + deleteButton + '</div>'
                 }
                 else {
-                    html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail_err("' + d['name'] + '")>' + current_locales.target_detection + '</button><a>' + year + ' ' + time + '</a> <button type="button" class="btn-close" aria-label="Close" onclick="del_dir(\'' + d['name'] + '\')"></button></div>'
+                    html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail_err("' + dirName + '")>' + current_locales.target_detection + '</button><a>' + year + ' ' + time + '</a> ' + deleteButton + '</div>'
                 }
             }
         } catch (error) {
@@ -385,6 +398,16 @@ ipcRenderer.on('update_train_history', function (event, arg) {
     document.getElementById('train_history_list_yolo').innerHTML = html
 });
 
+document.getElementById('train_history_list_yolo').addEventListener('click', function (event) {
+    const button = event.target.closest('.train-delete-button');
+    if (!button) {
+        return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    del_dir(button.dataset.dir);
+});
+
 function open_dir(dir) {
     // 向主进程发送打开 dir 路径文件夹指令
     ipcRenderer.send('open_dir', dir)
@@ -393,6 +416,7 @@ function open_dir(dir) {
 
 function del_dir(dir) {
     // 向主进程发送删除 dir 路径模型训练结果文件夹指令
+    cleanupModalArtifacts();
     ipcRenderer.send('del_dir', dir)
 }
 
@@ -459,6 +483,9 @@ document.getElementById('stop_train_yolo').addEventListener('click', function ()
 
 ipcRenderer.on('show_train_succeed', function (event, arg) {
     // 收到主进程发出的训练成功信息，进行提醒并更新状态
+    if (!train_situation_yolo) {
+        return
+    }
     train_situation_yolo = false
     Notiflix.Report.success(current_locales.train_success, current_locales.train_success_to_dir_look_result, current_locales.confirm)
     document.getElementById('training_situation_yolo').innerHTML = "<i class='fa fa-check' style='color:#069b34'></i>"
@@ -477,6 +504,9 @@ ipcRenderer.on('show_test_succeed', function (event, arg) {
 
 ipcRenderer.on('show_train_failed', function (event, arg) {
     // 收到主进程发出的训练错误信息，进行提醒并更新状态
+    if (!train_situation_yolo) {
+        return
+    }
     train_situation_yolo = false
     Notiflix.Report.failure(current_locales.train_failed, buildFailureDialogMessage(arg), current_locales.confirm)
     renderErrorSummary('train_error_summary', arg)
@@ -533,6 +563,33 @@ const myModal = new bootstrap.Modal('#model_info_tab_window', {
 const myerrModal = new bootstrap.Modal('#model_info_tab_window_err', {
     keyboard: false
 })
+
+function cleanupModalArtifacts() {
+    const hasVisibleModal = document.querySelector('.modal.show');
+    if (hasVisibleModal) {
+        return;
+    }
+    document.querySelectorAll('.modal-backdrop').forEach((backdrop) => backdrop.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
+}
+
+function attachModalCleanup(modalId) {
+    const modalElement = document.getElementById(modalId);
+    if (!modalElement) {
+        return;
+    }
+    modalElement.addEventListener('hide.bs.modal', () => {
+        setTimeout(cleanupModalArtifacts, 360);
+    });
+    modalElement.addEventListener('hidden.bs.modal', () => {
+        setTimeout(cleanupModalArtifacts, 0);
+    });
+}
+
+attachModalCleanup('model_info_tab_window');
+attachModalCleanup('model_info_tab_window_err');
 
 document.getElementById('model_info_tab_window').addEventListener('shown.bs.modal', function () {
     requestAnimationFrame(() => {

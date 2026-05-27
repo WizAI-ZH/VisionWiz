@@ -40,6 +40,7 @@ from train_base import Train_Base
 
 VALID_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".bmp")
 SUPPORTED_DATA_AUG_MODES = {"auto", "off", "geometry", "color", "blur_noise"}
+TRAIN_RANDOM_SEED = 1337
 
 
 class Detector(Train_Base):
@@ -54,6 +55,12 @@ class Detector(Train_Base):
         '''
         import tensorflow as tf # for multiple process
         self.tf = tf
+        random.seed(TRAIN_RANDOM_SEED)
+        np.random.seed(TRAIN_RANDOM_SEED)
+        try:
+            tf.random.set_seed(TRAIN_RANDOM_SEED)
+        except Exception:
+            pass
         self.alpha=alpha
         self.need_rm_datasets = False
         self.input_shape = input_shape

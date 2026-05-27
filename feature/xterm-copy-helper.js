@@ -77,9 +77,55 @@ function createSearchBar(xtermInstance, container, getLocales) {
   let matches = [];
   let activeIndex = -1;
 
-  function getText(row) {
+  function trimRightWithMap(text, stringIndexToColumn) {
+    let end = text.length;
+    while (end > 0 && text[end - 1] === " ") {
+      end -= 1;
+    }
+    return {
+      text: text.slice(0, end),
+      stringIndexToColumn: stringIndexToColumn.slice(0, end),
+    };
+  }
+
+  function getLineSearchData(row) {
     const line = xtermInstance.buffer.active.getLine(row);
-    return line ? line.translateToString(true) : "";
+    if (!line) {
+      return { text: "", stringIndexToColumn: [] };
+    }
+
+    const stringIndexToColumn = [];
+    let text = "";
+    const cell = xtermInstance.buffer.active.getNullCell
+      ? xtermInstance.buffer.active.getNullCell()
+      : null;
+    for (let column = 0; column < line.length; column += 1) {
+      const currentCell = line.getCell(column, cell || undefined);
+      if (!currentCell || currentCell.getWidth() === 0) {
+        continue;
+      }
+      const chars = currentCell.getChars() || " ";
+      for (let index = 0; index < chars.length; index += 1) {
+        stringIndexToColumn[text.length + index] = column;
+      }
+      text += chars;
+    }
+    return trimRightWithMap(text, stringIndexToColumn);
+  }
+
+  function getEndColumn(line, matchStartIndex, matchEndIndex) {
+    const map = line.stringIndexToColumn;
+    const startColumn = map[matchStartIndex] || 0;
+    if (map[matchEndIndex] !== undefined) {
+      return map[matchEndIndex];
+    }
+    const lastColumn = map[matchEndIndex - 1];
+    if (lastColumn === undefined) {
+      return startColumn + 1;
+    }
+    const bufferLine = xtermInstance.buffer.active.getLine(line.row);
+    const lastCell = bufferLine ? bufferLine.getCell(lastColumn) : null;
+    return lastColumn + Math.max(1, lastCell ? lastCell.getWidth() : 1);
   }
 
   function findMatches(query) {
@@ -90,12 +136,21 @@ function createSearchBar(xtermInstance, container, getLocales) {
     }
     const activeBuffer = xtermInstance.buffer.active;
     for (let row = 0; row < activeBuffer.length; row += 1) {
-      const text = getText(row);
-      const lowerText = text.toLowerCase();
-      let column = lowerText.indexOf(needle);
-      while (column !== -1) {
-        found.push({ row, column, length: query.length });
-        column = lowerText.indexOf(needle, column + Math.max(1, needle.length));
+      const line = getLineSearchData(row);
+      line.row = row;
+      const lowerText = line.text.toLowerCase();
+      let stringIndex = lowerText.indexOf(needle);
+      while (stringIndex !== -1) {
+        const column = line.stringIndexToColumn[stringIndex];
+        if (column !== undefined) {
+          const endColumn = getEndColumn(line, stringIndex, stringIndex + query.length);
+          found.push({
+            row,
+            column,
+            length: Math.max(1, endColumn - column),
+          });
+        }
+        stringIndex = lowerText.indexOf(needle, stringIndex + Math.max(1, needle.length));
       }
     }
     return found;

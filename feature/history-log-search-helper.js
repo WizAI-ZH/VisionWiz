@@ -153,8 +153,14 @@ function setupHistoryLogSearch(logIds, getLocales) {
     toolbar.style.display = "none";
     toolbar.style.alignItems = "center";
     toolbar.style.gap = "8px";
-    toolbar.style.margin = "8px 0";
+    toolbar.style.margin = "0 0 8px";
+    toolbar.style.padding = "8px 0";
     toolbar.style.flexWrap = "wrap";
+    toolbar.style.position = "sticky";
+    toolbar.style.top = "0";
+    toolbar.style.zIndex = "20";
+    toolbar.style.background = "#fff";
+    toolbar.style.borderBottom = "1px solid #dee2e6";
 
     const input = document.createElement("input");
     input.type = "search";

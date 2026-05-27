@@ -256,8 +256,28 @@ margin: 0;
 
 .filelist{
   display: flex;
-    align-items: center;
-    justify-content: space-around;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  position: relative;
+  min-height: 44px;
+}
+
+.filelist > a {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filelist .train-delete-button,
+.filelist > .btn-close {
+  flex: 0 0 auto;
+  margin-left: auto;
+  position: relative;
+  z-index: 3;
+  pointer-events: auto;
 }
 
 body section canvas {

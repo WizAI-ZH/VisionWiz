@@ -252,14 +252,20 @@ class ImgAugment(object):
         if self._jitter != "off":
             image, boxes_ = make_jitter_on_image(image, boxes_, self._jitter)
     
-        # 3. resize image            
-        image, boxes_ = resize_image(image, boxes_, self._w, self._h)
+        # 3. resize image
+        image, boxes_ = resize_image(image, boxes_, self._w, self._h, flip_channels=True)
         return image, boxes_
 
     def make_jitter(self, img, boxes):
+        boxes_ = np.copy(boxes)
         if self._jitter != "off":
-            img, boxes = make_jitter_on_image(img, boxes, self._jitter)
-        return img, boxes
+            img, boxes_ = make_jitter_on_image(img, boxes_, self._jitter)
+        img_h, img_w = img.shape[:2]
+        if img_h != self._h or img_w != self._w:
+            img, boxes_ = resize_image(img, boxes_, self._w, self._h, flip_channels=False)
+        else:
+            boxes_ = clip_boxes_to_image(boxes_, self._w, self._h)
+        return img, boxes_
 
 def make_jitter_on_image(image, boxes, mode="auto"):
     mode = normalize_augment_mode(mode)
@@ -309,32 +315,47 @@ def make_jitter_on_image(image, boxes, mode="auto"):
     #        x1 = w - x2
     #        x2 = w - xmin
         new_boxes.append([x1,y1,x2,y2])
-    return image, np.array(new_boxes)
+    return image, clip_boxes_to_image(np.array(new_boxes), w, h)
 
 
-def resize_image(image, boxes, desired_w, desired_h):
+def resize_image(image, boxes, desired_w, desired_h, flip_channels=True):
     h, w, _ = image.shape
+    target_w = desired_w
+    target_h = desired_h
     
     # resize the image to standard size
-    image = cv2.resize(image, (desired_h, desired_w))
-    image = image[:,:,::-1]
+    image = cv2.resize(image, (target_w, target_h))
+    if flip_channels:
+        image = image[:,:,::-1]
 
     # fix object's position and size
     new_boxes = []
     for box in boxes:
         x1,y1,x2,y2 = box
-        x1 = int(x1 * float(desired_w) / w)
-        x1 = max(min(x1, desired_w - 1), 0)
-        x2 = int(x2 * float(desired_w) / w)
-        x2 = max(min(x2, desired_w - 1), 0)
+        x1 = int(x1 * float(target_w) / w)
+        x1 = max(min(x1, target_w - 1), 0)
+        x2 = int(x2 * float(target_w) / w)
+        x2 = max(min(x2, target_w - 1), 0)
         
-        y1 = int(y1 * float(desired_h) / h)
-        y1 = max(min(y1, desired_h - 1), 0)
-        y2 = int(y2 * float(desired_h) / h)
-        y2 = max(min(y2, desired_h - 1), 0)
+        y1 = int(y1 * float(target_h) / h)
+        y1 = max(min(y1, target_h - 1), 0)
+        y2 = int(y2 * float(target_h) / h)
+        y2 = max(min(y2, target_h - 1), 0)
 
         new_boxes.append([x1,y1,x2,y2])
-    return image, np.array(new_boxes)
+    return image, clip_boxes_to_image(np.array(new_boxes), target_w, target_h)
+
+
+def clip_boxes_to_image(boxes, width, height):
+    boxes = np.array(boxes)
+    if boxes.size == 0:
+        return boxes.reshape(-1, 4)
+    boxes = boxes.astype(np.float32)
+    boxes[:, 0] = np.clip(boxes[:, 0], 0, width - 1)
+    boxes[:, 2] = np.clip(boxes[:, 2], 0, width - 1)
+    boxes[:, 1] = np.clip(boxes[:, 1], 0, height - 1)
+    boxes[:, 3] = np.clip(boxes[:, 3], 0, height - 1)
+    return boxes
 
 
 def _create_augment_pipeline(mode="auto"):
@@ -427,5 +448,3 @@ if __name__ == '__main__':
     
     
     
-
-

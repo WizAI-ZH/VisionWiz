@@ -357,6 +357,50 @@ function extractReleaseNotes(release) {
   return String(release && release.body ? release.body : "").trim();
 }
 
+function getReleaseLanguageHeading(line) {
+  const text = String(line || "")
+    .replace(/^#{1,6}\s*/, "")
+    .trim()
+    .toLowerCase();
+  if (text === "english" || text === "\u82f1\u6587" || text === "en") {
+    return "en";
+  }
+  if (text === "\u4e2d\u6587" || text === "chinese" || text === "zh") {
+    return "zh";
+  }
+  return "";
+}
+
+function normalizeBilingualReleaseNotes(body) {
+  const text = String(body || "").trim();
+  if (!text) {
+    return "";
+  }
+
+  const sections = { en: [], zh: [] };
+  let currentLanguage = "";
+  let hasLanguageHeading = false;
+
+  for (const line of text.split(/\r?\n/)) {
+    const language = getReleaseLanguageHeading(line);
+    if (language) {
+      currentLanguage = sections[language].some((item) => item.trim()) ? "" : language;
+      hasLanguageHeading = true;
+      continue;
+    }
+    if (currentLanguage) {
+      sections[currentLanguage].push(line);
+    }
+  }
+
+  const enBody = sections.en.join("\n").trim();
+  const zhBody = sections.zh.join("\n").trim();
+  if (hasLanguageHeading && enBody && zhBody) {
+    return ["## English", "", enBody, "", "## \u4e2d\u6587", "", zhBody].join("\n").trim();
+  }
+  return text;
+}
+
 function translateReleaseLineToChinese(line) {
   const trimmed = String(line || "").trim();
   if (!trimmed) {
@@ -403,11 +447,13 @@ function buildBilingualReleaseNotes(release) {
   if (!body) {
     return "";
   }
-  if (/[一-龥]/.test(body) && /(###\s*中文|###\s*English|###\s*英文)/i.test(body)) {
-    return body;
+  const normalizedBody = normalizeBilingualReleaseNotes(body);
+  if (/(^|\n)\s*#{0,6}\s*(English|\u82f1\u6587)\s*(\n|$)/i.test(body)
+      && /(^|\n)\s*#{0,6}\s*(\u4e2d\u6587|Chinese|zh)\s*(\n|$)/i.test(body)) {
+    return normalizedBody;
   }
 
-  const lines = body.split(/\r?\n/);
+  const lines = normalizedBody.split(/\r?\n/);
   const zhLines = lines.map((line) => {
     const heading = line.match(/^(#{1,6})\s+(.*)$/);
     if (heading) {
@@ -417,10 +463,10 @@ function buildBilingualReleaseNotes(release) {
   });
 
   return [
-    "### English",
-    body,
+    "## English",
+    normalizedBody,
     "",
-    "### 中文",
+    "## \u4e2d\u6587",
     zhLines.join("\n"),
   ]
     .join("\n")
@@ -2244,8 +2290,8 @@ const ptyProcess_cls = pty.spawn(shell, [], {
 
 const TRAIN_ERROR_PREFIX = "VW_TRAIN_ERROR::";
 const trainStreamState = {
-  imgCls: { buffer: "", lastError: null },
-  objectDetection: { buffer: "", lastError: null },
+  imgCls: { buffer: "", lastError: null, trainSuccessNotified: false, trainFailureNotified: false, testSuccessNotified: false },
+  objectDetection: { buffer: "", lastError: null, trainSuccessNotified: false, trainFailureNotified: false, testSuccessNotified: false },
 };
 const TRAIN_TRANSCRIPT_MAX_BUFFER = 2 * 1024 * 1024;
 const trainTranscriptState = {
@@ -2589,10 +2635,25 @@ function resetTrainStream(channel) {
   }
   trainStreamState[channel].buffer = "";
   trainStreamState[channel].lastError = null;
+  trainStreamState[channel].trainSuccessNotified = false;
+  trainStreamState[channel].trainFailureNotified = false;
+  trainStreamState[channel].testSuccessNotified = false;
 }
 
 function getTrainStreamError(channel) {
   return trainStreamState[channel] ? trainStreamState[channel].lastError : null;
+}
+
+function shouldNotifyTrainEvent(channel, eventName) {
+  const state = trainStreamState[channel];
+  if (!state) {
+    return false;
+  }
+  if (state[eventName]) {
+    return false;
+  }
+  state[eventName] = true;
+  return true;
 }
 
 function extractTrainErrorFromLog(logText) {
@@ -2678,16 +2739,26 @@ ptyProcess_cls.onData((data) => {
       nums2,
     ]);
   }
-  if (data.indexOf("Training and testing success") != -1) {
+  if (
+    data.indexOf("Training and testing success") != -1 &&
+    shouldNotifyTrainEvent("imgCls", "trainSuccessNotified")
+  ) {
     sendMessageToView(mainWindow_views, "imgCls", "show_train_succeed");
   }
-  if (data.indexOf("Test succeed!") != -1) {
+  if (
+    data.indexOf("Test succeed!") != -1 &&
+    shouldNotifyTrainEvent("imgCls", "testSuccessNotified")
+  ) {
     sendMessageToView(mainWindow_views, "imgCls", "show_test_succeed");
   }
-  if (errorPayload) {
+  if (errorPayload && shouldNotifyTrainEvent("imgCls", "trainFailureNotified")) {
     sendMessageToView(mainWindow_views, "imgCls", "show_train_failed", errorPayload);
   }
-  if (data.indexOf("训练错误:") != -1 && !errorPayload) {
+  if (
+    data.indexOf("训练错误:") != -1 &&
+    !errorPayload &&
+    shouldNotifyTrainEvent("imgCls", "trainFailureNotified")
+  ) {
     sendMessageToView(mainWindow_views, "imgCls", "show_train_failed", buildFallbackTrainError(data));
   }
   sendMessageToView(
@@ -2725,17 +2796,23 @@ ptyProcess_yolo.onData((data) => {
       [nums1, nums2]
     );
   }
-  if (data.indexOf("Training and testing success") != -1) {
+  if (
+    data.indexOf("Training and testing success") != -1 &&
+    shouldNotifyTrainEvent("objectDetection", "trainSuccessNotified")
+  ) {
     sendMessageToView(
       mainWindow_views,
       "objectDetection",
       "show_train_succeed"
     );
   }
-  if (data.indexOf("Test succeed!") != -1) {
+  if (
+    data.indexOf("Test succeed!") != -1 &&
+    shouldNotifyTrainEvent("objectDetection", "testSuccessNotified")
+  ) {
     sendMessageToView(mainWindow_views, "objectDetection", "show_test_succeed");
   }
-  if (errorPayload) {
+  if (errorPayload && shouldNotifyTrainEvent("objectDetection", "trainFailureNotified")) {
     sendMessageToView(
       mainWindow_views,
       "objectDetection",
@@ -2743,7 +2820,11 @@ ptyProcess_yolo.onData((data) => {
       errorPayload
     );
   }
-  if (data.indexOf("训练错误:") != -1 && !errorPayload) {
+  if (
+    data.indexOf("训练错误:") != -1 &&
+    !errorPayload &&
+    shouldNotifyTrainEvent("objectDetection", "trainFailureNotified")
+  ) {
     sendMessageToView(
       mainWindow_views,
       "objectDetection",
@@ -3018,6 +3099,7 @@ function read_config() {
     yolo_alpha: safeGet("yolo_alpha", 0),
     yolo_batch_size: safeGet("yolo_batch_size", 8),
     yolo_data_aug: safeGet("yolo_data_aug", 0),
+    yolo_input_size: safeGet("yolo_input_size", "224x224"),
     cls_img: safeGet("cls_img", ""),
     cls_epoch: safeGet("cls_epoch", 25),
     cls_alpha: safeGet("cls_alpha", 0),
@@ -3091,6 +3173,10 @@ ipcMain.on("config_input_size_cls", function (event, arg) {
 
 ipcMain.on("config_batch_size_yolo", function (event, arg) {
   set_store_value("yolo_batch_size", arg);
+});
+
+ipcMain.on("config_input_size_yolo", function (event, arg) {
+  set_store_value("yolo_input_size", arg);
 });
 
 ipcMain.on("config_test_img_dir_cls", function (event, arg) {

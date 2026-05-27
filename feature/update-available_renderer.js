@@ -25,8 +25,52 @@ function linkify(text) {
   );
 }
 
+function getReleaseLanguageHeading(line) {
+  const text = String(line || "")
+    .replace(/^#{1,6}\s*/, "")
+    .trim()
+    .toLowerCase();
+  if (text === "english" || text === "英文" || text === "en") {
+    return "en";
+  }
+  if (text === "中文" || text === "chinese" || text === "zh") {
+    return "zh";
+  }
+  return "";
+}
+
+function normalizeReleaseNotes(markdown) {
+  const text = String(markdown || "").trim();
+  if (!text) {
+    return "";
+  }
+
+  const sections = { en: [], zh: [] };
+  let currentLanguage = "";
+  let hasLanguageHeading = false;
+
+  for (const line of text.split(/\r?\n/)) {
+    const language = getReleaseLanguageHeading(line);
+    if (language) {
+      currentLanguage = sections[language].some((item) => item.trim()) ? "" : language;
+      hasLanguageHeading = true;
+      continue;
+    }
+    if (currentLanguage) {
+      sections[currentLanguage].push(line);
+    }
+  }
+
+  const enBody = sections.en.join("\n").trim();
+  const zhBody = sections.zh.join("\n").trim();
+  if (hasLanguageHeading && enBody && zhBody) {
+    return ["## English", "", enBody, "", "## 中文", "", zhBody].join("\n").trim();
+  }
+  return text;
+}
+
 function renderMarkdown(markdown) {
-  const lines = String(markdown || "").split(/\r?\n/);
+  const lines = normalizeReleaseNotes(markdown).split(/\r?\n/);
   const html = [];
   let listBuffer = [];
 

@@ -4,6 +4,22 @@ VisionWiz is a desktop AI tool focused on K210 and lightweight vision model work
 
 VisionWiz 是一款面向 K210 与轻量视觉模型工作流的桌面 AI 工具，集成图像采集、数据标注、图像分类训练、目标检测训练、模型测试与结果查看等能力。
 
+## 1.6.5 Update
+
+### English
+
+- Fixed duplicate training success and failure dialogs by allowing each training run to notify the UI only once.
+- Stabilized object detection training by making anchor generation and train/validation splitting deterministic for the same dataset and parameters.
+- Corrected non-square object detection image resizing so 320x224 training keeps image and bounding-box scaling aligned.
+- Improved training console resizing, search selection, history-log search visibility, and remembered input-size selection.
+
+### 中文
+
+- 修复训练成功或失败弹窗可能重复出现的问题，同一轮训练只会向界面通知一次结果。
+- 稳定目标检测训练流程，同一数据集和参数会使用确定性的 anchors 生成与训练/验证集拆分。
+- 修正非正方形目标检测图片缩放逻辑，确保 320x224 训练时图片与标注框缩放保持一致。
+- 优化训练控制台窗口缩放、搜索选中文本、历史训练日志搜索栏固定显示，以及输入分辨率选择记忆。
+
 ## 1.6.2 Update
 
 ### English
