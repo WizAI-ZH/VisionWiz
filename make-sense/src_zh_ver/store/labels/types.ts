@@ -4,6 +4,7 @@ import {LabelType} from '../../data/enums/LabelType';
 import {IPoint} from '../../interfaces/IPoint';
 import {LabelStatus} from '../../data/enums/LabelStatus';
 import {ILine} from '../../interfaces/ILine';
+import {ImageSortMode} from '../../data/enums/ImageSortMode';
 
 export type Annotation = {
     id: string;
@@ -62,6 +63,18 @@ export type ImageData = {
     isVisitedByRoboflowAPI: boolean;
 }
 
+export type LabelHistorySnapshot = {
+    labelRects: LabelRect[];
+    labelPoints: LabelPoint[];
+    labelLines: LabelLine[];
+    labelPolygons: LabelPolygon[];
+    labelNameIds: string[];
+}
+
+export type LabelHistoryStack = {
+    [imageId: string]: LabelHistorySnapshot[];
+}
+
 export type LabelsState = {
     activeImageIndex: number;
     activeLabelNameId: string;
@@ -71,6 +84,9 @@ export type LabelsState = {
     imagesData: ImageData[];
     firstLabelCreatedFlag: boolean;
     labels: LabelName[];
+    imageSortMode: ImageSortMode;
+    undoStack: LabelHistoryStack;
+    redoStack: LabelHistoryStack;
 }
 
 interface UpdateActiveImageIndex {
@@ -144,6 +160,35 @@ interface UpdateFirstLabelCreatedFlag {
     }
 }
 
+interface UpdateImageSortMode {
+    type: typeof Action.UPDATE_IMAGE_SORT_MODE;
+    payload: {
+        imageSortMode: ImageSortMode;
+    }
+}
+
+interface PushLabelHistory {
+    type: typeof Action.PUSH_LABEL_HISTORY;
+    payload: {
+        imageId: string;
+        snapshot: LabelHistorySnapshot;
+    }
+}
+
+interface UndoLabelHistory {
+    type: typeof Action.UNDO_LABEL_HISTORY;
+    payload: {
+        imageId: string;
+    }
+}
+
+interface RedoLabelHistory {
+    type: typeof Action.REDO_LABEL_HISTORY;
+    payload: {
+        imageId: string;
+    }
+}
+
 export type LabelsActionTypes = UpdateActiveImageIndex
     | UpdateActiveLabelNameId
     | UpdateActiveLabelType
@@ -154,4 +199,7 @@ export type LabelsActionTypes = UpdateActiveImageIndex
     | UpdateActiveLabelId
     | UpdateHighlightedLabelId
     | UpdateFirstLabelCreatedFlag
-
+    | UpdateImageSortMode
+    | PushLabelHistory
+    | UndoLabelHistory
+    | RedoLabelHistory

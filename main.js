@@ -359,7 +359,8 @@ function extractReleaseNotes(release) {
 
 function getReleaseLanguageHeading(line) {
   const text = String(line || "")
-    .replace(/^#{1,6}\s*/, "")
+    .replace(/^#{0,6}\s*/, "")
+    .replace(/[:：]\s*$/, "")
     .trim()
     .toLowerCase();
   if (text === "english" || text === "\u82f1\u6587" || text === "en") {
@@ -371,21 +372,18 @@ function getReleaseLanguageHeading(line) {
   return "";
 }
 
-function normalizeBilingualReleaseNotes(body) {
-  const text = String(body || "").trim();
-  if (!text) {
-    return "";
-  }
-
+function collectBilingualReleaseSections(body) {
   const sections = { en: [], zh: [] };
+  const seenSections = { en: false, zh: false };
   let currentLanguage = "";
   let hasLanguageHeading = false;
 
-  for (const line of text.split(/\r?\n/)) {
+  for (const line of String(body || "").split(/\r?\n/)) {
     const language = getReleaseLanguageHeading(line);
     if (language) {
-      currentLanguage = sections[language].some((item) => item.trim()) ? "" : language;
       hasLanguageHeading = true;
+      currentLanguage = seenSections[language] ? "" : language;
+      seenSections[language] = true;
       continue;
     }
     if (currentLanguage) {
@@ -393,10 +391,22 @@ function normalizeBilingualReleaseNotes(body) {
     }
   }
 
-  const enBody = sections.en.join("\n").trim();
-  const zhBody = sections.zh.join("\n").trim();
+  return {
+    hasLanguageHeading,
+    enBody: sections.en.join("\n").trim(),
+    zhBody: sections.zh.join("\n").trim(),
+  };
+}
+
+function normalizeBilingualReleaseNotes(body) {
+  const text = String(body || "").trim();
+  if (!text) {
+    return "";
+  }
+
+  const { hasLanguageHeading, enBody, zhBody } = collectBilingualReleaseSections(text);
   if (hasLanguageHeading && enBody && zhBody) {
-    return ["## English", "", enBody, "", "## \u4e2d\u6587", "", zhBody].join("\n").trim();
+    return ["## \u4e2d\u6587", "", zhBody, "", "## English", "", enBody].join("\n").trim();
   }
   return text;
 }
@@ -447,11 +457,11 @@ function buildBilingualReleaseNotes(release) {
   if (!body) {
     return "";
   }
-  const normalizedBody = normalizeBilingualReleaseNotes(body);
-  if (/(^|\n)\s*#{0,6}\s*(English|\u82f1\u6587)\s*(\n|$)/i.test(body)
-      && /(^|\n)\s*#{0,6}\s*(\u4e2d\u6587|Chinese|zh)\s*(\n|$)/i.test(body)) {
-    return normalizedBody;
+  const { hasLanguageHeading, enBody, zhBody } = collectBilingualReleaseSections(body);
+  if (hasLanguageHeading && enBody && zhBody) {
+    return normalizeBilingualReleaseNotes(body);
   }
+  const normalizedBody = normalizeBilingualReleaseNotes(body);
 
   const lines = normalizedBody.split(/\r?\n/);
   const zhLines = lines.map((line) => {
@@ -463,11 +473,11 @@ function buildBilingualReleaseNotes(release) {
   });
 
   return [
-    "## English",
-    normalizedBody,
-    "",
     "## \u4e2d\u6587",
     zhLines.join("\n"),
+    "",
+    "## English",
+    normalizedBody,
   ]
     .join("\n")
     .trim();
@@ -516,15 +526,15 @@ function buildTestUpdateRelease() {
     draft: false,
     prerelease: false,
     body: [
-      "### English",
-      "- Internal automatic update test release.",
-      "- Uses a local installer or custom download URL from environment variables.",
-      "- This release is only visible when VISIONWIZ_UPDATE_TEST=1 is set.",
-      "",
       "### 中文",
       "- 自动更新内测版本。",
       "- 使用环境变量指定的本地安装包或自定义下载链接。",
       "- 只有设置 VISIONWIZ_UPDATE_TEST=1 时才会显示这个测试更新。",
+      "",
+      "### English",
+      "- Internal automatic update test release.",
+      "- Uses a local installer or custom download URL from environment variables.",
+      "- This release is only visible when VISIONWIZ_UPDATE_TEST=1 is set.",
     ].join("\n"),
     assets: [
       {
@@ -1835,6 +1845,37 @@ ipcMain.handle("get-app-meta", () => {
 ipcMain.handle("get-current-locales", () => {
   console.log('[MAIN] get-current-locales invoked');
   return current_locales;
+});
+
+ipcMain.handle("make-sense-select-export-directory", async () => {
+  const result = await dialog.showOpenDialog({
+    title: (current_locales && current_locales.choose_save_path) || "Select export folder",
+    properties: ["openDirectory"],
+  });
+  return result.canceled ? null : result.filePaths[0];
+});
+
+ipcMain.handle("make-sense-open-directory", async (_event, directoryPath) => {
+  if (!directoryPath) {
+    return false;
+  }
+  await electronShell.openPath(directoryPath);
+  return true;
+});
+
+ipcMain.handle("make-sense-save-export-file", async (_event, payload = {}) => {
+  const fileName = payload.fileName || "labels.zip";
+  const result = await dialog.showSaveDialog({
+    title: (current_locales && current_locales.choose_save_path) || "Save export file",
+    defaultPath: path.join(app.getPath("downloads"), fileName),
+  });
+  if (result.canceled || !result.filePath) {
+    return null;
+  }
+
+  fs.writeFileSync(result.filePath, Buffer.from(payload.data || []));
+  electronShell.showItemInFolder(result.filePath);
+  return result.filePath;
 });
 
 ipcMain.handle("get-update-prompt-state", () => {

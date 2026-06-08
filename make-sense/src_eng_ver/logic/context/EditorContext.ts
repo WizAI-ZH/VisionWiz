@@ -13,9 +13,32 @@ import {LabelActions} from "../actions/LabelActions";
 import {LineRenderEngine} from "../render/LineRenderEngine";
 import { AIActions } from '../../logic/actions/AIActions';
 import { LabelsSelector } from '../../store/selectors/LabelsSelector';
+import { LabelHistoryActions } from '../actions/LabelHistoryActions';
 
 export class EditorContext extends BaseContext {
     public static actions: HotKeyAction[] = [
+        {
+            keyCombo: PlatformUtil.isMac(window.navigator.userAgent) ? ["Meta", "v"] : ["Control", "v"],
+            action: (event: KeyboardEvent) => {
+                event.preventDefault();
+                ImageActions.pastePreviousImageRectLabels();
+                EditorActions.fullRender();
+            }
+        },
+        {
+            keyCombo: PlatformUtil.isMac(window.navigator.userAgent) ? ["Meta", "z"] : ["Control", "z"],
+            action: (event: KeyboardEvent) => {
+                event.preventDefault();
+                LabelHistoryActions.undoActiveImage();
+            }
+        },
+        {
+            keyCombo: PlatformUtil.isMac(window.navigator.userAgent) ? ["Meta", "y"] : ["Control", "y"],
+            action: (event: KeyboardEvent) => {
+                event.preventDefault();
+                LabelHistoryActions.redoActiveImage();
+            }
+        },
         {
             keyCombo: ["Enter"],
             action: (event: KeyboardEvent) => {

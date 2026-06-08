@@ -2,7 +2,6 @@ import {AnnotationFormatType} from '../../data/enums/AnnotationFormatType';
 import {ImageData, LabelName, LabelRect} from '../../store/labels/types';
 import {ImageRepository} from '../imageRepository/ImageRepository';
 import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
 import {LabelsSelector} from '../../store/selectors/LabelsSelector';
 import {XMLSanitizerUtil} from '../../utils/XMLSanitizerUtil';
 import {ExporterUtil} from '../../utils/ExporterUtil';
@@ -14,13 +13,16 @@ import {RectUtil} from '../../utils/RectUtil';
 import {Settings} from '../../settings/Settings';
 
 export class RectLabelsExporter {
-    public static export(exportFormatType: AnnotationFormatType): void {
+    public static async export(exportFormatType: AnnotationFormatType): Promise<void> {
         switch (exportFormatType) {
             case AnnotationFormatType.YOLO:
                 RectLabelsExporter.exportAsYOLO();
                 break;
             case AnnotationFormatType.VOC:
                 RectLabelsExporter.exportAsVOC();
+                break;
+            case AnnotationFormatType.VOC_FOLDER:
+                await RectLabelsExporter.exportAsVOCFolder();
                 break;
             case AnnotationFormatType.CSV:
                 RectLabelsExporter.exportAsCSV();
@@ -47,9 +49,9 @@ export class RectLabelsExporter {
             });
 
         try {
-            zip.generateAsync({type:'blob'})
-                .then((content: Blob) => {
-                    saveAs(content, `${ExporterUtil.getExportFileName()}.zip`);
+            zip.generateAsync({type:'uint8array'})
+                .then((content: Uint8Array) => {
+                    RectLabelsExporter.saveZipAndOpenFolder(`${ExporterUtil.getExportFileName()}.zip`, content);
                 });
         } catch (error) {
             // TODO
@@ -132,14 +134,72 @@ export class RectLabelsExporter {
         });
 
         try {
-            zip.generateAsync({type:'blob'})
-                .then(content => {
-                    saveAs(content, `${ExporterUtil.getExportFileName()}.zip`);
+            zip.generateAsync({type:'uint8array'})
+                .then((content: Uint8Array) => {
+                    RectLabelsExporter.saveZipAndOpenFolder(`${ExporterUtil.getExportFileName()}.zip`, content);
                 });
         } catch (error) {
             // TODO
             throw new Error(error as string);
         }
+    }
+
+    private static async exportAsVOCFolder(): Promise<void> {
+        const directoryPath = await RectLabelsExporter.selectExportDirectory();
+        if (!directoryPath) {
+            return;
+        }
+
+        const nodeRequire = (window as any).require;
+        if (!nodeRequire) {
+            throw new Error('Node integration is required to export XML files to a folder.');
+        }
+
+        const fs = nodeRequire('fs');
+        const path = nodeRequire('path');
+
+        LabelsSelector.getImagesData().forEach((imageData: ImageData) => {
+            const fileContent: string = RectLabelsExporter.wrapImageIntoVOC(imageData);
+            if (fileContent) {
+                const fileName: string = imageData.fileData.name.replace(/\.[^/.]+$/, '.xml');
+                fs.writeFileSync(path.join(directoryPath, fileName), fileContent, 'utf8');
+            }
+        });
+        await RectLabelsExporter.openExportDirectory(directoryPath);
+    }
+
+    private static async selectExportDirectory(): Promise<string | null> {
+        const nodeRequire = (window as any).require;
+        if (!nodeRequire) {
+            return null;
+        }
+
+        const {ipcRenderer} = nodeRequire('electron');
+        return await ipcRenderer.invoke('make-sense-select-export-directory');
+    }
+
+    private static async openExportDirectory(directoryPath: string): Promise<void> {
+        const nodeRequire = (window as any).require;
+        if (!nodeRequire) {
+            return;
+        }
+
+        const {ipcRenderer} = nodeRequire('electron');
+        await ipcRenderer.invoke('make-sense-open-directory', directoryPath);
+    }
+
+    private static async saveZipAndOpenFolder(fileName: string, content: Uint8Array): Promise<void> {
+        const nodeRequire = (window as any).require;
+        if (!nodeRequire) {
+            ExporterUtil.saveAs(new Blob([content], {type: 'application/zip'}), fileName);
+            return;
+        }
+
+        const {ipcRenderer} = nodeRequire('electron');
+        await ipcRenderer.invoke('make-sense-save-export-file', {
+            fileName,
+            data: Array.from(content)
+        });
     }
 
     private static wrapRectLabelsIntoVOC(imageData: ImageData): string {

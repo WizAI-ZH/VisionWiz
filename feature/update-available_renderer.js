@@ -27,7 +27,8 @@ function linkify(text) {
 
 function getReleaseLanguageHeading(line) {
   const text = String(line || "")
-    .replace(/^#{1,6}\s*/, "")
+    .replace(/^#{0,6}\s*/, "")
+    .replace(/[:：]\s*$/, "")
     .trim()
     .toLowerCase();
   if (text === "english" || text === "英文" || text === "en") {
@@ -46,13 +47,15 @@ function normalizeReleaseNotes(markdown) {
   }
 
   const sections = { en: [], zh: [] };
+  const seenSections = { en: false, zh: false };
   let currentLanguage = "";
   let hasLanguageHeading = false;
 
   for (const line of text.split(/\r?\n/)) {
     const language = getReleaseLanguageHeading(line);
     if (language) {
-      currentLanguage = sections[language].some((item) => item.trim()) ? "" : language;
+      currentLanguage = seenSections[language] ? "" : language;
+      seenSections[language] = true;
       hasLanguageHeading = true;
       continue;
     }
@@ -64,7 +67,7 @@ function normalizeReleaseNotes(markdown) {
   const enBody = sections.en.join("\n").trim();
   const zhBody = sections.zh.join("\n").trim();
   if (hasLanguageHeading && enBody && zhBody) {
-    return ["## English", "", enBody, "", "## 中文", "", zhBody].join("\n").trim();
+    return ["## 中文", "", zhBody, "", "## English", "", enBody].join("\n").trim();
   }
   return text;
 }

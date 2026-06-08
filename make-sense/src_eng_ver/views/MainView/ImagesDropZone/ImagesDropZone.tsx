@@ -11,7 +11,7 @@ import {PopupWindowType} from '../../../data/enums/PopupWindowType';
 import {updateActivePopupType, updateProjectData} from '../../../store/general/actionCreators';
 import {ProjectData} from '../../../store/general/types';
 import {ImageDataUtil} from '../../../utils/ImageDataUtil';
-import { sortBy } from 'lodash';
+import {ImageSortMode} from '../../../data/enums/ImageSortMode';
 
 interface IProps {
     updateActiveImageIndexAction: (activeImageIndex: number) => any;
@@ -30,14 +30,16 @@ const ImagesDropZone: React.FC<IProps> = (props: PropsWithChildren<IProps>) => {
 
     const startEditor = (projectType: ProjectType) => {
         if (acceptedFiles.length > 0) {
-            const files = sortBy(acceptedFiles, (item: File) => item.name)
+            const imageData = ImageDataUtil.sortImages(
+                acceptedFiles.map((file:File) => ImageDataUtil.createImageDataFromFileData(file)),
+                ImageSortMode.NATURAL_ASC
+            );
             props.updateProjectDataAction({
                 ...props.projectData,
                 type: projectType
             });
             props.updateActiveImageIndexAction(0);
-            props.addImageDataAction(files.map((file:File) => ImageDataUtil
-                .createImageDataFromFileData(file)));
+            props.addImageDataAction(imageData);
             props.updateActivePopupTypeAction(PopupWindowType.INSERT_LABEL_NAMES);
         }
     };

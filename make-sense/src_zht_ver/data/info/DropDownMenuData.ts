@@ -28,32 +28,32 @@ export const DropDownMenuData: DropDownMenuNode[] = [
                 onClick: () => store.dispatch(updateActivePopupType(PopupWindowType.UPDATE_LABEL))
             },
             {
-                name: '導入圖片',
-                description: '導入新圖片到項目中',
+                name: '匯入圖片',
+                description: '匯入新圖片到專案中',
                 imageSrc: './ico/camera.png',
                 imageAlt: 'images',
                 disabled: false,
                 onClick: () => store.dispatch(updateActivePopupType(PopupWindowType.IMPORT_IMAGES))
             },
             {
-                name: '導入標註文件',
-                description: '從文件中導入標註文件信息並更新到對應圖片中',
+                name: '匯入標註檔案',
+                description: '從檔案中匯入標註資訊並更新到對應圖片中',
                 imageSrc: './ico/import-labels.png',
                 imageAlt: 'import-labels',
                 disabled: false,
                 onClick: () => store.dispatch(updateActivePopupType(PopupWindowType.IMPORT_ANNOTATIONS))
             },
             {
-                name: '導出標註檔案',
-                description: '導出標註檔案',
+                name: '匯出標註檔案',
+                description: '匯出標註檔案',
                 imageSrc: './ico/export-labels.png',
                 imageAlt: 'export-labels',
                 disabled: false,
                 onClick: () => store.dispatch(updateActivePopupType(PopupWindowType.EXPORT_ANNOTATIONS))
             },
             {
-                name: 'AI標註',
-                description: '通過本地運行模型推理來協助標注',
+                name: 'AI 標註',
+                description: '透過本地執行模型推理來協助標註，可能需要網路下載模型',
                 imageSrc: './ico/ai.png',
                 imageAlt: 'load-ai-model-in-browser',
                 disabled: false,
@@ -68,8 +68,16 @@ export const DropDownMenuData: DropDownMenuNode[] = [
         disabled: false,
         children: [
             {
-                name: '使用教程',
-                description: '閱讀「慧標(Make-Sense)」的使用教學課程',
+                name: '快捷鍵與提示',
+                description: '查看快捷鍵和標註使用提示',
+                imageSrc: './ico/help.png',
+                imageAlt: 'shortcuts-and-tips',
+                disabled: false,
+                onClick: () => store.dispatch(updateActivePopupType(PopupWindowType.HELP_TIPS))
+            },
+            {
+                name: '使用教學',
+                description: '閱讀「慧標(Make-Sense)」的使用教學',
                 imageSrc: './ico/documentation.png',
                 imageAlt: 'documentation',
                 disabled: false,
@@ -86,4 +94,3 @@ export const DropDownMenuData: DropDownMenuNode[] = [
         ]
     }
 ]
-

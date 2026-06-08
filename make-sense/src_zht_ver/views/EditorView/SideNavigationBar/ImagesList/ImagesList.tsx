@@ -12,11 +12,13 @@ import {ContextType} from "../../../../data/enums/ContextType";
 import {ImageActions} from "../../../../logic/actions/ImageActions";
 import {EventType} from "../../../../data/enums/EventType";
 import {LabelStatus} from "../../../../data/enums/LabelStatus";
+import {ImageSortMode} from "../../../../data/enums/ImageSortMode";
 
 interface IProps {
     activeImageIndex: number;
     imagesData: ImageData[];
     activeLabelType: LabelType;
+    imageSortMode: ImageSortMode;
 }
 
 interface IState {
@@ -80,6 +82,10 @@ class ImagesList extends React.Component<IProps, IState> {
         ImageActions.getImageByIndex(index)
     };
 
+    private onSortModeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        ImageActions.updateImageSortMode(event.target.value as ImageSortMode);
+    };
+
     private renderImagePreview = (index: number, isScrolling: boolean, isVisible: boolean, style: React.CSSProperties) => {
         return <ImagePreview
             key={index}
@@ -101,8 +107,19 @@ class ImagesList extends React.Component<IProps, IState> {
                 ref={ref => this.imagesListRef = ref}
                 onClick={() => ContextManager.switchCtx(ContextType.LEFT_NAVBAR)}
             >
+                <div className="ImagesSortBar">
+                    <span>排序</span>
+                    <select value={this.props.imageSortMode} onChange={this.onSortModeChange} title="切换图片排序方式">
+                        <option value={ImageSortMode.NATURAL_ASC}>自然升序</option>
+                        <option value={ImageSortMode.NATURAL_DESC}>自然降序</option>
+                        <option value={ImageSortMode.NAME_ASC}>名称升序</option>
+                        <option value={ImageSortMode.NAME_DESC}>名称降序</option>
+                        <option value={ImageSortMode.MODIFIED_DESC}>最新优先</option>
+                        <option value={ImageSortMode.MODIFIED_ASC}>最旧优先</option>
+                    </select>
+                </div>
                 {!!size && <VirtualList
-                    size={size}
+                    size={{width: size.width, height: size.height - 34}}
                     childSize={{width: 150, height: 150}}
                     childCount={this.props.imagesData.length}
                     childRender={this.renderImagePreview}
@@ -118,7 +135,8 @@ const mapDispatchToProps = {};
 const mapStateToProps = (state: AppState) => ({
     activeImageIndex: state.labels.activeImageIndex,
     imagesData: state.labels.imagesData,
-    activeLabelType: state.labels.activeLabelType
+    activeLabelType: state.labels.activeLabelType,
+    imageSortMode: state.labels.imageSortMode
 });
 
 export default connect(

@@ -15,6 +15,7 @@ import { AISelector } from '../../../store/selectors/AISelector';
 import { ISize } from '../../../interfaces/ISize';
 import { AIActions } from '../../../logic/actions/AIActions';
 import { Fade, styled, Tooltip, tooltipClasses, TooltipProps } from '@mui/material';
+import { LabelHistoryActions } from '../../../logic/actions/LabelHistoryActions';
 const BUTTON_SIZE: ISize = { width: 30, height: 30 };
 const BUTTON_PADDING: number = 10;
 
@@ -38,7 +39,8 @@ const getButtonWithTooltip = (
     imageAlt: string,
     isActive: boolean,
     href?: string,
-    onClick?: () => any
+    onClick?: () => any,
+    isDisabled?: boolean
 ): React.ReactElement => {
     return <StyledTooltip
         key={key}
@@ -57,6 +59,7 @@ const getButtonWithTooltip = (
                 href={href}
                 onClick={onClick}
                 isActive={isActive}
+                isDisabled={isDisabled}
             />
         </div>
     </StyledTooltip>;
@@ -69,6 +72,8 @@ interface IProps {
     imageDragMode: boolean;
     crossHairVisible: boolean;
     activeLabelType: LabelType;
+    canUndo: boolean;
+    canRedo: boolean;
 }
 
 const EditorTopNavigationBar: React.FC<IProps> = (
@@ -78,7 +83,9 @@ const EditorTopNavigationBar: React.FC<IProps> = (
         updateCrossHairVisibleStatusAction,
         imageDragMode,
         crossHairVisible,
-        activeLabelType
+        activeLabelType,
+        canUndo,
+        canRedo
     }) => {
     const getClassName = () => {
         return classNames(
@@ -112,10 +119,32 @@ const EditorTopNavigationBar: React.FC<IProps> = (
     return (
         <div className={getClassName()}>
             <div className='ButtonWrapper'>
+                {getButtonWithTooltip(
+                    'undo',
+                    '???????Ctrl+Z?',
+                    './ico/left.png',
+                    'undo',
+                    false,
+                    undefined,
+                    () => LabelHistoryActions.undoActiveImage(),
+                    !canUndo
+                )}
+                {getButtonWithTooltip(
+                    'redo',
+                    '???????Ctrl+Y?',
+                    './ico/right.png',
+                    'redo',
+                    false,
+                    undefined,
+                    () => LabelHistoryActions.redoActiveImage(),
+                    !canRedo
+                )}
+            </div>
+            <div className='ButtonWrapper'>
                 {
                     getButtonWithTooltip(
                         'zoom-in',
-                        '放大圖片',
+                        '????',
                         './ico/zoom-in.png',
                         'zoom-in',
                         false,
@@ -126,7 +155,7 @@ const EditorTopNavigationBar: React.FC<IProps> = (
                 {
                     getButtonWithTooltip(
                         'zoom-out',
-                        '縮小圖片',
+                        '????',
                         './ico/zoom-out.png',
                         'zoom-out',
                         false,
@@ -137,7 +166,7 @@ const EditorTopNavigationBar: React.FC<IProps> = (
                 {
                     getButtonWithTooltip(
                         'zoom-fit',
-                        '調整圖像大小到顯示邊界尺寸',
+                        '?????????????',
                         './ico/zoom-fit.png',
                         'zoom-fit',
                         false,
@@ -148,7 +177,7 @@ const EditorTopNavigationBar: React.FC<IProps> = (
                 {
                     getButtonWithTooltip(
                         'zoom-max',
-                        '放大到最大倍率',
+                        '???????',
                         './ico/zoom-max.png',
                         'zoom-max',
                         false,
@@ -161,7 +190,7 @@ const EditorTopNavigationBar: React.FC<IProps> = (
                 {
                     getButtonWithTooltip(
                         'image-drag-mode',
-                        imageDragMode ? '關閉圖像拖動模式' : '打開圖像拖動模式（只能在圖像被放大的情況下才能打開）',
+                        imageDragMode ? '????????' : '??????????????????????????',
                         './ico/hand.png',
                         'image-drag-mode',
                         imageDragMode,
@@ -172,7 +201,7 @@ const EditorTopNavigationBar: React.FC<IProps> = (
                 {
                     getButtonWithTooltip(
                         'cursor-cross-hair',
-                        crossHairVisible ? '關閉鼠標十字準星' : '打開鼠標十字準星',
+                        crossHairVisible ? '????????' : '????????',
                         './ico/cross-hair.png',
                         'cross-hair',
                         crossHairVisible,
@@ -185,7 +214,7 @@ const EditorTopNavigationBar: React.FC<IProps> = (
                     {
                         getButtonWithTooltip(
                             'accept-all',
-                            '同意所有當前圖片所有AI協助標註的結果',
+                            '???????? AI ???????AI ????????????????',
                             './ico/accept-all.png',
                             'accept-all',
                             false,
@@ -196,7 +225,7 @@ const EditorTopNavigationBar: React.FC<IProps> = (
                     {
                         getButtonWithTooltip(
                             'reject-all',
-                            '拒絕所有當前圖片所有AI協助標註的結果',
+                            '???????? AI ??????',
                             './ico/reject-all.png',
                             'reject-all',
                             false,
@@ -218,7 +247,11 @@ const mapStateToProps = (state: AppState) => ({
     activeContext: state.general.activeContext,
     imageDragMode: state.general.imageDragMode,
     crossHairVisible: state.general.crossHairVisible,
-    activeLabelType: state.labels.activeLabelType
+    activeLabelType: state.labels.activeLabelType,
+    canUndo: !!state.labels.imagesData[state.labels.activeImageIndex] &&
+        (state.labels.undoStack[state.labels.imagesData[state.labels.activeImageIndex].id] || []).length > 0,
+    canRedo: !!state.labels.imagesData[state.labels.activeImageIndex] &&
+        (state.labels.redoStack[state.labels.imagesData[state.labels.activeImageIndex].id] || []).length > 0
 });
 
 export default connect(

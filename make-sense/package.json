@@ -3,10 +3,10 @@
   "version": "1.11.0-alpha",
   "private": true,
   "dependencies": {
-    "@emotion/react": "^11.9.3",
-    "@emotion/styled": "^11.9.3",
-    "@mui/material": "^5.9.1",
-    "@mui/system": "^5.9.1",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^5.18.0",
+    "@mui/system": "^5.18.0",
     "@tensorflow-models/coco-ssd": "^2.2.2",
     "@tensorflow-models/posenet": "^2.2.2",
     "@tensorflow/tfjs": "^3.19.0",
@@ -24,10 +24,10 @@
     "react-custom-scrollbars-2": "^4.5.0",
     "react-dom": "18.2.0",
     "react-dropzone": "^14.2.2",
-    "react-redux": "^8.0.2",
+    "react-redux": "^8.1.3",
     "react-spinners": "^0.13.3",
-    "redux": "^4.2.0",
-    "uuid": "^8.3.2",
+    "redux": "^4.2.1",
+    "uuid": "^11.1.1",
     "yolov5js": "^1.0.0"
   },
   "scripts": {
@@ -57,7 +57,7 @@
     ]
   },
   "devDependencies": {
-    "@redux-devtools/core": "^3.13.1",
+    "@redux-devtools/core": "^3.14.0",
     "@swc/core": "^1.2.218",
     "@swc/jest": "^0.2.22",
     "@testing-library/jest-dom": "^5.16.4",
@@ -71,7 +71,6 @@
     "@types/react-custom-scrollbars": "^4.0.10",
     "@types/react-dom": "18.0.6",
     "@types/react-redux": "^7.1.24",
-    "@types/uuid": "^8.3.4",
     "@typescript-eslint/eslint-plugin": "^5.30.7",
     "@typescript-eslint/parser": "^5.30.7",
     "@vitejs/plugin-react": "^4.7.0",
@@ -92,5 +91,8 @@
     "typescript": "4.7.4",
     "vite": "^6.4.2",
     "vite-tsconfig-paths": "^3.5.0"
+  },
+  "volta": {
+    "node": "24.16.0"
   }
 }

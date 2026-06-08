@@ -9,8 +9,8 @@ export class ExporterUtil {
         return `labels_${projectName}_${date}`
     }
 
-    public static saveAs(content: string, fileName: string): void {
-        const blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
+    public static saveAs(content: string | Blob, fileName: string): void {
+        const blob = content instanceof Blob ? content : new Blob([content], {type: 'text/plain;charset=utf-8'});
         try {
             saveAs(blob, fileName);
         } catch (error) {

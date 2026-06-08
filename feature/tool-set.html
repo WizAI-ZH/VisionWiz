@@ -1,53 +1,226 @@
 <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Software Tools Collection</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-    </head>
-    <body class="bg-gray-100 text-gray-800">
-        <header class="bg-blue-600 text-white py-6">
-            <div class="container mx-auto text-center">
-                <h1 class="text-3xl font-bold" id="title_name_toolset">工具集</h1>
-                <p class="mt-2 text-lg" id="title_descript_toolset">提供威智产品关联的工具，满足日常产品使用需求</p>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Software Tools Collection</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #eef2f7;
+      color: #172033;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .page-shell {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 32px 28px;
+      color: #fff;
+      background: linear-gradient(180deg, #1557d8 0%, #123d91 100%);
+    }
+
+    .sidebar h1 {
+      margin: 0;
+      font-size: 32px;
+      line-height: 1.15;
+      font-weight: 750;
+    }
+
+    .sidebar p {
+      margin: 14px 0 0;
+      color: rgba(255, 255, 255, 0.82);
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    .side-note {
+      margin-top: 32px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.24);
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    main {
+      padding: 28px;
+      overflow: auto;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .tool-card {
+      display: grid;
+      grid-template-rows: 136px 1fr;
+      overflow: hidden;
+      min-height: 360px;
+      background: #fff;
+      border: 1px solid #dde5f0;
+      border-radius: 8px;
+      box-shadow: 0 10px 28px rgba(20, 40, 80, 0.08);
+    }
+
+    .tool-media {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: #f8fbff;
+      border-bottom: 1px solid #e5edf6;
+    }
+
+    .tool-media img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .tool-content {
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+
+    .tool-content h2 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .tool-content p {
+      flex: 1;
+      margin: 0;
+      color: #4a5568;
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    button {
+      min-height: 38px;
+      border: 0;
+      border-radius: 6px;
+      background: #2563eb;
+      color: #fff;
+      padding: 0 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.2);
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .secondary {
+      background: #e8eef8;
+      color: #1f3a6b;
+      box-shadow: none;
+    }
+
+    .secondary:hover {
+      background: #d8e2f2;
+    }
+
+    @media (max-width: 860px) {
+      .page-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        padding: 24px;
+      }
+
+      .side-note {
+        display: none;
+      }
+
+      main {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <aside class="sidebar">
+      <div>
+        <h1 id="title_name_toolset">工具集</h1>
+        <p id="title_descript_toolset">提供 VisionWiz 相关工具，满足日常产品使用需求</p>
+      </div>
+      <div class="side-note">VisionWiz Tools</div>
+    </aside>
+
+    <main>
+      <div class="tools-grid">
+        <section class="tool-card">
+          <div class="tool-media">
+            <img src="../icons/miniLEDdisplayVESIBIT.ico" alt="Mini LED editor">
+          </div>
+          <div class="tool-content">
+            <h2 id="toolname_mini_led_editor">LED 灯牌编辑器(BmpBadge)</h2>
+            <p id="tooldescript_mini_led_editor">修改 LED 灯牌内容和显示效果，支持显示图标和自定义图案。</p>
+            <div class="button-row">
+              <button id="btn_open_mini_led_editor">打开软件</button>
             </div>
-        </header>
+          </div>
+        </section>
 
-        <main class="container mx-auto py-10">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Tool Card 1 -->
-                <div class="bg-white shadow-md rounded-lg overflow-hidden flex flex-col">
-                    <img src="../icons/miniLEDdisplayVESIBIT.ico" alt="Tool 1 Image" class="w-full h-48 object-contain object-cover">
-                    <div class="p-6 flex-grow">
-                        <h2 id="toolname_mini_led_editor" class="text-xl font-semibold mb-2" >LED灯牌编辑器(BmpBadge)</h2>
-                        <p class="text-gray-600 mb-4" id="tooldescript_mini_led_editor">修改LED灯牌内容和显示效果,支持显示图标和自定义图案</p>
-                        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" id="btn_open_mini_led_editor">打开软件</button>
-                    </div>
-                </div>
+        <section class="tool-card">
+          <div class="tool-media">
+            <img src="../icons/WizResizer.png" alt="Wiz Resizer">
+          </div>
+          <div class="tool-content">
+            <h2 id="toolname_wiz_resizer">Wiz Resizer</h2>
+            <p id="tooldescript_wiz_resizer">支持批量调整图片尺寸，并自动补边以符合长宽比需求。</p>
+            <div class="button-row">
+              <button id="btn_open_wiz_resizer">打开软件</button>
+            </div>
+          </div>
+        </section>
 
-                <!-- Tool Card 2 -->
-                <div class="bg-white shadow-md rounded-lg overflow-hidden flex flex-col">
-                    <img src="../icons/WizResizer.png" alt="Tool 2 Image" class="w-full object-contain object-cover">
-                    <div class="p-6 flex-grow">
-                        <h2 class="text-xl font-semibold mb-2" id="toolname_wiz_resizer">威智图改(Wiz Resizer)</h2>
-                        <p class="text-gray-600 mb-4" id="tooldescript_wiz_resizer">支持批量修改图片尺寸并自动填充到满足比例要求</p>
-                        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" id="btn_open_wiz_resizer">打开软件</button>
-                    </div>
-                </div>
-				
-				<!-- Tool Card 3 -->
-                <div class="bg-white shadow-md rounded-lg overflow-hidden flex flex-col">
-                    <img src="../icons/make-sense-logo.png" alt="Tool 2 Image" class="w-full  object-contain object-cover">
-                    <div class="p-6 flex-grow">
-                        <h2 class="text-xl font-semibold mb-2" id="toolname_make_sense">慧标(Make-Sense)</h2>
-                        <p class="text-gray-600 mb-4" id="tooldescript_make_sense">一款图像标注工具,支持目标检测数据集的标注，标注区域支持矩形、点、线、多边形，并且支持多种导出格式</p>
-                        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" id="btn_open_make_sense" >打开</button>
-						<button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" id="btn_open_learn_make_sense">了解更多</button>
-                    </div>
-                </div>
-				<script src="../utils_protected/language-html_loader.js"></script>
-                <script type="text/javascript" src="tool-set_renderer.js"></script>
-				
-    	</body>
-    </html>
+        <section class="tool-card">
+          <div class="tool-media">
+            <img src="../icons/make-sense-logo.png" alt="Make Sense">
+          </div>
+          <div class="tool-content">
+            <h2 id="toolname_make_sense">慧标(Make-Sense)</h2>
+            <p id="tooldescript_make_sense">一款图像标注工具，支持目标检测数据集标注，支持矩形、点、线、多边形和多种导出格式。</p>
+            <div class="button-row">
+              <button id="btn_open_make_sense">打开</button>
+              <button class="secondary" id="btn_open_learn_make_sense">了解更多</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="../utils_protected/language-html_loader.js"></script>
+  <script type="text/javascript" src="tool-set_renderer.js"></script>
+</body>
+</html>

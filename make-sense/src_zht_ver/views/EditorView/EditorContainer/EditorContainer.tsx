@@ -16,6 +16,7 @@ import {ContextType} from '../../../data/enums/ContextType';
 import EditorBottomNavigationBar from '../EditorBottomNavigationBar/EditorBottomNavigationBar';
 import EditorTopNavigationBar from '../EditorTopNavigationBar/EditorTopNavigationBar';
 import {ProjectType} from '../../../data/enums/ProjectType';
+import EditorTipsBar from '../EditorTipsBar/EditorTipsBar';
 
 interface IProps {
     windowSize: ISize;
@@ -35,6 +36,7 @@ const EditorContainer: React.FC<IProps> = (
     }) => {
     const [leftTabStatus, setLeftTabStatus] = useState(true);
     const [rightTabStatus, setRightTabStatus] = useState(true);
+    const [tipsVisible, setTipsVisible] = useState(true);
 
     const calculateEditorSize = (): ISize => {
         if (windowSize) {
@@ -43,7 +45,9 @@ const EditorContainer: React.FC<IProps> = (
             return {
                 width: windowSize.width - leftTabWidth - rightTabWidth,
                 height: windowSize.height - Settings.TOP_NAVIGATION_BAR_HEIGHT_PX
-                    - Settings.EDITOR_BOTTOM_NAVIGATION_BAR_HEIGHT_PX - Settings.EDITOR_TOP_NAVIGATION_BAR_HEIGHT_PX,
+                    - Settings.EDITOR_BOTTOM_NAVIGATION_BAR_HEIGHT_PX
+                    - Settings.EDITOR_TOP_NAVIGATION_BAR_HEIGHT_PX
+                    - (tipsVisible ? Settings.EDITOR_TIPS_BAR_HEIGHT_PX : 0),
             }
         }
         else
@@ -112,11 +116,12 @@ const EditorContainer: React.FC<IProps> = (
             />
             <div className='EditorWrapper'
                 onMouseDown={() => ContextManager.switchCtx(ContextType.EDITOR)}
-                 key='editor-wrapper'
+                key='editor-wrapper'
             >
                 {projectType === ProjectType.OBJECT_DETECTION && <EditorTopNavigationBar
                     key='editor-top-navigation-bar'
                 />}
+                {tipsVisible && <EditorTipsBar onClose={() => setTipsVisible(false)} />}
                 <Editor
                     size={calculateEditorSize()}
                     imageData={imagesData[activeImageIndex]}

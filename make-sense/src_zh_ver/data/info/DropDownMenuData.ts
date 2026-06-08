@@ -1,7 +1,6 @@
 import {updateActivePopupType} from '../../store/general/actionCreators';
 import {PopupWindowType} from '../enums/PopupWindowType';
 import {store} from '../../index';
-import {shell} from 'electron';
 
 export type DropDownMenuNode = {
     name: string
@@ -53,8 +52,8 @@ export const DropDownMenuData: DropDownMenuNode[] = [
                 onClick: () => store.dispatch(updateActivePopupType(PopupWindowType.EXPORT_ANNOTATIONS))
             },
             {
-                name: 'AI标注',
-                description: '通过本地运行模型推理来协助标注',
+                name: 'AI 标注',
+                description: '通过本地运行模型推理来协助标注，可能需要网络下载模型',
                 imageSrc: './ico/ai.png',
                 imageAlt: 'load-ai-model-in-browser',
                 disabled: false,
@@ -69,15 +68,23 @@ export const DropDownMenuData: DropDownMenuNode[] = [
         disabled: false,
         children: [
             {
+                name: '快捷键与提示',
+                description: '查看快捷键和标注使用提示',
+                imageSrc: './ico/help.png',
+                imageAlt: 'shortcuts-and-tips',
+                disabled: false,
+                onClick: () => store.dispatch(updateActivePopupType(PopupWindowType.HELP_TIPS))
+            },
+            {
                 name: '使用教程',
-                description: '阅读关于“慧标(Make-Sense)”的使用教程',
+                description: '阅读“慧标(Make-Sense)”的使用教程',
                 imageSrc: './ico/documentation.png',
                 imageAlt: 'documentation',
                 disabled: false,
                 onClick: () => window.open('https://vesibit.yuque.com/ednd8n/rp34u1/zufv1ucsunzkrh0p', '_blank')
             },
             {
-                name: '联系我們',
+                name: '联系我们',
                 description: '通过微信二维码、地址、电话方式联系我们',
                 imageSrc: './ico/contact_us.png',
                 imageAlt: 'contact-us',
@@ -87,4 +94,3 @@ export const DropDownMenuData: DropDownMenuNode[] = [
         ]
     }
 ]
-

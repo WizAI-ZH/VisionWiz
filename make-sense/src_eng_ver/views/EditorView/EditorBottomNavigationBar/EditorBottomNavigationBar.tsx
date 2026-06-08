@@ -41,6 +41,7 @@ const EditorBottomNavigationBar: React.FC<IProps> = ({size, imageData, totalImag
                 buttonSize={{width: 25, height: 25}}
                 onClick={() => ImageActions.getPreviousImage()}
                 isDisabled={activeImageIndex === 0}
+                title='Previous image (Left arrow)'
                 externalClassName={"left"}
             />
             {size.width > minWidth ?
@@ -53,6 +54,7 @@ const EditorBottomNavigationBar: React.FC<IProps> = ({size, imageData, totalImag
                 buttonSize={{width: 25, height: 25}}
                 onClick={() => ImageActions.getNextImage()}
                 isDisabled={activeImageIndex === totalImageCount - 1}
+                title='Next image (Right arrow)'
                 externalClassName={"right"}
             />
         </div>

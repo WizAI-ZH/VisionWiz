@@ -52,6 +52,11 @@ function fixIndexHtml(dir) {
 
   // ✅ 删除 <title>Make Sense</title>
   html = html.replace(/<title>\s*Make Sense\s*<\/title>/i, "");
+  html = html.replace(/<script[^>]+googletagmanager[^>]*><\/script>\s*/gi, "");
+  html = html.replace(/<script>\s*window\.dataLayer[\s\S]*?gtag\('config',\s*'UA-155837750-1'\);\s*<\/script>\s*/gi, "");
+  html = html.replace(/<script>\s*\(function\(w,d,s,l,i\)[\s\S]*?GTM-5N6WR7G'\);<\/script>\s*/gi, "");
+  html = html.replace(/<link[^>]+fonts\.googleapis\.com[^>]*>\s*/gi, "");
+  html = html.replace(/<noscript>\s*<iframe[^>]+googletagmanager[\s\S]*?<\/iframe>\s*<\/noscript>\s*/gi, "");
 
   fs.writeFileSync(indexPath, html, "utf8");
   console.log(`✅ 已修正路径并移除标题: ${indexPath}`);

@@ -4,6 +4,28 @@ VisionWiz is a desktop AI tool focused on K210 and lightweight vision model work
 
 VisionWiz 是一款面向 K210 与轻量视觉模型工作流的桌面 AI 工具，集成图像采集、数据标注、图像分类训练、目标检测训练、模型测试与结果查看等能力。
 
+## 1.7.0 Update
+
+### 中文
+
+- Make Sense 标注工具新增上一张图片矩形框复制、右键按鼠标位置快速粘贴、撤销/重做、自然排序和多种排序模式。
+- 粘贴后的矩形框可以直接拖拽，拖框时会锁定画布，减少误选页面文本造成的标注异常。
+- 新增 VOC XML 直接导出到指定文件夹；VOC/YOLO ZIP 和 XML 文件夹导出完成后会自动打开输出位置。
+- 新增 Make Sense 快捷键与使用提示弹窗、轮播提示条，并提示 AI 协助可能需要网络。
+- 修复 Make Sense 简体/繁体文案混用、乱码和英文快捷键不生效等问题。
+- `dev:protectfull` 现在会自动构建 Make Sense 三语言产物，避免开发保护编译后打开旧版标注工具。
+- 优化工具集页面显示，并修复工具集脚本重复声明导致工具打不开的问题。
+
+### English
+
+- Make Sense now supports previous-image rectangle copy, right-click paste centered on the mouse position, undo/redo, natural sorting, and multiple sorting modes.
+- Pasted rectangles can be dragged directly, and canvas dragging now locks interaction to reduce accidental text selection while annotating.
+- Added direct VOC XML export to a selected folder; VOC/YOLO ZIP and XML-folder exports now open their output location automatically.
+- Added Make Sense shortcut/help dialogs, rotating tips, and AI-assistance network requirement guidance.
+- Fixed Simplified/Traditional Chinese text mix-ups, garbled strings, and English shortcut handling in Make Sense.
+- `dev:protectfull` now builds all three Make Sense language variants automatically, avoiding stale annotation-tool output.
+- Improved the toolset page layout and fixed duplicate script declaration issues that could stop tools from opening.
+
 ## 1.6.5 Update
 
 ### English

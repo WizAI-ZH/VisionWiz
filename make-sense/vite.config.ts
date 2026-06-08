@@ -1,7 +1,6 @@
 import { defineConfig, loadEnv, UserConfig, UserConfigExport, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import * as path from 'path';
-import fs from 'fs';
 import { webcrypto } from 'crypto';
 
 if (!globalThis.crypto) {
@@ -14,22 +13,19 @@ export default ({ mode }: UserConfig): UserConfigExport => {
   const SRC_DIR = process.env.SRC_DIR || 'src';
   const OUT_DIR = process.env.OUT_DIR || 'dist';
 
-  console.log(`🔧 当前构建源码目录: ${SRC_DIR}`);
+  console.log(`[make-sense] build source: ${SRC_DIR}`);
 
-  // 一个简单的自定义插件：在构建时替换 index.html 中源码路径
   const htmlFixPlugin: Plugin = {
     name: 'html-entry-fix',
-    enforce: 'pre', // ✅ 提前执行，避免被其他插件覆盖
+    enforce: 'pre',
     transformIndexHtml(html) {
-      const newHtml = html.replace(/\/src\/index\.tsx/g, `/${SRC_DIR}/index.tsx`);
-      console.log(`🧩 HTML入口已替换为 -> /${SRC_DIR}/index.tsx`);
-      return newHtml;
+      return html.replace(/\/src\/index\.tsx/g, `/${SRC_DIR}/index.tsx`);
     },
   };
 
   return defineConfig({
-    root: __dirname,                  // ✅ 告诉 Vite "index.html" 就在项目根目录
-    base: './',                       // ✅ 输出路径相对化（便于 postbuild 修正路径）
+    root: __dirname,
+    base: './',
     plugins: [react(), htmlFixPlugin],
     resolve: {
       alias: {
@@ -40,8 +36,9 @@ export default ({ mode }: UserConfig): UserConfigExport => {
       outDir: OUT_DIR,
       minify: 'terser',
       sourcemap: mode === 'development',
+      modulePreload: false,
       rollupOptions: {
-        input: path.resolve(__dirname, 'index.html'), // ✅ 根目录HTML
+        input: path.resolve(__dirname, 'index.html'),
         treeshake: true,
         output: {
           manualChunks: {
@@ -49,13 +46,11 @@ export default ({ mode }: UserConfig): UserConfigExport => {
             classnames: ['classnames'],
             runtime: ['react', 'react-is'],
             'runtime-dom': ['react-dom'],
-            ai: [
+            aiModels: [
               '@tensorflow/tfjs',
               '@tensorflow/tfjs-backend-cpu',
               '@tensorflow/tfjs-backend-webgl',
               '@tensorflow/tfjs-core',
-            ],
-            models: [
               '@tensorflow-models/coco-ssd',
               '@tensorflow-models/posenet',
             ],
@@ -69,10 +64,14 @@ export default ({ mode }: UserConfig): UserConfigExport => {
       logOverride: { 'this-is-undefined-in-esm': 'silent' },
     },
     css: {
+      preprocessorOptions: {
+        scss: {
+          includePaths: [__dirname],
+        },
+      },
       modules: {
-        generateScopedName: mode === 'development'
-          ? '[name]__[local]___[hash:base64:5]'
-          : '[hash:base64:8]',
+        generateScopedName:
+          mode === 'development' ? '[name]__[local]___[hash:base64:5]' : '[hash:base64:8]',
         scopeBehaviour: 'local',
         localsConvention: 'camelCase',
       },

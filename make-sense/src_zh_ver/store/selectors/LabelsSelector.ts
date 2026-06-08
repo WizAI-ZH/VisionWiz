@@ -2,6 +2,7 @@ import {store} from '../..';
 import {ImageData, LabelLine, LabelName, LabelPoint, LabelPolygon, LabelRect} from '../labels/types';
 import {find} from 'lodash';
 import {LabelType} from '../../data/enums/LabelType';
+import {ImageSortMode} from '../../data/enums/ImageSortMode';
 
 export class LabelsSelector {
     public static getLabelNames(): LabelName[] {
@@ -90,5 +91,19 @@ export class LabelsSelector {
             return null;
 
         return find(LabelsSelector.getActiveImageData().labelLines, {id: activeLabelId});
+    }
+
+    public static getImageSortMode(): ImageSortMode {
+        return store.getState().labels.imageSortMode;
+    }
+
+    public static canUndoActiveImage(): boolean {
+        const activeImageData = LabelsSelector.getActiveImageData();
+        return !!activeImageData && (store.getState().labels.undoStack[activeImageData.id] || []).length > 0;
+    }
+
+    public static canRedoActiveImage(): boolean {
+        const activeImageData = LabelsSelector.getActiveImageData();
+        return !!activeImageData && (store.getState().labels.redoStack[activeImageData.id] || []).length > 0;
     }
 }

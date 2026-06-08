@@ -11,6 +11,10 @@ export const ExportFormatData: ExportFormatDataMap = {
             label: '(Recommended for VESIBIT user train model using VisionWiz) A .zip package containing files in VOC XML format.'
         },
         {
+            type: AnnotationFormatType.VOC_FOLDER,
+            label: 'Export VOC XML files directly to a selected folder.'
+        },
+        {
             type: AnnotationFormatType.YOLO,
             label: 'A .zip package containing files in YOLO format.'
         },

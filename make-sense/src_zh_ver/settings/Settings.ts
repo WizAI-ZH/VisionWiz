@@ -9,6 +9,7 @@ export class Settings {
     public static readonly TOP_NAVIGATION_BAR_HEIGHT_PX: number = 35;
     public static readonly EDITOR_BOTTOM_NAVIGATION_BAR_HEIGHT_PX: number = 40 + 1;
     public static readonly EDITOR_TOP_NAVIGATION_BAR_HEIGHT_PX: number = 40 + 1;
+    public static readonly EDITOR_TIPS_BAR_HEIGHT_PX: number = 28;
     public static readonly SIDE_NAVIGATION_BAR_WIDTH_CLOSED_PX: number = 23 + 1;
     public static readonly SIDE_NAVIGATION_BAR_WIDTH_OPEN_PX: number = Settings.SIDE_NAVIGATION_BAR_WIDTH_CLOSED_PX + 300 + 1;
     public static readonly TOOLKIT_TAB_HEIGHT_PX: number = 40;
@@ -40,6 +41,7 @@ export class Settings {
         PopupWindowType.UPDATE_LABEL,
         PopupWindowType.LOAD_AI_MODEL,
         PopupWindowType.LOAD_YOLO_V5_MODEL,
+        PopupWindowType.HELP_TIPS,
         PopupWindowType.CONTACT_US
     ];
 

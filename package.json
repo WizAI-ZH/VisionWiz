@@ -1,6 +1,6 @@
 {
   "name": "VisionWiz",
-  "version": "1.6.5",
+  "version": "1.7.0",
   "description": "VisionWiz AI toolset",
   "main": "main_bootstrap.js",
   "author": "VisionWiz Team",
@@ -8,11 +8,12 @@
   "scripts": {
     "test": "vesi_test",
     "prestart:protect": "electron scripts/compile-in-electron-incremental.js",
-    "prestart:protectfull": "electron scripts/compile-in-electron.js",
+    "prestart:protectfull": "npm run build:makesense && electron scripts/compile-in-electron.js",
     "start:protect": "electron .",
     "start:protectfull": "electron .",
     "dev:protect": "chcp 65001 && npm run start:protect",
     "dev:protectfull": "chcp 65001 && cnpm install && npm run start:protectfull",
+    "build:makesense": "cd make-sense && npm run build:all",
     "get-struct": "powershell -ExecutionPolicy Bypass -File get_project_structure_tree.ps1",
     "compile": "node compile.js",
     "compile:inc": "node scripts/compile-in-electron-incremental.js",
@@ -152,7 +153,6 @@
     "@types/react-custom-scrollbars": "^4",
     "@types/react-dom": "^18",
     "@types/react-redux": "^7",
-    "@types/uuid": "^8",
     "@typescript-eslint/eslint-plugin": "^5",
     "@typescript-eslint/parser": "^5",
     "@vitejs/plugin-react": "^4.7.0",
@@ -222,18 +222,18 @@
     "redux": "^4",
     "serialport": "^12",
     "silly-datetime": "^0",
-    "uuid": "^8",
+    "uuid": "^11.1.1",
     "xterm": "^5",
     "xterm-addon-fit": "^0",
     "xterm-addon-web-links": "^0",
     "yolov5js": "^1"
   },
   "volta": {
-    "node": "18.20.8"
+    "node": "24.16.0"
   },
   "buildInfo": {
     "productName": "VisionWiz",
-    "date": "2026-05-27",
+    "date": "2026-06-08",
     "copyright": "(C) 2025 VisionWiz Team"
   }
 }

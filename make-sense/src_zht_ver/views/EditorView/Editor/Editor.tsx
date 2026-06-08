@@ -28,6 +28,7 @@ import {RenderEngineUtil} from '../../../utils/RenderEngineUtil';
 import {LabelStatus} from '../../../data/enums/LabelStatus';
 import {isEqual} from 'lodash';
 import {AIActions} from '../../../logic/actions/AIActions';
+import {ImageActions} from '../../../logic/actions/ImageActions';
 
 interface IProps {
     size: ISize;
@@ -46,6 +47,7 @@ interface IState {
 }
 
 class Editor extends React.Component<IProps, IState> {
+    private canvasPointerLocked: boolean = false;
 
     constructor(props) {
         super(props);
@@ -96,6 +98,7 @@ class Editor extends React.Component<IProps, IState> {
     private mountEventListeners() {
         window.addEventListener(EventType.MOUSE_MOVE, this.update);
         window.addEventListener(EventType.MOUSE_UP, this.update);
+        window.addEventListener(EventType.BLUR, this.releaseCanvasPointerLock);
         EditorModel.canvas.addEventListener(EventType.MOUSE_DOWN, this.update);
         EditorModel.canvas.addEventListener(EventType.MOUSE_WHEEL, this.handleZoom);
     }
@@ -103,8 +106,10 @@ class Editor extends React.Component<IProps, IState> {
     private unmountEventListeners() {
         window.removeEventListener(EventType.MOUSE_MOVE, this.update);
         window.removeEventListener(EventType.MOUSE_UP, this.update);
+        window.removeEventListener(EventType.BLUR, this.releaseCanvasPointerLock);
         EditorModel.canvas.removeEventListener(EventType.MOUSE_DOWN, this.update);
         EditorModel.canvas.removeEventListener(EventType.MOUSE_WHEEL, this.handleZoom);
+        this.releaseCanvasPointerLock();
     }
 
     // =================================================================================================================
@@ -152,7 +157,14 @@ class Editor extends React.Component<IProps, IState> {
     };
 
     private update = (event: MouseEvent) => {
+        this.updateCanvasPointerLock(event);
+        if (this.canvasPointerLocked) {
+            event.preventDefault();
+        }
         const editorData: EditorData = EditorActions.getEditorData(event);
+        if (this.handleRightClickPaste(event, editorData)) {
+            return;
+        }
         EditorModel.mousePositionOnViewPortContent = CanvasUtil.getMousePositionOnCanvasFromEvent(event, EditorModel.canvas);
         EditorModel.primaryRenderingEngine.update(editorData);
 
@@ -164,6 +176,52 @@ class Editor extends React.Component<IProps, IState> {
 
         !this.props.activePopupType && EditorActions.updateMousePositionIndicator(event);
         EditorActions.fullRender();
+    };
+
+    private handleRightClickPaste(event: MouseEvent, editorData: EditorData): boolean {
+        if (event.type !== EventType.MOUSE_DOWN || event.button !== 2 || this.props.activeLabelType !== LabelType.RECT) {
+            return false;
+        }
+
+        event.preventDefault();
+        EditorModel.mousePositionOnViewPortContent = CanvasUtil.getMousePositionOnCanvasFromEvent(event, EditorModel.canvas);
+        if (!RenderEngineUtil.isMouseOverImage(editorData)) {
+            return true;
+        }
+
+        const centerOnImage: IPoint = RenderEngineUtil.transferPointFromViewPortContentToImage(
+            editorData.mousePositionOnViewPortContent,
+            editorData
+        );
+        ImageActions.pastePreviousImageRectLabels(centerOnImage);
+        EditorActions.fullRender();
+        return true;
+    }
+
+    private updateCanvasPointerLock = (event: MouseEvent) => {
+        if (event.type === EventType.MOUSE_DOWN && event.button === 0) {
+            this.canvasPointerLocked = true;
+            document.body.classList.add('annotation-drag-lock');
+            document.addEventListener('selectionstart', this.preventDefaultWhileLocked);
+            document.addEventListener('dragstart', this.preventDefaultWhileLocked);
+        }
+        if (event.type === EventType.MOUSE_UP) {
+            this.releaseCanvasPointerLock();
+        }
+    };
+
+    private preventDefaultWhileLocked = (event: Event) => {
+        if (this.canvasPointerLocked) {
+            event.preventDefault();
+        }
+    };
+
+    private releaseCanvasPointerLock = () => {
+        if (!this.canvasPointerLocked) return;
+        this.canvasPointerLocked = false;
+        document.body.classList.remove('annotation-drag-lock');
+        document.removeEventListener('selectionstart', this.preventDefaultWhileLocked);
+        document.removeEventListener('dragstart', this.preventDefaultWhileLocked);
     };
 
     private handleZoom = (event: WheelEvent) => {

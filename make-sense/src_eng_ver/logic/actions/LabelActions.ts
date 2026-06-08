@@ -5,6 +5,7 @@ import {store} from '../../index';
 import {updateImageData, updateImageDataById} from '../../store/labels/actionCreators';
 import {LabelType} from '../../data/enums/LabelType';
 import {LabelUtil} from '../../utils/LabelUtil';
+import {LabelHistoryActions} from './LabelHistoryActions';
 
 export class LabelActions {
     public static deleteActiveLabel() {
@@ -29,6 +30,7 @@ export class LabelActions {
 
     public static deleteRectLabelById(imageId: string, labelRectId: string) {
         const imageData: ImageData = LabelsSelector.getImageDataById(imageId);
+        LabelHistoryActions.recordImageHistory(imageData);
         const newImageData = {
             ...imageData,
             labelRects: filter(imageData.labelRects, (currentLabel: LabelRect) => {
@@ -40,6 +42,7 @@ export class LabelActions {
 
     public static deletePointLabelById(imageId: string, labelPointId: string) {
         const imageData: ImageData = LabelsSelector.getImageDataById(imageId);
+        LabelHistoryActions.recordImageHistory(imageData);
         const newImageData = {
             ...imageData,
             labelPoints: filter(imageData.labelPoints, (currentLabel: LabelPoint) => {
@@ -51,6 +54,7 @@ export class LabelActions {
 
     public static deleteLineLabelById(imageId: string, labelLineId: string) {
         const imageData: ImageData = LabelsSelector.getImageDataById(imageId);
+        LabelHistoryActions.recordImageHistory(imageData);
         const newImageData = {
             ...imageData,
             labelLines: filter(imageData.labelLines, (currentLabel: LabelLine) => {
@@ -62,6 +66,7 @@ export class LabelActions {
 
     public static deletePolygonLabelById(imageId: string, labelPolygonId: string) {
         const imageData: ImageData = LabelsSelector.getImageDataById(imageId);
+        LabelHistoryActions.recordImageHistory(imageData);
         const newImageData = {
             ...imageData,
             labelPolygons: filter(imageData.labelPolygons, (currentLabel: LabelPolygon) => {
@@ -73,6 +78,7 @@ export class LabelActions {
 
     public static toggleLabelVisibilityById(imageId: string, labelId: string) {
         const imageData: ImageData = LabelsSelector.getImageDataById(imageId);
+        LabelHistoryActions.recordImageHistory(imageData);
         const newImageData = {
             ...imageData,
             labelPoints: imageData.labelPoints.map((labelPoint: LabelPoint) => {

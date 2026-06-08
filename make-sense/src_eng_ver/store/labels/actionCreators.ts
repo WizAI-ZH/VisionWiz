@@ -1,6 +1,7 @@
-import {LabelsActionTypes, ImageData, LabelName} from './types';
+import {LabelsActionTypes, ImageData, LabelHistorySnapshot, LabelName} from './types';
 import {Action} from '../Actions';
 import {LabelType} from '../../data/enums/LabelType';
+import {ImageSortMode} from '../../data/enums/ImageSortMode';
 
 export function updateActiveImageIndex(activeImageIndex: number): LabelsActionTypes {
     return {
@@ -89,6 +90,43 @@ export function updateFirstLabelCreatedFlag(firstLabelCreatedFlag: boolean): Lab
         type: Action.UPDATE_FIRST_LABEL_CREATED_FLAG,
         payload: {
             firstLabelCreatedFlag
+        }
+    }
+}
+
+export function updateImageSortMode(imageSortMode: ImageSortMode): LabelsActionTypes {
+    return {
+        type: Action.UPDATE_IMAGE_SORT_MODE,
+        payload: {
+            imageSortMode
+        }
+    }
+}
+
+export function pushLabelHistory(imageId: string, snapshot: LabelHistorySnapshot): LabelsActionTypes {
+    return {
+        type: Action.PUSH_LABEL_HISTORY,
+        payload: {
+            imageId,
+            snapshot
+        }
+    }
+}
+
+export function undoLabelHistory(imageId: string): LabelsActionTypes {
+    return {
+        type: Action.UNDO_LABEL_HISTORY,
+        payload: {
+            imageId
+        }
+    }
+}
+
+export function redoLabelHistory(imageId: string): LabelsActionTypes {
+    return {
+        type: Action.REDO_LABEL_HISTORY,
+        payload: {
+            imageId
         }
     }
 }

@@ -1,37 +1,48 @@
-
 const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
 
-function renameDir(oldPath, newPath) {
-  if (fs.existsSync(oldPath)) {
-    fs.renameSync(oldPath, newPath);
-    console.log(`📁 重命名: ${oldPath} → ${newPath}`);
+function removeJunction(junctionPath) {
+  if (!fs.existsSync(junctionPath)) return;
+
+  const stat = fs.lstatSync(junctionPath);
+  if (!stat.isSymbolicLink() && !stat.isDirectory()) {
+    throw new Error(`${junctionPath} is not a removable source junction`);
   }
+
+  if (process.platform === "win32") {
+    execFileSync("cmd", ["/c", "rmdir", junctionPath], { stdio: "inherit" });
+  } else {
+    fs.rmSync(junctionPath, { force: true, recursive: false });
+  }
+}
+
+function createSourceJunction(sourceDir, tempSrc) {
+  if (fs.existsSync(tempSrc)) {
+    const stat = fs.lstatSync(tempSrc);
+    if (!stat.isSymbolicLink()) {
+      throw new Error(`${tempSrc} already exists and is not a build junction`);
+    }
+    removeJunction(tempSrc);
+  }
+
+  fs.symlinkSync(sourceDir, tempSrc, process.platform === "win32" ? "junction" : "dir");
 }
 
 function buildVariant(variant) {
   const root = path.resolve(__dirname, "..");
   const srcDir = path.join(root, `src_${variant}_ver`);
   const tempSrc = path.join(root, "src");
-  const backupSrc = path.join(root, "_src_backup");
 
   if (!fs.existsSync(srcDir)) {
-    console.error(`❌ 找不到对应版本源码目录: ${srcDir}`);
+    console.error(`[make-sense] source variant not found: ${srcDir}`);
     process.exit(1);
   }
 
-  // 1️⃣ 备份旧 src
-  if (fs.existsSync(tempSrc)) {
-    renameDir(tempSrc, backupSrc);
-  }
-
-  // 2️⃣ 将目标目录改为 src
-  renameDir(srcDir, tempSrc);
-
   try {
-    // 3️⃣ 执行构建
-    console.log(`🚧 正在构建 ${variant} 版本...`);
+    createSourceJunction(srcDir, tempSrc);
+
+    console.log(`[make-sense] building ${variant} from ${srcDir}`);
     const viteCli = path.join(root, "node_modules", "vite", "bin", "vite.js");
     const nodeOptions = [process.env.NODE_OPTIONS, "--experimental-global-webcrypto"]
       .filter(Boolean)
@@ -46,31 +57,32 @@ function buildVariant(variant) {
         : process.platform === "win32"
           ? "node.exe"
           : "node";
+
     execFileSync(nodeCommand, [viteCli, "build"], {
       stdio: "inherit",
       env: {
         ...process.env,
+        SRC_DIR: "src",
         OUT_DIR: `dist_${variant}`,
         NODE_OPTIONS: nodeOptions,
       },
     });
-    console.log(`✅ 构建完成: dist_${variant}`);
+    console.log(`[make-sense] build complete: dist_${variant}`);
   } catch (err) {
-    console.error(`❌ 构建失败: ${variant}`, err);
+    console.error(`[make-sense] build failed: ${variant}`, err);
+    process.exitCode = 1;
   } finally {
-    // 4️⃣ 还原目录结构
-    renameDir(tempSrc, srcDir);
-    if (fs.existsSync(backupSrc)) {
-      renameDir(backupSrc, tempSrc);
+    try {
+      removeJunction(tempSrc);
+    } catch (cleanupError) {
+      console.warn(`[make-sense] failed to remove temporary source junction: ${cleanupError.message}`);
     }
-    console.log(`♻️ 已还原目录结构`);
   }
 }
 
-// 从命令行参数取版本名
 const variant = process.argv[2];
 if (!variant) {
-  console.error("❌ 请指定构建版本，如: node scripts/build-variant.js zh");
+  console.error("[make-sense] missing variant. Example: node scripts/build-variant.js zh");
   process.exit(1);
 }
 

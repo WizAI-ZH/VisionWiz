@@ -14,6 +14,12 @@ body {
   overflow-y: hidden;
 }
 
+.annotation-drag-lock,
+.annotation-drag-lock * {
+  user-select: none !important;
+  -webkit-user-drag: none !important;
+}
+
 #root {
   width: 100%;
   height: 100%;

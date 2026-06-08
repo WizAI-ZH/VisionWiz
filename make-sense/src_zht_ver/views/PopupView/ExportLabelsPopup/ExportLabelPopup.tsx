@@ -22,10 +22,10 @@ const ExportLabelPopup: React.FC<IProps> = ({ activeLabelType }) => {
     const [labelType, setLabelType] = useState(activeLabelType);
     const [exportFormatType, setExportFormatType] = useState(null);
 
-    const onAccept = (type: LabelType) => {
+    const onAccept = async (type: LabelType) => {
         switch (type) {
             case LabelType.RECT:
-                RectLabelsExporter.export(exportFormatType);
+                await RectLabelsExporter.export(exportFormatType);
                 break;
             case LabelType.POINT:
                 PointLabelsExporter.export(exportFormatType);
@@ -77,7 +77,7 @@ const ExportLabelPopup: React.FC<IProps> = ({ activeLabelType }) => {
     const renderInternalContent = (type: LabelType) => {
         return <>
             <div className='Message'>
-            選擇標籤類型和您想要用於導出標註文件的文件格式。
+                請選擇標籤類型和匯出標註檔案時使用的檔案格式。
             </div>
             <div className='Options'>
                 {getOptions(ExportFormatData[type])}
@@ -91,28 +91,29 @@ const ExportLabelPopup: React.FC<IProps> = ({ activeLabelType }) => {
     };
 
     const getLabelTypeName = (type: LabelType) =>{
-        if(type.toLowerCase() == "rect"){
-            return "矩形"
-        }else if(type.toLowerCase() == "point"){
-            return "點"
-        }else if(type.toLowerCase() == "line"){
-            return "線段"
-        }else if(type.toLowerCase() == "polygon"){
-            return "多邊形"
+        if (type.toLowerCase() === 'rect') {
+            return '矩形';
+        } else if (type.toLowerCase() === 'point') {
+            return '點';
+        } else if (type.toLowerCase() === 'line') {
+            return '線段';
+        } else if (type.toLowerCase() === 'polygon') {
+            return '多邊形';
         }
-    }
+        return '圖像分類';
+    };
 
     return (
-        <GenericLabelTypePopup  
-            activeLabelType={labelType}  
-            title={`導出 ${getLabelTypeName(labelType)} 標註文件`}  
-            onLabelTypeChange={onLabelTypeChange}  
-            acceptLabel={'導出'}  
-            onAccept={onAccept}  
-            disableAcceptButton={!exportFormatType}  
-            rejectLabel={'取消'}  
-            onReject={onReject}  
-            renderInternalContent={renderInternalContent}  
+        <GenericLabelTypePopup
+            activeLabelType={labelType}
+            title={`匯出 ${getLabelTypeName(labelType)} 標註檔案`}
+            onLabelTypeChange={onLabelTypeChange}
+            acceptLabel={'匯出'}
+            onAccept={onAccept}
+            disableAcceptButton={!exportFormatType}
+            rejectLabel={'取消'}
+            onReject={onReject}
+            renderInternalContent={renderInternalContent}
         />
     );
 };

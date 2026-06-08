@@ -22,10 +22,10 @@ const ExportLabelPopup: React.FC<IProps> = ({ activeLabelType }) => {
     const [labelType, setLabelType] = useState(activeLabelType);
     const [exportFormatType, setExportFormatType] = useState(null);
 
-    const onAccept = (type: LabelType) => {
+    const onAccept = async (type: LabelType) => {
         switch (type) {
             case LabelType.RECT:
-                RectLabelsExporter.export(exportFormatType);
+                await RectLabelsExporter.export(exportFormatType);
                 break;
             case LabelType.POINT:
                 PointLabelsExporter.export(exportFormatType);

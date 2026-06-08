@@ -264,14 +264,6 @@ async function buildReleaseNotes(tagName) {
   return normalizeReleaseBody([
     `## VisionWiz ${releaseVersion}`,
     "",
-    "### English",
-    `- Release version: ${releaseTag}`,
-    `- Release date: ${today}`,
-    `- Manual update guide: ${manualUpdateUrl}`,
-    "",
-    "### Highlights",
-    highlights,
-    "",
     "### 中文",
     `- 发布版本：${releaseTag}`,
     `- 发布时间：${today}`,
@@ -279,12 +271,21 @@ async function buildReleaseNotes(tagName) {
     "",
     "### 更新亮点",
     translatedHighlights || "- 维护版本更新",
+    "",
+    "### English",
+    `- Release version: ${releaseTag}`,
+    `- Release date: ${today}`,
+    `- Manual update guide: ${manualUpdateUrl}`,
+    "",
+    "### Highlights",
+    highlights,
   ].join("\n"));
 }
 
 function normalizeLanguageHeading(value) {
   const text = String(value || "")
-    .replace(/^#+\s*/, "")
+    .replace(/^#*\s*/, "")
+    .replace(/[:：]\s*$/, "")
     .trim()
     .toLowerCase();
   if (text === "english" || text === "en" || text === "英文") {
@@ -297,33 +298,35 @@ function normalizeLanguageHeading(value) {
 }
 
 function normalizeReleaseBody(body) {
-  const lines = String(body || "").split(/\r?\n/);
+  const text = String(body || "").trim();
+  const sections = { chinese: [], english: [] };
+  const seenLanguageSections = { chinese: false, english: false };
   const output = [];
-  const seenLanguageSections = new Set();
-  let skippingDuplicateLanguageSection = false;
+  let currentLanguage = "";
+  let hasLanguageHeading = false;
 
-  for (const line of lines) {
-    const heading = line.match(/^(#{1,6})\s+(.+?)\s*$/);
-    if (heading) {
-      const languageKey = normalizeLanguageHeading(heading[2]);
-      if (languageKey) {
-        if (seenLanguageSections.has(languageKey)) {
-          skippingDuplicateLanguageSection = true;
-          continue;
-        }
-        seenLanguageSections.add(languageKey);
-        skippingDuplicateLanguageSection = false;
-      } else {
-        skippingDuplicateLanguageSection = false;
-      }
+  for (const line of text.split(/\r?\n/)) {
+    const languageKey = normalizeLanguageHeading(line);
+    if (languageKey) {
+      hasLanguageHeading = true;
+      currentLanguage = seenLanguageSections[languageKey] ? "" : languageKey;
+      seenLanguageSections[languageKey] = true;
+      continue;
     }
-
-    if (!skippingDuplicateLanguageSection) {
+    if (currentLanguage) {
+      sections[currentLanguage].push(line);
+    } else if (!hasLanguageHeading) {
       output.push(line);
     }
   }
 
-  return output.join("\n").trim();
+  const chineseBody = sections.chinese.join("\n").trim();
+  const englishBody = sections.english.join("\n").trim();
+  if (hasLanguageHeading && chineseBody && englishBody) {
+    return ["## 中文", "", chineseBody, "", "## English", "", englishBody].join("\n").trim();
+  }
+
+  return text;
 }
 
 function findRecentArtifacts(buildStartedAt) {

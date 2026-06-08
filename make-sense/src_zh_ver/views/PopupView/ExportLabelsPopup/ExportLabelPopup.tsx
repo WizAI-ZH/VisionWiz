@@ -22,10 +22,10 @@ const ExportLabelPopup: React.FC<IProps> = ({ activeLabelType }) => {
     const [labelType, setLabelType] = useState(activeLabelType);
     const [exportFormatType, setExportFormatType] = useState(null);
 
-    const onAccept = (type: LabelType) => {
+    const onAccept = async (type: LabelType) => {
         switch (type) {
             case LabelType.RECT:
-                RectLabelsExporter.export(exportFormatType);
+                await RectLabelsExporter.export(exportFormatType);
                 break;
             case LabelType.POINT:
                 PointLabelsExporter.export(exportFormatType);
@@ -77,7 +77,7 @@ const ExportLabelPopup: React.FC<IProps> = ({ activeLabelType }) => {
     const renderInternalContent = (type: LabelType) => {
         return <>
             <div className='Message'>
-            选择您想要用于导出标注文件的标签类型和文件格式。
+                请选择标签类型和导出标注文件时使用的文件格式。
             </div>
             <div className='Options'>
                 {getOptions(ExportFormatData[type])}
@@ -91,16 +91,17 @@ const ExportLabelPopup: React.FC<IProps> = ({ activeLabelType }) => {
     };
 
     const getLabelTypeName = (type: LabelType) =>{
-        if(type.toLowerCase() == "rect"){
-            return "矩形"
-        }else if(type.toLowerCase() == "point"){
-            return "点"
-        }else if(type.toLowerCase() == "line"){
-            return "线段"
-        }else if(type.toLowerCase() == "polygon"){
-            return "多边形"
+        if (type.toLowerCase() === 'rect') {
+            return '矩形';
+        } else if (type.toLowerCase() === 'point') {
+            return '点';
+        } else if (type.toLowerCase() === 'line') {
+            return '线段';
+        } else if (type.toLowerCase() === 'polygon') {
+            return '多边形';
         }
-    }
+        return '图像分类';
+    };
 
     return (
         <GenericLabelTypePopup

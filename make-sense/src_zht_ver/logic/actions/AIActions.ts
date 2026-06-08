@@ -6,6 +6,7 @@ import {ImageData} from '../../store/labels/types';
 import {AISelector} from '../../store/selectors/AISelector';
 import {AIYOLOObjectDetectionActions} from './AIYOLOObjectDetectionActions';
 import { AIRoboflowAPIObjectDetectionActions } from './AIRoboflowAPIObjectDetectionActions';
+import {LabelHistoryActions} from './LabelHistoryActions';
 
 export class AIActions {
     public static excludeRejectedLabelNames(suggestedLabels: string[], rejectedLabels: string[]): string[] {
@@ -42,6 +43,7 @@ export class AIActions {
     }
 
     public static rejectAllSuggestedLabels(imageData: ImageData) {
+        LabelHistoryActions.recordImageHistory(imageData);
         const activeLabelType: LabelType = LabelsSelector.getActiveLabelType();
         const isAIYOLOObjectDetectorModelLoaded = AISelector.isAIYOLOObjectDetectorModelLoaded();
         const isAISSDObjectDetectorModelLoaded = AISelector.isAISSDObjectDetectorModelLoaded();
@@ -65,6 +67,7 @@ export class AIActions {
     }
 
     public static acceptAllSuggestedLabels(imageData: ImageData) {
+        LabelHistoryActions.recordImageHistory(imageData);
         const activeLabelType: LabelType = LabelsSelector.getActiveLabelType();
         const isAIYOLOObjectDetectorModelLoaded = AISelector.isAIYOLOObjectDetectorModelLoaded();
         const isAISSDObjectDetectorModelLoaded = AISelector.isAISSDObjectDetectorModelLoaded();

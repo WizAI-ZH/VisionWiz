@@ -25,6 +25,7 @@ export class ContextManager {
         window.addEventListener(EventType.KEY_DOWN, ContextManager.onDown);
         window.addEventListener(EventType.KEY_UP, ContextManager.onUp);
         window.addEventListener(EventType.FOCUS, ContextManager.onFocus);
+        ContextManager.updateCtx(GeneralSelector.getActiveContext());
     }
 
     public static switchCtx(context: ContextType): void {
@@ -102,7 +103,7 @@ export class ContextManager {
     }
 
     private static getKeyCodeFromEvent(event: KeyboardEvent): string {
-        return event.key;
+        return event.key.length === 1 ? event.key.toLowerCase() : event.key;
     }
 
     private static matchCombo(combo1: string[], combo2: string[]): boolean {

@@ -15,6 +15,7 @@ import { AISelector } from '../../../store/selectors/AISelector';
 import { ISize } from '../../../interfaces/ISize';
 import { AIActions } from '../../../logic/actions/AIActions';
 import { Fade, styled, Tooltip, tooltipClasses, TooltipProps } from '@mui/material';
+import { LabelHistoryActions } from '../../../logic/actions/LabelHistoryActions';
 const BUTTON_SIZE: ISize = { width: 30, height: 30 };
 const BUTTON_PADDING: number = 10;
 
@@ -38,7 +39,8 @@ const getButtonWithTooltip = (
     imageAlt: string,
     isActive: boolean,
     href?: string,
-    onClick?: () => any
+    onClick?: () => any,
+    isDisabled?: boolean
 ): React.ReactElement => {
     return <StyledTooltip
         key={key}
@@ -57,6 +59,7 @@ const getButtonWithTooltip = (
                 href={href}
                 onClick={onClick}
                 isActive={isActive}
+                isDisabled={isDisabled}
             />
         </div>
     </StyledTooltip>;
@@ -69,6 +72,8 @@ interface IProps {
     imageDragMode: boolean;
     crossHairVisible: boolean;
     activeLabelType: LabelType;
+    canUndo: boolean;
+    canRedo: boolean;
 }
 
 const EditorTopNavigationBar: React.FC<IProps> = (
@@ -78,7 +83,9 @@ const EditorTopNavigationBar: React.FC<IProps> = (
         updateCrossHairVisibleStatusAction,
         imageDragMode,
         crossHairVisible,
-        activeLabelType
+        activeLabelType,
+        canUndo,
+        canRedo
     }) => {
     const getClassName = () => {
         return classNames(
@@ -111,6 +118,28 @@ const EditorTopNavigationBar: React.FC<IProps> = (
 
     return (
         <div className={getClassName()}>
+            <div className='ButtonWrapper'>
+                {getButtonWithTooltip(
+                    'undo',
+                    'Undo annotation change (Ctrl+Z)',
+                    './ico/left.png',
+                    'undo',
+                    false,
+                    undefined,
+                    () => LabelHistoryActions.undoActiveImage(),
+                    !canUndo
+                )}
+                {getButtonWithTooltip(
+                    'redo',
+                    'Redo annotation change (Ctrl+Y)',
+                    './ico/right.png',
+                    'redo',
+                    false,
+                    undefined,
+                    () => LabelHistoryActions.redoActiveImage(),
+                    !canRedo
+                )}
+            </div>
             <div className='ButtonWrapper'>
                 {
                     getButtonWithTooltip(
@@ -185,7 +214,7 @@ const EditorTopNavigationBar: React.FC<IProps> = (
                     {
                         getButtonWithTooltip(
                             'accept-all',
-                            'accept all proposed detections',
+                            'accept all proposed detections (AI may need network access to load or connect)',
                             './ico/accept-all.png',
                             'accept-all',
                             false,
@@ -218,7 +247,11 @@ const mapStateToProps = (state: AppState) => ({
     activeContext: state.general.activeContext,
     imageDragMode: state.general.imageDragMode,
     crossHairVisible: state.general.crossHairVisible,
-    activeLabelType: state.labels.activeLabelType
+    activeLabelType: state.labels.activeLabelType,
+    canUndo: !!state.labels.imagesData[state.labels.activeImageIndex] &&
+        (state.labels.undoStack[state.labels.imagesData[state.labels.activeImageIndex].id] || []).length > 0,
+    canRedo: !!state.labels.imagesData[state.labels.activeImageIndex] &&
+        (state.labels.redoStack[state.labels.imagesData[state.labels.activeImageIndex].id] || []).length > 0
 });
 
 export default connect(

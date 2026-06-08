@@ -53,7 +53,7 @@ export const DropDownMenuData: DropDownMenuNode[] = [
             },
             {
                 name: 'Run AI locally',
-                description: 'Run annotation model in browser',
+                description: 'Run annotation model in browser. Network may be required to download models.',
                 imageSrc: './ico/ai.png',
                 imageAlt: 'load-ai-model-in-browser',
                 disabled: false,
@@ -67,6 +67,14 @@ export const DropDownMenuData: DropDownMenuNode[] = [
         imageAlt: 'community',
         disabled: false,
         children: [
+            {
+                name: 'Shortcuts and Tips',
+                description: 'View keyboard shortcuts and annotation tips',
+                imageSrc: './ico/help.png',
+                imageAlt: 'shortcuts-and-tips',
+                disabled: false,
+                onClick: () => store.dispatch(updateActivePopupType(PopupWindowType.HELP_TIPS))
+            },
             {
                 name: 'Tutorial',
                 description: 'Read more about Make Sense',
@@ -86,4 +94,3 @@ export const DropDownMenuData: DropDownMenuNode[] = [
         ]
     }
 ]
-
