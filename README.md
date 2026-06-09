@@ -13,6 +13,7 @@ VisionWiz 是一款面向 K210 与轻量视觉模型工作流的桌面 AI 工具
 - 新增 VOC XML 直接导出到指定文件夹；VOC/YOLO ZIP 和 XML 文件夹导出完成后会自动打开输出位置。
 - 新增 Make Sense 快捷键与使用提示弹窗、轮播提示条，并提示 AI 协助可能需要网络。
 - 修复 Make Sense 简体/繁体文案混用、乱码和英文快捷键不生效等问题。
+- 修正 Make Sense 图片排序下拉框中的简体/繁体文案错位。
 - `dev:protectfull` 现在会自动构建 Make Sense 三语言产物，避免开发保护编译后打开旧版标注工具。
 - 优化工具集页面显示，并修复工具集脚本重复声明导致工具打不开的问题。
 
@@ -23,6 +24,7 @@ VisionWiz 是一款面向 K210 与轻量视觉模型工作流的桌面 AI 工具
 - Added direct VOC XML export to a selected folder; VOC/YOLO ZIP and XML-folder exports now open their output location automatically.
 - Added Make Sense shortcut/help dialogs, rotating tips, and AI-assistance network requirement guidance.
 - Fixed Simplified/Traditional Chinese text mix-ups, garbled strings, and English shortcut handling in Make Sense.
+- Corrected Simplified/Traditional Chinese text in the Make Sense image sort dropdown.
 - `dev:protectfull` now builds all three Make Sense language variants automatically, avoiding stale annotation-tool output.
 - Improved the toolset page layout and fixed duplicate script declaration issues that could stop tools from opening.
 

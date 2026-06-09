@@ -13,6 +13,7 @@ VisionWiz 的重要变更都会记录在此文件中。
 - 新增 VOC XML 直接导出到指定文件夹功能，并在 VOC/YOLO ZIP 和 XML 文件夹导出完成后自动打开输出位置。
 - 增加 Make Sense 快捷键与使用提示弹窗、轮播提示条，并明确 AI 协助功能可能需要网络。
 - 修复 Make Sense 简体/繁体文案混用与乱码问题，确保窗口标题、侧栏、导入导出和帮助提示跟随当前语言。
+- 修正 Make Sense 图片排序下拉框中的简体/繁体文案错位，简体显示“名称/优先”，繁体显示“名稱/優先”。
 - 将 Make Sense 三语言构建接入 `dev:protectfull`，开发保护编译时会自动刷新标注工具产物。
 - 优化工具集页面布局并修复工具集脚本重复声明导致页面无法打开的问题。
 
@@ -23,6 +24,7 @@ VisionWiz 的重要变更都会记录在此文件中。
 - Added direct VOC XML export to a selected folder, and automatically opens the output location after VOC/YOLO ZIP and XML-folder exports.
 - Added Make Sense shortcut/help tips, rotating tips, and clearer AI-assistance network requirement guidance.
 - Fixed Simplified/Traditional Chinese text mix-ups and garbled Make Sense strings so titles, sidebars, import/export UI, and help text follow the selected language.
+- Corrected Simplified/Traditional Chinese text in the Make Sense image sort dropdown, including the Name and priority labels.
 - Integrated Make Sense three-language builds into `dev:protectfull` so protected development runs refresh annotation-tool output automatically.
 - Improved the toolset page layout and fixed the duplicate script declaration that could prevent tools from opening.
 

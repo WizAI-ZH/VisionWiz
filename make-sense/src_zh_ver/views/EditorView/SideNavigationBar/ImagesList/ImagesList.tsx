@@ -112,10 +112,10 @@ class ImagesList extends React.Component<IProps, IState> {
                     <select value={this.props.imageSortMode} onChange={this.onSortModeChange} title="切換圖片排序方式">
                         <option value={ImageSortMode.NATURAL_ASC}>自然升序</option>
                         <option value={ImageSortMode.NATURAL_DESC}>自然降序</option>
-                        <option value={ImageSortMode.NAME_ASC}>名稱升序</option>
-                        <option value={ImageSortMode.NAME_DESC}>名稱降序</option>
-                        <option value={ImageSortMode.MODIFIED_DESC}>最新優先</option>
-                        <option value={ImageSortMode.MODIFIED_ASC}>最舊優先</option>
+                        <option value={ImageSortMode.NAME_ASC}>名称升序</option>
+                        <option value={ImageSortMode.NAME_DESC}>名称降序</option>
+                        <option value={ImageSortMode.MODIFIED_DESC}>最新优先</option>
+                        <option value={ImageSortMode.MODIFIED_ASC}>最旧优先</option>
                     </select>
                 </div>
                 {!!size && <VirtualList

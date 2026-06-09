@@ -107,7 +107,7 @@ async function compressFolder(folderPath, outputFile) {
 
   const args = [
     'a', '-t7z',
-    '-mx=7', '-m0=LZMA2', '-mfb=273', '-md=128m', '-mmt=on', '-ms=on', '-y',
+    '-mx=7', '-m0=LZMA2', '-mfb=128', '-md=64m', '-mmt=2', '-ms=on', '-y',
     outputFile,
     path.join(folderPath, '*') // 让 7z 自行处理通配符
   ];
