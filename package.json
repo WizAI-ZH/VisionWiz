@@ -92,6 +92,10 @@
       {
         "from": "tools/WizResizer.exe",
         "to": "tools/WizResizer.exe"
+      },
+      {
+        "from": "tools/visionwiz_image_sync",
+        "to": "tools/visionwiz_image_sync"
       }
     ],
     "asar": true,

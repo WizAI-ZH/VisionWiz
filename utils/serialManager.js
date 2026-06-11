@@ -1,5 +1,7 @@
-const { ipcMain } = require('electron');
+const { app, ipcMain } = require('electron');
 const { SerialPort } = require('serialport');
+const fs = require('fs');
+const path = require('path');
 const AuthService = require('../cryptoservice_critical_loader.js');
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -9,6 +11,13 @@ const PREVIEW_DEFAULTS = Object.freeze({
   quality: 20,
   fps: 1,
 });
+const IMAGE_SYNC_FILES = Object.freeze([
+  'main.py',
+  'usys.mpy',
+  'visionwiz_image_sync.mpy',
+]);
+const RAW_REPL_TIMEOUT_MS = 6000;
+const RAW_REPL_CHUNK_SIZE = 512;
 
 console.log('[serialmanager] module loaded');
 
@@ -28,6 +37,175 @@ let previewState = {
   fps: PREVIEW_DEFAULTS.fps,
   error: '',
 };
+
+function emitImageSyncUploadProgress(payload = {}) {
+  const nextPayload = {
+    status: payload.status || 'info',
+    message: payload.message || '',
+    file: payload.file || '',
+    percent: Number.isFinite(payload.percent) ? payload.percent : null,
+  };
+  console.log('[K210 IMAGE SYNC][UPLOAD]', JSON.stringify(nextPayload));
+  ipcMain.emit('k210-image-sync-upload-progress-internal', nextPayload);
+}
+
+function resolveImageSyncPayloadDir() {
+  const candidates = [
+    app && app.isPackaged
+      ? path.join(process.resourcesPath, 'tools', 'visionwiz_image_sync', 'VESIBIT')
+      : '',
+    path.join(process.cwd(), 'tools', 'visionwiz_image_sync', 'VESIBIT'),
+    path.join(__dirname, '..', 'tools', 'visionwiz_image_sync', 'VESIBIT'),
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    if (IMAGE_SYNC_FILES.every((fileName) => fs.existsSync(path.join(candidate, fileName)))) {
+      return candidate;
+    }
+  }
+
+  throw new Error(`Image sync payload files are missing. Checked: ${candidates.join('; ')}`);
+}
+
+function openSerialPort(pathName) {
+  const port = new SerialPort({
+    path: pathName,
+    baudRate: 115200,
+    dataBits: 8,
+    parity: 'none',
+    stopBits: 1,
+    autoOpen: false,
+  });
+  return new Promise((resolve, reject) => {
+    port.open((error) => (error ? reject(error) : resolve(port)));
+  });
+}
+
+function closeSerialPort(port) {
+  return new Promise((resolve) => {
+    if (!port || !port.isOpen) {
+      resolve();
+      return;
+    }
+    port.close(() => resolve());
+  });
+}
+
+function writeAndDrain(port, payload) {
+  return new Promise((resolve, reject) => {
+    if (!port || !port.isOpen) {
+      reject(new Error('serial port is not open'));
+      return;
+    }
+    port.write(payload, (writeError) => {
+      if (writeError) {
+        reject(writeError);
+        return;
+      }
+      port.drain((drainError) => (drainError ? reject(drainError) : resolve()));
+    });
+  });
+}
+
+function waitForRawReplResponse(port, marker, timeoutMs = RAW_REPL_TIMEOUT_MS) {
+  return new Promise((resolve, reject) => {
+    let buffer = Buffer.alloc(0);
+    const markerBuffer = Buffer.from(marker, 'utf8');
+    const errorBuffer = Buffer.from('Traceback', 'utf8');
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error(`raw REPL response timeout: ${marker}`));
+    }, timeoutMs);
+
+    function cleanup() {
+      clearTimeout(timer);
+      port.off('data', onData);
+      port.off('error', onError);
+    }
+
+    function onError(error) {
+      cleanup();
+      reject(error);
+    }
+
+    function onData(chunk) {
+      buffer = Buffer.concat([buffer, chunk]);
+      if (buffer.indexOf(errorBuffer) !== -1) {
+        cleanup();
+        reject(new Error(buffer.toString('utf8')));
+        return;
+      }
+      if (buffer.indexOf(markerBuffer) !== -1) {
+        cleanup();
+        resolve(buffer.toString('utf8'));
+      }
+    }
+
+    port.on('data', onData);
+    port.on('error', onError);
+  });
+}
+
+async function enterRawRepl(port) {
+  await writeAndDrain(port, Buffer.from([0x03, 0x03]));
+  await delay(250);
+  await writeAndDrain(port, Buffer.from([0x01]));
+  try {
+    await waitForRawReplResponse(port, 'raw REPL', 2500);
+  } catch (_error) {
+    await writeAndDrain(port, Buffer.from([0x03, 0x03]));
+    await delay(250);
+    await writeAndDrain(port, Buffer.from([0x01]));
+    await waitForRawReplResponse(port, 'raw REPL', RAW_REPL_TIMEOUT_MS);
+  }
+}
+
+async function rawExec(port, code, marker) {
+  const waitPromise = waitForRawReplResponse(port, marker, RAW_REPL_TIMEOUT_MS);
+  await writeAndDrain(port, code);
+  await writeAndDrain(port, Buffer.from([0x04]));
+  return waitPromise;
+}
+
+async function backupBoardMain(port) {
+  const marker = 'VW_BACKUP_DONE';
+  const code = [
+    "import os",
+    "try:",
+    "    data = open('/flash/main.py', 'rb').read()",
+    "    open('/flash/main_visionwiz_backup.py', 'wb').write(data)",
+    "except Exception as e:",
+    "    pass",
+    `print('${marker}')`,
+  ].join('\n');
+  await rawExec(port, code, marker);
+}
+
+async function writeRemoteFile(port, remotePath, data, progressBase, progressSpan, fileName) {
+  const openMarker = `VW_OPEN_${Date.now()}`;
+  await rawExec(port, `f=open('${remotePath}','wb')\nprint('${openMarker}')`, openMarker);
+
+  for (let offset = 0; offset < data.length; offset += RAW_REPL_CHUNK_SIZE) {
+    const chunk = data.slice(offset, offset + RAW_REPL_CHUNK_SIZE);
+    const marker = `VW_WRITE_${offset}_${Date.now()}`;
+    const chunkLiteral = JSON.stringify(chunk.toString('base64'));
+    const code = [
+      "import ubinascii",
+      `f.write(ubinascii.a2b_base64(${chunkLiteral}))`,
+      `print('${marker}')`,
+    ].join('\n');
+    await rawExec(port, code, marker);
+    emitImageSyncUploadProgress({
+      status: 'uploading',
+      message: 'uploading',
+      file: fileName,
+      percent: Math.min(95, progressBase + Math.round(((offset + chunk.length) / data.length) * progressSpan)),
+    });
+  }
+
+  const closeMarker = `VW_CLOSE_${Date.now()}`;
+  await rawExec(port, `f.close()\nprint('${closeMarker}')`, closeMarker);
+}
 
 function stopPortWatch() {
   if (portWatchTimer) {
@@ -242,6 +420,142 @@ exports.stopK210Preview = async () => {
 };
 
 exports.getK210PreviewState = () => ({ ...previewState });
+
+exports.uploadImageSyncProgram = async () => {
+  const uploadPortPath = currentPortPath || previewState.portPath;
+  if (!uploadPortPath) {
+    throw new Error('Device is not connected.');
+  }
+
+  let uploadPort = null;
+  emitImageSyncUploadProgress({
+    status: 'preparing',
+    message: 'preparing',
+    percent: 0,
+  });
+
+  try {
+    const payloadDir = resolveImageSyncPayloadDir();
+    const payloads = IMAGE_SYNC_FILES.map((fileName) => ({
+      fileName,
+      remotePath: `/flash/${fileName}`,
+      data: fs.readFileSync(path.join(payloadDir, fileName)),
+    }));
+
+    emitImageSyncUploadProgress({
+      status: 'stopping-preview',
+      message: 'stopping-preview',
+      percent: 5,
+    });
+    if (currentAuth) {
+      try {
+        await currentAuth.stopPreview({ skipCommand: true });
+      } catch (_error) {}
+      currentAuth.cleanup();
+      currentAuth = null;
+    }
+    stopPortWatch();
+    disconnectHandled = true;
+    emitPreviewStatus({
+      connected: true,
+      authenticated: false,
+      previewActive: false,
+      portPath: uploadPortPath,
+      error: '',
+    });
+    await delay(800);
+
+    emitImageSyncUploadProgress({
+      status: 'connecting-raw-repl',
+      message: 'connecting-raw-repl',
+      percent: 10,
+    });
+    uploadPort = await openSerialPort(uploadPortPath);
+    await enterRawRepl(uploadPort);
+
+    emitImageSyncUploadProgress({
+      status: 'backup',
+      message: 'backup',
+      percent: 18,
+    });
+    await backupBoardMain(uploadPort);
+
+    const fileSpan = 60 / payloads.length;
+    for (let index = 0; index < payloads.length; index += 1) {
+      const item = payloads[index];
+      emitImageSyncUploadProgress({
+        status: 'uploading',
+        message: 'uploading',
+        file: item.fileName,
+        percent: Math.round(22 + index * fileSpan),
+      });
+      await writeRemoteFile(
+        uploadPort,
+        item.remotePath,
+        item.data,
+        Math.round(22 + index * fileSpan),
+        Math.round(fileSpan),
+        item.fileName
+      );
+    }
+
+    emitImageSyncUploadProgress({
+      status: 'restarting',
+      message: 'restarting',
+      percent: 88,
+    });
+    await writeAndDrain(uploadPort, Buffer.from([0x04]));
+    await delay(250);
+    await closeSerialPort(uploadPort);
+    uploadPort = null;
+    try {
+      await hardwareReset(uploadPortPath);
+    } catch (_resetError) {}
+    await delay(1200);
+
+    emitImageSyncUploadProgress({
+      status: 'reconnecting',
+      message: 'reconnecting',
+      percent: 94,
+    });
+    disconnectHandled = false;
+    await exports.connectPort(uploadPortPath);
+
+    emitImageSyncUploadProgress({
+      status: 'starting-preview',
+      message: 'starting-preview',
+      percent: 98,
+    });
+    await exports.startK210Preview();
+
+    emitImageSyncUploadProgress({
+      status: 'done',
+      message: 'done',
+      percent: 100,
+    });
+    return {
+      ok: true,
+      state: exports.getK210PreviewState(),
+    };
+  } catch (error) {
+    await closeSerialPort(uploadPort);
+    disconnectHandled = false;
+    emitImageSyncUploadProgress({
+      status: 'failed',
+      message: error.message,
+      percent: null,
+    });
+    emitPreviewError(error);
+    try {
+      if (!currentAuth) {
+        await exports.connectPort(uploadPortPath);
+      }
+    } catch (restoreError) {
+      console.warn('[K210 IMAGE SYNC][UPLOAD] restore connection failed:', restoreError.message);
+    }
+    throw error;
+  }
+};
 
 exports.disconnectPort = () => {
   disconnectHandled = true;

@@ -45,6 +45,7 @@ const {
   startK210Preview,
   stopK210Preview,
   getK210PreviewState,
+  uploadImageSyncProgram,
 } = require("./utils_protected/serialManager_loader");
 console.log('[MAIN] after serialManager');
 console.log('[MAIN] before cryptoservice');
@@ -1935,6 +1936,7 @@ ipcMain.handle("disconnect-port", () => require("./utils_protected/serialManager
 ipcMain.handle("start-k210-preview", () => startK210Preview());
 ipcMain.handle("stop-k210-preview", () => stopK210Preview());
 ipcMain.handle("get-k210-preview-state", () => getK210PreviewState());
+ipcMain.handle("upload-k210-image-sync-program", () => uploadImageSyncProgram());
 
 function afterAuthSuccess() {
   if (authWindow) {
@@ -2085,6 +2087,16 @@ ipcMain.on("k210-preview-error-internal", (eventOrPayload, payloadMaybe) => {
     sendMessageToView(mainWindow_views, "dataCollect", "k210-preview-error", payload);
   } else {
     console.warn("[K210 PREVIEW] dataCollect view unavailable for error event");
+  }
+});
+
+ipcMain.on("k210-image-sync-upload-progress-internal", (eventOrPayload, payloadMaybe) => {
+  const payload = payloadMaybe || eventOrPayload;
+  const view = mainWindow_views?.dataCollect;
+  if (payload && view?.webContents && !view.webContents.isDestroyed()) {
+    sendMessageToView(mainWindow_views, "dataCollect", "k210-image-sync-upload-progress", payload);
+  } else {
+    console.warn("[K210 IMAGE SYNC] dataCollect view unavailable for upload progress event");
   }
 });
 

@@ -170,9 +170,23 @@
     #cbtn,
     #k210_preview_start,
     #k210_preview_stop,
+    #k210_image_sync_upload,
     #img_history {
       min-height: 46px;
       white-space: normal;
+    }
+
+    .image-sync-upload-status {
+      display: none;
+      min-height: 34px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-size: 12px;
+      line-height: 1.35;
+      text-align: center;
+      overflow-wrap: anywhere;
     }
 
     #img_capture {
@@ -363,6 +377,8 @@
 
         <button type="button" id="k210_preview_start" class="btn btn-success" disabled>Start Preview</button>
         <button type="button" id="k210_preview_stop" class="btn btn-outline-secondary" disabled>Stop Preview</button>
+        <button type="button" id="k210_image_sync_upload" class="btn btn-warning" disabled>Upload Image Sync Program</button>
+        <div id="k210_image_sync_upload_status" class="image-sync-upload-status"></div>
         <button type="button" id="img_capture" class="btn btn-primary btn-lg">Capture</button>
         <button type="button" id="img_history" class="btn btn-secondary btn-lg" data-bs-toggle="modal" data-bs-target="#ImgModal">Capture Record</button>
       </div>

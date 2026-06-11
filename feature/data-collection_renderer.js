@@ -26,11 +26,14 @@ const k210PreviewPlaceholder = document.getElementById('k210_preview_placeholder
 const k210PreviewStatus = document.getElementById('k210_preview_status');
 const k210PreviewStart = document.getElementById('k210_preview_start');
 const k210PreviewStop = document.getElementById('k210_preview_stop');
+const k210ImageSyncUpload = document.getElementById('k210_image_sync_upload');
+const k210ImageSyncUploadStatus = document.getElementById('k210_image_sync_upload_status');
 const previewSourceBadge = document.getElementById('preview_source_badge');
 const burstModeCheckbox = document.getElementById('burst_mode');
 const burstCountInput = document.getElementById('burst_count');
 
 let burstCaptureState = null;
+let imageSyncUploading = false;
 
 function isUsingK210Preview() {
   return latestPreviewState.previewActive && !!currentPreviewDataUrl;
@@ -261,8 +264,11 @@ function getPreviewStatusText(state) {
 }
 
 function updatePreviewButtons(state) {
-  k210PreviewStart.disabled = !state.authenticated || state.previewActive;
-  k210PreviewStop.disabled = !state.previewActive;
+  k210PreviewStart.disabled = imageSyncUploading || !state.authenticated || state.previewActive;
+  k210PreviewStop.disabled = imageSyncUploading || !state.previewActive;
+  if (k210ImageSyncUpload) {
+    k210ImageSyncUpload.disabled = imageSyncUploading || !state.connected;
+  }
 }
 
 function updatePreviewState(partial = {}) {
@@ -313,6 +319,93 @@ k210PreviewStop.addEventListener('click', async () => {
     updatePreviewState({ error: error.message });
     Notiflix.Notify.failure(error.message);
   }
+});
+
+function getImageSyncUploadText(payload = {}) {
+  const locales = current_locales_local || {};
+  const key = `k210_image_sync_upload_${payload.status}`;
+  const baseText = locales[key] || payload.message || payload.status || '';
+  const fileText = payload.file ? ` ${payload.file}` : '';
+  const percentText = Number.isFinite(payload.percent) ? ` ${payload.percent}%` : '';
+  return `${baseText}${fileText}${percentText}`.trim();
+}
+
+function setImageSyncUploadStatus(payload = {}) {
+  if (!k210ImageSyncUploadStatus) return;
+  const status = payload.status || '';
+  const isVisible = !!status && status !== 'idle';
+  k210ImageSyncUploadStatus.style.display = isVisible ? 'block' : 'none';
+  k210ImageSyncUploadStatus.textContent = getImageSyncUploadText(payload);
+
+  if (status === 'failed') {
+    k210ImageSyncUploadStatus.style.background = '#fee2e2';
+    k210ImageSyncUploadStatus.style.color = '#991b1b';
+  } else if (status === 'done') {
+    k210ImageSyncUploadStatus.style.background = '#dcfce7';
+    k210ImageSyncUploadStatus.style.color = '#166534';
+  } else {
+    k210ImageSyncUploadStatus.style.background = '#eef2ff';
+    k210ImageSyncUploadStatus.style.color = '#3730a3';
+  }
+}
+
+async function startImageSyncUpload() {
+  if (imageSyncUploading) return;
+  imageSyncUploading = true;
+  updatePreviewButtons(latestPreviewState);
+  setImageSyncUploadStatus({
+    status: 'preparing',
+    percent: 0,
+  });
+
+  try {
+    const result = await ipcRenderer.invoke('upload-k210-image-sync-program');
+    if (result && result.state) {
+      updatePreviewState(result.state);
+    }
+    setImageSyncUploadStatus({
+      status: 'done',
+      percent: 100,
+    });
+    Notiflix.Notify.success(current_locales_local.k210_image_sync_upload_done || 'Image sync program uploaded.');
+  } catch (error) {
+    setImageSyncUploadStatus({
+      status: 'failed',
+      message: error.message,
+    });
+    Notiflix.Notify.failure(error.message);
+  } finally {
+    imageSyncUploading = false;
+    updatePreviewButtons(latestPreviewState);
+  }
+}
+
+function confirmImageSyncUpload() {
+  const title = current_locales_local.k210_image_sync_upload_confirm_title || 'Upload image sync program?';
+  const message = current_locales_local.k210_image_sync_upload_confirm_message
+    || 'This will back up and replace the controller main.py, then restart and reconnect preview.';
+  const button = current_locales_local.k210_image_sync_upload_confirm_button || 'Upload';
+
+  if (typeof Notiflix !== 'undefined' && Notiflix.Report && typeof Notiflix.Report.warning === 'function') {
+    Notiflix.Report.warning(title, message, button, startImageSyncUpload);
+    return;
+  }
+
+  if (window.confirm(`${title}\n\n${message}`)) {
+    startImageSyncUpload();
+  }
+}
+
+if (k210ImageSyncUpload) {
+  k210ImageSyncUpload.addEventListener('click', confirmImageSyncUpload);
+}
+
+ipcRenderer.on('k210-image-sync-upload-progress', (_event, payload = {}) => {
+  if (payload.status && payload.status !== 'done' && payload.status !== 'failed') {
+    imageSyncUploading = true;
+    updatePreviewButtons(latestPreviewState);
+  }
+  setImageSyncUploadStatus(payload);
 });
 
 ipcRenderer.on('k210-preview-frame', (_event, payload) => {
@@ -417,7 +510,7 @@ function applyResponsiveLayout({ width, height }) {
     captureBtn.style.fontSize = `${clamp(Math.floor(btnSize * 0.16), 14, 18)}px`;
   }
 
-  ['#img_history', '#k210_preview_start', '#k210_preview_stop', '#cbtn'].forEach((selector) => {
+  ['#img_history', '#k210_preview_start', '#k210_preview_stop', '#k210_image_sync_upload', '#cbtn'].forEach((selector) => {
     const el = $(selector);
     if (el) {
       el.style.minWidth = `${clamp(Math.floor(workW * 0.14), 140, 200)}px`;
