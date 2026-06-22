@@ -45,7 +45,9 @@ const {
   startK210Preview,
   stopK210Preview,
   getK210PreviewState,
+  setK210ImageSyncParams,
   uploadImageSyncProgram,
+  uploadK210ModelTestProgram,
 } = require("./utils_protected/serialManager_loader");
 console.log('[MAIN] after serialManager');
 console.log('[MAIN] before cryptoservice');
@@ -1936,7 +1938,9 @@ ipcMain.handle("disconnect-port", () => require("./utils_protected/serialManager
 ipcMain.handle("start-k210-preview", () => startK210Preview());
 ipcMain.handle("stop-k210-preview", () => stopK210Preview());
 ipcMain.handle("get-k210-preview-state", () => getK210PreviewState());
-ipcMain.handle("upload-k210-image-sync-program", () => uploadImageSyncProgram());
+ipcMain.handle("set-k210-image-sync-params", (_event, options) => setK210ImageSyncParams(options));
+ipcMain.handle("upload-k210-image-sync-program", (_event, options) => uploadImageSyncProgram(options));
+ipcMain.handle("upload-k210-model-test-program", (_event, options) => uploadK210ModelTestProgram(options));
 
 function afterAuthSuccess() {
   if (authWindow) {
@@ -2078,6 +2082,12 @@ ipcMain.on("k210-preview-status-internal", (eventOrPayload, payloadMaybe) => {
   } else {
     console.warn("[K210 PREVIEW] dataCollect view unavailable for status event");
   }
+  for (const viewName of ["imgCls", "objectDetection"]) {
+    const trainView = mainWindow_views?.[viewName];
+    if (payload && trainView?.webContents && !trainView.webContents.isDestroyed()) {
+      sendMessageToView(mainWindow_views, viewName, "k210-preview-status", payload);
+    }
+  }
 });
 
 ipcMain.on("k210-preview-error-internal", (eventOrPayload, payloadMaybe) => {
@@ -2101,6 +2111,16 @@ ipcMain.on("k210-image-sync-upload-progress-internal", (eventOrPayload, payloadM
 });
 
 //使用系统默认图片查看器打开图片
+ipcMain.on("k210-model-test-upload-progress-internal", (eventOrPayload, payloadMaybe) => {
+  const payload = payloadMaybe || eventOrPayload;
+  for (const viewName of ["imgCls", "objectDetection"]) {
+    const view = mainWindow_views?.[viewName];
+    if (payload && view?.webContents && !view.webContents.isDestroyed()) {
+      sendMessageToView(mainWindow_views, viewName, "k210-model-test-upload-progress", payload);
+    }
+  }
+});
+
 ipcMain.on("open_image", (event, imagePath) => {
   const fullPath = path.normalize(imagePath);
   console.log(fullPath);
@@ -2915,6 +2935,40 @@ ipcMain.on("stop_process", function (event, arg) {
   });
 });
 
+function getTrainRunDir(runName) {
+  return path.join(process.cwd(), "trainOutput", path.basename(String(runName || "")));
+}
+
+function getTrainDisplayName(runName) {
+  const metaPath = path.join(getTrainRunDir(runName), "display_name.json");
+  try {
+    if (!fs.existsSync(metaPath)) return "";
+    const data = JSON.parse(fs.readFileSync(metaPath, "utf8"));
+    return String(data.displayName || "").trim();
+  } catch (error) {
+    console.warn("[TRAIN HISTORY] read display name failed:", runName, error.message);
+    return "";
+  }
+}
+
+ipcMain.handle("rename-train-history", async (_event, payload = {}) => {
+  const runName = path.basename(String(payload.dir || ""));
+  const displayName = String(payload.displayName || "").trim();
+  if (!runName || !displayName) {
+    throw new Error("Invalid training record name.");
+  }
+  const runDir = getTrainRunDir(runName);
+  if (!fs.existsSync(runDir)) {
+    throw new Error("Training record does not exist.");
+  }
+  fs.writeFileSync(
+    path.join(runDir, "display_name.json"),
+    JSON.stringify({ displayName, updatedAt: new Date().toISOString() }, null, 2),
+    "utf8"
+  );
+  return { ok: true, dir: runName, displayName };
+});
+
 ipcMain.on("update_train_history_list", function (event, arg) {
   const outDir = path.join(process.cwd(), "trainOutput");
   if (!fs.existsSync(outDir)) {
@@ -2928,9 +2982,9 @@ ipcMain.on("update_train_history_list", function (event, arg) {
       //如果文件夹中有success文件，则代码训练成功并且训练成功
       let checkDir = fs.existsSync("trainOutput/" + f + "/success");
       if (checkDir) {
-        op = { name: f, train_result: "success" };
+        op = { name: f, displayName: getTrainDisplayName(f), train_result: "success" };
       } else {
-        op = { name: f, train_result: "danger" };
+        op = { name: f, displayName: getTrainDisplayName(f), train_result: "danger" };
       }
       flist.push(op);
     }
@@ -2984,6 +3038,235 @@ ipcMain.on("open-path", function (_event, targetPath) {
   });
 });
 
+function isSupportedImageFile(filePath) {
+  return IMAGE_FILE_EXTENSIONS.has(path.extname(String(filePath || "")).toLowerCase());
+}
+
+function getCaptureTrashDir(filePath) {
+  return path.join(path.dirname(filePath), ".visionwiz_capture_trash");
+}
+
+function buildCaptureTrashPath(filePath) {
+  const trashDir = getCaptureTrashDir(filePath);
+  fs.mkdirSync(trashDir, { recursive: true });
+  return path.join(trashDir, `${Date.now()}_${path.basename(filePath)}`);
+}
+
+function moveCaptureFile(sourcePath, targetPath) {
+  if (!isSupportedImageFile(sourcePath) || !isSupportedImageFile(targetPath)) {
+    throw new Error("Unsupported image file.");
+  }
+  fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+  if (fs.existsSync(targetPath)) {
+    throw new Error("Target image already exists.");
+  }
+  fs.renameSync(sourcePath, targetPath);
+}
+
+function buildCaptureRenameTarget(sourcePath, rawName) {
+  const sourceExt = path.extname(sourcePath);
+  const trimmedName = String(rawName || "").trim();
+  if (!trimmedName) {
+    throw new Error("Invalid image name.");
+  }
+  const sanitizedName = path.basename(trimmedName);
+  if (sanitizedName !== trimmedName || sanitizedName === "." || sanitizedName === "..") {
+    throw new Error("Invalid image name.");
+  }
+  const targetName = path.extname(sanitizedName) ? sanitizedName : `${sanitizedName}${sourceExt}`;
+  if (!isSupportedImageFile(targetName)) {
+    throw new Error("Unsupported image file extension.");
+  }
+  return {
+    targetName,
+    targetPath: path.join(path.dirname(sourcePath), targetName),
+  };
+}
+
+ipcMain.handle("capture-images-delete", async (_event, payload = {}) => {
+  const targetPaths = Array.isArray(payload.paths) ? payload.paths : [];
+  const entries = [];
+  for (const targetPath of targetPaths) {
+    const resolvedPath = path.resolve(String(targetPath || ""));
+    if (!isSupportedImageFile(resolvedPath)) {
+      continue;
+    }
+    try {
+      const stat = fs.statSync(resolvedPath);
+      if (!stat.isFile()) {
+        continue;
+      }
+      const trashPath = buildCaptureTrashPath(resolvedPath);
+      fs.renameSync(resolvedPath, trashPath);
+      entries.push({
+        originalPath: resolvedPath,
+        trashPath,
+      });
+    } catch (error) {
+      console.warn("[IMG] delete image failed:", resolvedPath, error.message);
+    }
+  }
+  return {
+    deleted: entries.length,
+    operation: {
+      type: "delete",
+      entries,
+    },
+  };
+});
+
+ipcMain.handle("capture-image-rename", async (_event, payload = {}) => {
+  const sourcePath = path.resolve(String(payload.path || ""));
+  if (!isSupportedImageFile(sourcePath)) {
+    throw new Error("Unsupported image file.");
+  }
+  const { targetName, targetPath } = buildCaptureRenameTarget(sourcePath, payload.newName);
+  if (path.resolve(targetPath) === sourcePath) {
+    return { path: sourcePath };
+  }
+  if (fs.existsSync(targetPath)) {
+    throw new Error("A file with this name already exists.");
+  }
+  fs.renameSync(sourcePath, targetPath);
+  return {
+    path: targetPath,
+    name: targetName,
+    operation: {
+      type: "rename",
+      oldPath: sourcePath,
+      newPath: targetPath,
+    },
+  };
+});
+
+ipcMain.handle("capture-images-rename", async (_event, payload = {}) => {
+  const sourcePaths = Array.isArray(payload.paths)
+    ? payload.paths.map((item) => path.resolve(String(item || ""))).filter(Boolean)
+    : [];
+  const baseName = String(payload.baseName || "").trim();
+  if (!sourcePaths.length || !baseName) {
+    throw new Error("Invalid image name.");
+  }
+
+  const renamePlan = sourcePaths.map((sourcePath, index) => {
+    if (!isSupportedImageFile(sourcePath)) {
+      throw new Error("Unsupported image file.");
+    }
+    const stat = fs.statSync(sourcePath);
+    if (!stat.isFile()) {
+      throw new Error("Invalid image file.");
+    }
+    const indexedName = sourcePaths.length === 1 ? baseName : `${baseName}(${index + 1})`;
+    const { targetName, targetPath } = buildCaptureRenameTarget(sourcePath, indexedName);
+    return {
+      oldPath: sourcePath,
+      newPath: path.resolve(targetPath),
+      name: targetName,
+    };
+  });
+
+  const targetSet = new Set();
+  for (const item of renamePlan) {
+    if (item.oldPath === item.newPath) {
+      continue;
+    }
+    if (targetSet.has(item.newPath)) {
+      throw new Error("Duplicate target image name.");
+    }
+    targetSet.add(item.newPath);
+    const occupyingEntry = renamePlan.find((entry) => entry.oldPath === item.newPath);
+    if (fs.existsSync(item.newPath) && (!occupyingEntry || occupyingEntry.oldPath === occupyingEntry.newPath)) {
+      throw new Error("A file with this name already exists.");
+    }
+  }
+
+  const entries = [];
+  const tempEntries = [];
+  try {
+    for (const item of renamePlan) {
+      if (item.oldPath === item.newPath) {
+        continue;
+      }
+      const tempPath = path.join(path.dirname(item.oldPath), `.visionwiz_rename_${Date.now()}_${Math.random().toString(16).slice(2)}${path.extname(item.oldPath)}`);
+      fs.renameSync(item.oldPath, tempPath);
+      tempEntries.push({ ...item, tempPath });
+    }
+    for (const item of tempEntries) {
+      fs.renameSync(item.tempPath, item.newPath);
+      entries.push({
+        oldPath: item.oldPath,
+        newPath: item.newPath,
+        name: item.name,
+      });
+    }
+  } catch (error) {
+    for (const item of tempEntries.reverse()) {
+      if (fs.existsSync(item.tempPath) && !fs.existsSync(item.oldPath)) {
+        try {
+          fs.renameSync(item.tempPath, item.oldPath);
+        } catch (rollbackError) {
+          console.warn("[IMG] rollback rename failed:", rollbackError.message);
+        }
+      }
+    }
+    throw error;
+  }
+
+  return {
+    renamed: entries.length,
+    entries,
+    operation: {
+      type: "rename",
+      entries,
+    },
+  };
+});
+
+ipcMain.handle("capture-images-undo", async (_event, operation = {}) => {
+  if (operation.type === "delete") {
+    const entries = Array.isArray(operation.entries) ? operation.entries : [];
+    for (const entry of entries) {
+      moveCaptureFile(path.resolve(entry.trashPath), path.resolve(entry.originalPath));
+    }
+    return { ok: true };
+  }
+  if (operation.type === "rename") {
+    const entries = Array.isArray(operation.entries) ? operation.entries : [operation];
+    for (const entry of entries.slice().reverse()) {
+      moveCaptureFile(path.resolve(entry.newPath), path.resolve(entry.oldPath));
+    }
+    return { ok: true };
+  }
+  throw new Error("Unsupported undo operation.");
+});
+
+ipcMain.handle("capture-images-redo", async (_event, operation = {}) => {
+  if (operation.type === "delete") {
+    const entries = Array.isArray(operation.entries) ? operation.entries : [];
+    for (const entry of entries) {
+      moveCaptureFile(path.resolve(entry.originalPath), path.resolve(entry.trashPath));
+    }
+    return { ok: true };
+  }
+  if (operation.type === "rename") {
+    const entries = Array.isArray(operation.entries) ? operation.entries : [operation];
+    for (const entry of entries) {
+      moveCaptureFile(path.resolve(entry.oldPath), path.resolve(entry.newPath));
+    }
+    return { ok: true };
+  }
+  throw new Error("Unsupported redo operation.");
+});
+
+ipcMain.handle("capture-image-show-in-folder", async (_event, targetPath) => {
+  const resolvedPath = path.resolve(String(targetPath || ""));
+  if (!isSupportedImageFile(resolvedPath) || !fs.existsSync(resolvedPath)) {
+    return false;
+  }
+  electronShell.showItemInFolder(resolvedPath);
+  return true;
+});
+
 ipcMain.on("del_dir", function (event, arg) {
   //收到删除文件夹指令后进行文件夹及其内部所有内容的删除
   delDirRecurse(process.cwd() + "/trainOutput/" + arg);
@@ -3009,7 +3292,7 @@ ipcMain.on("clean_file", function (event, dir) {
 
 ipcMain.on("readimgdir", function (event, arg) {
   //向dataCollect窗口发送读取文件夹指令
-  let img_list = read_img_dir(arg);
+  let img_list = read_img_dir_detail(arg);
   sendMessageToView(mainWindow_views, "dataCollect", "readimgdir", img_list);
 });
 
@@ -3052,6 +3335,27 @@ function read_img_dir(path) {
     try {
       let ms = image(fs.readFileSync(item.fullPath));
       ms.mimeType && imageList.push(item.filename);
+    } catch (error) {
+      console.warn("[IMG] skip unreadable image:", item.fullPath, error.message);
+    }
+  });
+  console.log(imageList);
+  return imageList;
+}
+
+function read_img_dir_detail(dirPath) {
+  let imageList = [];
+  getFileList(dirPath).forEach((item) => {
+    try {
+      let ms = image(fs.readFileSync(item.fullPath));
+      if (!ms.mimeType) return;
+      const stat = fs.statSync(item.fullPath);
+      imageList.push({
+        filename: item.filename,
+        size: stat.size,
+        mtimeMs: stat.mtimeMs,
+        ext: path.extname(item.filename).toLowerCase(),
+      });
     } catch (error) {
       console.warn("[IMG] skip unreadable image:", item.fullPath, error.message);
     }

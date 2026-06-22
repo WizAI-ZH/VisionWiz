@@ -370,6 +370,198 @@ document.getElementById('test_model_button').addEventListener('click', function 
     ipcRenderer.send('update_test_result_yolo', current_tab_dir)
 });
 
+function getModelTestUploadText(key, fallback) {
+    return current_locales?.[key] || fallback;
+}
+
+async function refreshModelTestUploadButton() {
+    const button = document.getElementById('upload_model_test_button');
+    const status = document.getElementById('upload_model_test_status');
+    if (!button) return;
+    button.textContent = getModelTestUploadText('upload_model_test_button', 'Upload Test Program');
+    try {
+        const state = await ipcRenderer.invoke('get-k210-preview-state');
+        const enabled = !!state.connected && !!state.supportsImageSyncUpload && !!current_tab_dir;
+        button.disabled = !enabled;
+        if (status) {
+            status.textContent = enabled ? '' : getModelTestUploadText('upload_model_test_vesibit_only', 'Connect VESIBIT first');
+        }
+    } catch (error) {
+        button.disabled = true;
+        if (status) status.textContent = error.message;
+    }
+}
+
+document.getElementById('upload_model_test_button')?.addEventListener('click', async function () {
+    if (!current_tab_dir) {
+        Notiflix.Notify.warning(getModelTestUploadText('upload_model_test_no_record', 'Please open a training record first.'));
+        return;
+    }
+    const status = document.getElementById('upload_model_test_status');
+    this.disabled = true;
+    if (status) status.textContent = getModelTestUploadText('upload_model_test_preparing', 'Preparing upload');
+    let finalStatus = '';
+    try {
+        await ipcRenderer.invoke('upload-k210-model-test-program', { dir: current_tab_dir });
+        finalStatus = getModelTestUploadText('upload_model_test_done', 'Test program uploaded');
+        Notiflix.Notify.success(getModelTestUploadText('upload_model_test_done', 'Test program uploaded'));
+    } catch (error) {
+        finalStatus = error.message;
+        Notiflix.Notify.failure(error.message);
+    } finally {
+        await refreshModelTestUploadButton();
+        if (status && finalStatus) status.textContent = finalStatus;
+    }
+});
+
+ipcRenderer.on('k210-model-test-upload-progress', function (_event, payload = {}) {
+    const status = document.getElementById('upload_model_test_status');
+    if (!status) return;
+    const key = `upload_model_test_${payload.status || payload.message || 'preparing'}`;
+    const baseText = getModelTestUploadText(key, payload.message || payload.status || '');
+    const fileText = payload.file ? ` ${payload.file}` : '';
+    const percentText = Number.isFinite(payload.percent) ? ` ${payload.percent}%` : '';
+    status.textContent = `${baseText}${fileText}${percentText}`.trim();
+});
+
+ipcRenderer.on('k210-preview-status', function () {
+    refreshModelTestUploadButton();
+});
+
+function getTrainHistoryText(key, fallback) {
+    return current_locales?.[key] || fallback;
+}
+
+function getDefaultTrainHistoryLabel(dirName) {
+    const parts = String(dirName || '').split('_');
+    const year = parts[1] || '';
+    const time = parts[2] ? parts[2].replace('-', ':').replace('-', ':') : '';
+    return `${year} ${time}`.trim() || dirName;
+}
+
+function ensureTrainHistoryContextMenu() {
+    let menu = document.getElementById('train_history_context_menu_yolo');
+    if (menu) return menu;
+    menu = document.createElement('div');
+    menu.id = 'train_history_context_menu_yolo';
+    menu.style.cssText = 'position:fixed;display:none;z-index:4000;min-width:170px;padding:6px;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 14px 32px rgba(15,23,42,.2);';
+    document.body.appendChild(menu);
+    return menu;
+}
+
+function hideTrainHistoryContextMenu() {
+    const menu = document.getElementById('train_history_context_menu_yolo');
+    if (menu) menu.style.display = 'none';
+}
+
+function ensureTrainRenameDialog() {
+    let overlay = document.getElementById('train_rename_overlay_yolo');
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.id = 'train_rename_overlay_yolo';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:4100;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.38);';
+    overlay.innerHTML = `
+        <div style="width:min(430px,96vw);padding:18px;border-radius:14px;background:#fff;box-shadow:0 18px 42px rgba(15,23,42,.26);">
+            <h3 style="margin:0 0 12px;font-size:18px;font-weight:600;">${escapeHtml(getTrainHistoryText('train_record_rename_prompt', 'Rename training record'))}</h3>
+            <input id="train_rename_input_yolo" class="form-control" type="text">
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px;">
+                <button id="train_rename_cancel_yolo" type="button" class="btn btn-secondary">${escapeHtml(getTrainHistoryText('capture_rename_cancel', 'Cancel'))}</button>
+                <button id="train_rename_confirm_yolo" type="button" class="btn btn-primary">${escapeHtml(getTrainHistoryText('capture_rename_confirm', 'Rename'))}</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+    return overlay;
+}
+
+function askTrainDisplayName(currentName) {
+    return new Promise((resolve) => {
+        const overlay = ensureTrainRenameDialog();
+        const input = document.getElementById('train_rename_input_yolo');
+        const cancel = document.getElementById('train_rename_cancel_yolo');
+        const confirm = document.getElementById('train_rename_confirm_yolo');
+        const cleanup = (value) => {
+            overlay.style.display = 'none';
+            cancel.removeEventListener('click', onCancel);
+            confirm.removeEventListener('click', onConfirm);
+            input.removeEventListener('keydown', onKeydown);
+            resolve(value);
+        };
+        const onCancel = () => cleanup('');
+        const onConfirm = () => cleanup(input.value.trim());
+        const onKeydown = (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                onConfirm();
+            } else if (event.key === 'Escape') {
+                event.preventDefault();
+                onCancel();
+            }
+        };
+        input.value = currentName || '';
+        overlay.style.display = 'flex';
+        cancel.addEventListener('click', onCancel);
+        confirm.addEventListener('click', onConfirm);
+        input.addEventListener('keydown', onKeydown);
+        setTimeout(() => {
+            input.focus();
+            input.select();
+        }, 0);
+    });
+}
+
+async function renameTrainRecord(dirName, currentName) {
+    const nextName = await askTrainDisplayName(currentName);
+    if (!nextName || nextName === currentName) return;
+    try {
+        await ipcRenderer.invoke('rename-train-history', { dir: dirName, displayName: nextName });
+        Notiflix.Notify.success(getTrainHistoryText('capture_rename_success', 'Renamed'));
+        ipcRenderer.send('update_train_history_list', '');
+    } catch (error) {
+        Notiflix.Notify.failure(error.message);
+    }
+}
+
+function showTrainHistoryContextMenu(event, dirName, currentName, isSuccess) {
+    const menu = ensureTrainHistoryContextMenu();
+    menu.innerHTML = `
+        <button type="button" data-action="open" style="width:100%;border:0;background:transparent;padding:8px 10px;text-align:left;">${escapeHtml(getTrainHistoryText('train_record_menu_open', 'Open'))}</button>
+        <button type="button" data-action="rename" style="width:100%;border:0;background:transparent;padding:8px 10px;text-align:left;">${escapeHtml(getTrainHistoryText('capture_menu_rename', 'Rename'))}</button>
+        <button type="button" data-action="folder" style="width:100%;border:0;background:transparent;padding:8px 10px;text-align:left;">${escapeHtml(getTrainHistoryText('capture_menu_show_folder', 'Show in folder'))}</button>
+        <button type="button" data-action="delete" style="width:100%;border:0;background:transparent;padding:8px 10px;text-align:left;color:#dc2626;">${escapeHtml(getTrainHistoryText('capture_menu_delete', 'Delete'))}</button>`;
+    menu.style.display = 'block';
+    const rect = menu.getBoundingClientRect();
+    menu.style.left = `${Math.max(8, Math.min(event.clientX, window.innerWidth - rect.width - 8))}px`;
+    menu.style.top = `${Math.max(8, Math.min(event.clientY, window.innerHeight - rect.height - 8))}px`;
+    menu.onclick = async (clickEvent) => {
+        const button = clickEvent.target.closest('button[data-action]');
+        if (!button) return;
+        hideTrainHistoryContextMenu();
+        if (button.dataset.action === 'open') {
+            isSuccess ? open_model_detail(dirName) : open_model_detail_err(dirName);
+        } else if (button.dataset.action === 'rename') {
+            await renameTrainRecord(dirName, currentName);
+        } else if (button.dataset.action === 'folder') {
+            open_dir(dirName);
+        } else if (button.dataset.action === 'delete') {
+            del_dir(dirName);
+        }
+    };
+}
+
+function buildTrainHistoryItem(d) {
+    const dirName = d['name'];
+    const displayName = String(d.displayName || '').trim();
+    const defaultLabel = getDefaultTrainHistoryLabel(dirName);
+    const label = displayName || defaultLabel;
+    const isSuccess = d['train_result'] === 'success';
+    const openCall = isSuccess ? 'open_model_detail' : 'open_model_detail_err';
+    const deleteButton = `<button type="button" class="btn-close train-delete-button" aria-label="Close" data-dir="${escapeHtml(dirName)}"></button>`;
+    return `<div class="alert filelist alert-${escapeHtml(d['train_result'])}" role="alert" data-dir="${escapeHtml(dirName)}" data-display="${escapeHtml(label)}" data-success="${isSuccess ? '1' : '0'}">
+        <button type="button" class="btn btn-primary btn-sm" onclick=${openCall}("${escapeHtml(dirName)}")>${escapeHtml(current_locales.target_detection)}</button>
+        <a class="train-display-name" title="${escapeHtml(dirName)}">${escapeHtml(label)}</a> ${deleteButton}
+    </div>`;
+}
+
 ipcRenderer.on('update_train_history', function (event, arg) {
     // 更新并显示训练记录
     let html = ''
@@ -378,17 +570,8 @@ ipcRenderer.on('update_train_history', function (event, arg) {
     for (let d of arg) {
         try {
             let name = d['name'].split('_')[0]
-            let year = d['name'].split('_')[1]
-            let time = d['name'].split('_')[2].replace('-', ':').replace('-', ':')
-            const dirName = d['name'];
-            const deleteButton = '<button type="button" class="btn-close train-delete-button" aria-label="Close" data-dir="' + dirName + '"></button>';
             if (name == 'yolo') {
-                if (d['train_result'] == "success") {
-                    html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail("' + dirName + '")>' + current_locales.target_detection + '</button><a>' + year + ' ' + time + '</a> ' + deleteButton + '</div>'
-                }
-                else {
-                    html += '<div class="alert filelist alert-' + d['train_result'] + '" role="alert"><button type="button" class="btn btn-primary btn-sm" onclick=open_model_detail_err("' + dirName + '")>' + current_locales.target_detection + '</button><a>' + year + ' ' + time + '</a> ' + deleteButton + '</div>'
-                }
+                html += buildTrainHistoryItem(d)
             }
         } catch (error) {
             console.log("An error occurred while processing the data from " + d["name"] + ":", error);
@@ -406,6 +589,28 @@ document.getElementById('train_history_list_yolo').addEventListener('click', fun
     event.preventDefault();
     event.stopPropagation();
     del_dir(button.dataset.dir);
+});
+
+document.getElementById('train_history_list_yolo').addEventListener('dblclick', function (event) {
+    const nameNode = event.target.closest('.train-display-name');
+    const item = event.target.closest('.filelist');
+    if (!nameNode || !item) return;
+    event.preventDefault();
+    renameTrainRecord(item.dataset.dir, item.dataset.display || '');
+});
+
+document.getElementById('train_history_list_yolo').addEventListener('contextmenu', function (event) {
+    const item = event.target.closest('.filelist');
+    if (!item) return;
+    event.preventDefault();
+    showTrainHistoryContextMenu(event, item.dataset.dir, item.dataset.display || '', item.dataset.success === '1');
+});
+
+document.addEventListener('click', function (event) {
+    const menu = document.getElementById('train_history_context_menu_yolo');
+    if (menu && !menu.contains(event.target)) {
+        hideTrainHistoryContextMenu();
+    }
 });
 
 function open_dir(dir) {
@@ -623,6 +828,7 @@ function open_model_detail(dir) {
     }
     ipcRenderer.send('read_model_detail_and_show', dir)
     myModal.show()
+    refreshModelTestUploadButton()
 }
 
 function open_model_detail_err(dir) {

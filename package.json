@@ -96,6 +96,10 @@
       {
         "from": "tools/visionwiz_image_sync",
         "to": "tools/visionwiz_image_sync"
+      },
+      {
+        "from": "tools/visionwiz_imgreg_test",
+        "to": "tools/visionwiz_imgreg_test"
       }
     ],
     "asar": true,

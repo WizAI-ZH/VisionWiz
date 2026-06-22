@@ -119,6 +119,19 @@
       text-align: center;
     }
 
+    .capture-resolution {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 13px;
+      text-align: center;
+    }
+
     .preview-surface {
       position: relative;
       width: 100%;
@@ -171,6 +184,7 @@
     #k210_preview_start,
     #k210_preview_stop,
     #k210_image_sync_upload,
+    #k210_image_sync_resolution,
     #img_history {
       min-height: 46px;
       white-space: normal;
@@ -187,6 +201,16 @@
       line-height: 1.35;
       text-align: center;
       overflow-wrap: anywhere;
+    }
+
+    .custom-resolution-row {
+      display: none;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px;
+    }
+
+    .custom-resolution-row .btn {
+      grid-column: 1 / -1;
     }
 
     #img_capture {
@@ -251,6 +275,43 @@
       min-height: 0;
     }
 
+    #ImgModal .modal-header {
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .capture-modal-title-wrap {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .capture-modal-tools {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+      min-width: 220px;
+    }
+
+    .capture-modal-tools label {
+      margin: 0;
+      color: #475569;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .capture-modal-tools .form-select {
+      min-width: 150px;
+    }
+
+    .capture-shortcuts-hint {
+      margin-top: 6px;
+      color: #64748b;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
     #ImgModal .modal-body {
       min-height: 0 !important;
       max-height: min(560px, calc(100vh - 260px));
@@ -285,6 +346,15 @@
       align-items: center;
       gap: 8px;
       min-width: 0;
+      padding: 6px;
+      border-radius: 10px;
+      border: 2px solid transparent;
+      user-select: none;
+    }
+
+    #imglist .capture-item.selected {
+      border-color: #0d6efd;
+      background: rgba(13, 110, 253, 0.08);
     }
 
     #imglist .capture-item img {
@@ -292,6 +362,11 @@
       max-width: 132px;
       aspect-ratio: 1 / 1;
       object-fit: cover;
+      cursor: pointer;
+    }
+
+    #imglist .capture-item img:hover {
+      box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.22);
     }
 
     #imglist .capture-item p {
@@ -303,12 +378,96 @@
       overflow-wrap: anywhere;
     }
 
+    .capture-context-menu {
+      position: fixed;
+      z-index: 3000;
+      min-width: 180px;
+      padding: 6px;
+      display: none;
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      box-shadow: 0 14px 32px rgba(15, 23, 42, 0.2);
+    }
+
+    .capture-context-menu button {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      padding: 8px 10px;
+      border-radius: 6px;
+      text-align: left;
+      color: #111827;
+    }
+
+    .capture-context-menu button:hover:not(:disabled) {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .capture-context-menu button:disabled {
+      color: #9ca3af;
+    }
+
+    .capture-rename-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 4000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(15, 23, 42, 0.38);
+      pointer-events: auto;
+    }
+
+    .capture-rename-dialog {
+      width: min(420px, 96vw);
+      padding: 18px;
+      border-radius: 14px;
+      background: #ffffff;
+      box-shadow: 0 18px 42px rgba(15, 23, 42, 0.26);
+      pointer-events: auto;
+    }
+
+    #capture_rename_input {
+      pointer-events: auto;
+      user-select: text;
+    }
+
+    .capture-rename-dialog h3 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .capture-rename-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
     @media (max-width: 576px) {
       #ImgModal .modal-dialog {
         max-width: calc(100vw - 12px);
         height: calc(100vh - 96px);
         max-height: calc(100vh - 96px);
         margin: 24px auto 72px;
+      }
+
+      #ImgModal .modal-header {
+        flex-wrap: wrap;
+      }
+
+      .capture-modal-tools {
+        order: 3;
+        width: 100%;
+        min-width: 0;
+      }
+
+      .capture-modal-tools .form-select {
+        min-width: 0;
       }
 
       #ImgModal .modal-body,
@@ -358,6 +517,7 @@
           <div class="preview-meta">
             <div id="preview_source_badge" class="preview-source">Local Camera</div>
             <div id="k210_preview_status" class="preview-status">Waiting for authentication</div>
+            <div id="capture_resolution_badge" class="capture-resolution">Output: --</div>
           </div>
         </div>
         <div class="preview-surface">
@@ -377,6 +537,25 @@
 
         <button type="button" id="k210_preview_start" class="btn btn-success" disabled>Start Preview</button>
         <button type="button" id="k210_preview_stop" class="btn btn-outline-secondary" disabled>Stop Preview</button>
+        <div class="form-floating">
+          <select class="form-select" id="k210_image_sync_resolution">
+            <option value="320x240">320x240</option>
+            <option value="320x224">320x224</option>
+            <option value="224x224">224x224</option>
+          </select>
+          <label id="k210_image_sync_resolution_label" for="k210_image_sync_resolution">Image Sync Resolution</label>
+        </div>
+        <div id="custom_resolution_row" class="custom-resolution-row">
+          <div class="form-floating">
+            <input class="form-control" id="custom_resolution_width" type="number" min="1" max="4096" value="640">
+            <label id="custom_resolution_width_label" for="custom_resolution_width">Width</label>
+          </div>
+          <div class="form-floating">
+            <input class="form-control" id="custom_resolution_height" type="number" min="1" max="4096" value="480">
+            <label id="custom_resolution_height_label" for="custom_resolution_height">Height</label>
+          </div>
+          <button type="button" id="custom_resolution_apply" class="btn btn-outline-primary">Apply Resolution</button>
+        </div>
         <button type="button" id="k210_image_sync_upload" class="btn btn-warning" disabled>Upload Image Sync Program</button>
         <div id="k210_image_sync_upload_status" class="image-sync-upload-status"></div>
         <button type="button" id="img_capture" class="btn btn-primary btn-lg">Capture</button>
@@ -392,7 +571,14 @@
     <div class="modal-dialog modal-xl">
       <div class="modal-content">
         <div class="modal-header">
-          <h1 class="modal-title fs-5" id="imgModalLabel">Capture Record</h1>
+          <div class="capture-modal-title-wrap">
+            <h1 class="modal-title fs-5" id="imgModalLabel">Capture Record</h1>
+            <div id="capture_shortcuts_hint" class="capture-shortcuts-hint">Click to select, Ctrl+Click multi-select, Shift+Click range select, double-click to open.</div>
+          </div>
+          <div class="capture-modal-tools">
+            <label id="capture_sort_label" for="capture_sort_mode">Sort</label>
+            <select id="capture_sort_mode" class="form-select form-select-sm"></select>
+          </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" id="imglist"></div>
@@ -400,9 +586,20 @@
           <button id="open_capture_path" type="button" class="btn btn-primary">Open Folder</button>
           <button id="quit" type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
+        <div id="capture_rename_overlay" class="capture-rename-overlay">
+          <div class="capture-rename-dialog">
+            <h3 id="capture_rename_dialog_title">Rename image</h3>
+            <input id="capture_rename_input" class="form-control" type="text">
+            <div class="capture-rename-actions">
+              <button id="capture_rename_cancel" type="button" class="btn btn-secondary">Cancel</button>
+              <button id="capture_rename_confirm" type="button" class="btn btn-primary">Rename</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+  <div id="capture_context_menu" class="capture-context-menu"></div>
 
   <script src="../utils_protected/language-html_loader.js"></script>
   <script type="text/javascript" src="../static/js/jquery-1.11.0.min.js"></script>

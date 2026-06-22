@@ -14,4 +14,5 @@ sensor.skip_frames(10)
 sync = VisionWizImageSync(width=320, height=240, quality=35, fps=2, show_lcd=True)
 sync.start_preview(320, 240, 35, 2, True)
 while True:
+    sync.handle_control_commands(timeout_ms=1)
     sync.tick()

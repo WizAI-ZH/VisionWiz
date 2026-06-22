@@ -54,16 +54,52 @@ const getVideoList = () => {
 
 let MediaStream;
 let zt = false;
+let currentCameraName = '';
+
+function getLocalCameraState() {
+    const videoEl = document.getElementById('video');
+    const settings = MediaStream && typeof MediaStream.getSettings === 'function'
+        ? MediaStream.getSettings()
+        : {};
+    return {
+        active: zt,
+        label: currentCameraName,
+        width: settings.width || videoEl.videoWidth || 0,
+        height: settings.height || videoEl.videoHeight || 0,
+    };
+}
+
+function notifyLocalCameraOpened() {
+    window.dispatchEvent(new CustomEvent('visionwiz-local-camera-opened', {
+        detail: getLocalCameraState(),
+    }));
+}
+
+window.applyLocalCameraResolution = async function (width, height) {
+    if (!MediaStream || typeof MediaStream.applyConstraints !== 'function') {
+        throw new Error('Current camera does not support resolution switching.');
+    }
+    await MediaStream.applyConstraints({
+        width: { ideal: Number(width) },
+        height: { ideal: Number(height) },
+    });
+    await delay(300);
+    notifyLocalCameraOpened();
+    return getLocalCameraState();
+};
 
 function opencam(id, name) {
     this.dialogTakePhotoShow = true;
     let video = navigator.mediaDevices.getUserMedia({ audio: false, video: { deviceId: { exact: id } } })  // 更正为 deviceId  
         .then(success => {
-            document.getElementById('video').srcObject = success;
-            document.getElementById('video').play();
+            const videoEl = document.getElementById('video');
+            videoEl.srcObject = success;
+            videoEl.onloadedmetadata = notifyLocalCameraOpened;
+            videoEl.play().then(notifyLocalCameraOpened).catch(() => {});
             document.getElementById('cbtn').innerHTML = name;
             document.getElementById("cbtn").classList.replace("btn-danger", "btn-success");
             MediaStream = success.getTracks()[0];
+            currentCameraName = name;
             zt = true;
             Notiflix.Notify.success(current_locales_local.camera_opened);
         })
@@ -87,6 +123,8 @@ function stopcam() {
     document.getElementById("cbtn").classList.replace("btn-success", "btn-danger");
     Notiflix.Notify.success(current_locales_local.camera_disconnected);
     zt = false;
+    currentCameraName = '';
+    window.dispatchEvent(new CustomEvent('visionwiz-local-camera-closed'));
 }
 
 
