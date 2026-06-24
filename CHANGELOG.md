@@ -4,6 +4,28 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.7.5 - 2026-06-24
+
+### 中文
+
+- 新增 VESIBIT 模型测试程序上传到主板功能，训练记录的模型测试结果页可将测试脚本、依赖库和当前 `.kmodel` 写入 VESIBIT SD 卡。
+- 大幅优化 KModel 上传速度，`.kmodel` 使用高速转义二进制串流传输，小文件继续使用兼容 Base64 写入。
+- 上传速度参数改为自适应：默认尝试最快档位，失败时自动降级，并按主板/串口记忆成功档位，后续上传优先复用。
+- 上传完成后保持 VESIBIT 连接状态，用户可直接切换训练记录继续上传测试程序。
+- 数据采集新增一键上传图传同步程序、图传分辨率选择/运行时切换、输出分辨率提示和外接摄像头自定义分辨率。
+- 拍摄记录窗口支持双击打开、删除、重命名、批量重命名、多选/全选、Shift 连选、撤销/重做、右键菜单和排序，便于清洗采集数据。
+- 训练记录支持显示名重命名并持久保存，便于区分不同训练结果。
+
+### English
+
+- Added VESIBIT model-test program upload from training result pages, writing the test script, support libraries, and current `.kmodel` to the VESIBIT SD card.
+- Significantly improved KModel upload speed by using an escaped binary streaming path for `.kmodel` while keeping Base64 writes for small compatibility files.
+- Made upload tuning adaptive: VisionWiz tries the fastest profile first, falls back to safer profiles on failure, and remembers the successful profile per board/serial device.
+- Kept the VESIBIT upload state available after a successful upload so users can switch training records and upload another test program without reconnecting.
+- Added one-click image-sync program upload, preview resolution selection/runtime switching, output-resolution status, and custom external-camera resolution controls in data collection.
+- Enhanced capture records with double-click open, delete, rename, batch rename, multi-select/select-all, Shift range selection, undo/redo, context menu, and sorting for dataset cleanup.
+- Training records can now be renamed with persistent display names for easier result management.
+
 ## 1.7.0 - 2026-06-08
 
 ### 中文

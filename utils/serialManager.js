@@ -30,6 +30,15 @@ const MODEL_TEST_FILES = Object.freeze([
 const RAW_REPL_TIMEOUT_MS = 6000;
 const RAW_REPL_CHUNK_SIZE = 512;
 const MODEL_TEST_UPLOAD_CHUNK_SIZE = 12288;
+const MODEL_TEST_FAST_UPLOAD_CHUNK_SIZE = 8192;
+const MODEL_TEST_FAST_UPLOAD_ACK_BYTES = 524288;
+const MODEL_TEST_FAST_UPLOAD_PROFILES = Object.freeze([
+  { name: 'fast-512k', chunkSize: MODEL_TEST_FAST_UPLOAD_CHUNK_SIZE, ackBytes: 524288 },
+  { name: 'fast-256k', chunkSize: MODEL_TEST_FAST_UPLOAD_CHUNK_SIZE, ackBytes: 262144 },
+  { name: 'fast-128k', chunkSize: MODEL_TEST_FAST_UPLOAD_CHUNK_SIZE, ackBytes: 131072 },
+  { name: 'fast-64k', chunkSize: MODEL_TEST_FAST_UPLOAD_CHUNK_SIZE, ackBytes: 65536 },
+  { name: 'fast-32k', chunkSize: MODEL_TEST_FAST_UPLOAD_CHUNK_SIZE, ackBytes: 32768 },
+]);
 const RAW_REPL_BANNER = 'raw REPL; CTRL-B to exit';
 
 console.log('[serialmanager] module loaded');
@@ -40,6 +49,7 @@ let currentPortInfo = null;
 let disconnectHandled = false;
 let portWatchTimer = null;
 let suppressPreviewErrors = false;
+let modelTestFastUploadProfileCache = {};
 let previewState = {
   connected: false,
   authenticated: false,
@@ -115,6 +125,78 @@ function resolveModelTestPayloadDir() {
 
 function normalizeImageSyncResolution(value) {
   return IMAGE_SYNC_RESOLUTIONS[value] ? value : '320x240';
+}
+
+function getModelTestUploadProfileKey(portInfo = {}) {
+  return [
+    String(portInfo.vendorId || '').toUpperCase(),
+    String(portInfo.productId || '').toUpperCase(),
+    String(portInfo.serialNumber || portInfo.path || 'default'),
+  ].join(':');
+}
+
+function getModelTestUploadProfilePath() {
+  try {
+    return path.join(app.getPath('userData'), 'model-test-upload-profiles.json');
+  } catch (_error) {
+    return path.join(process.cwd(), 'model-test-upload-profiles.json');
+  }
+}
+
+function readModelTestUploadProfileStore() {
+  try {
+    const filePath = getModelTestUploadProfilePath();
+    if (!fs.existsSync(filePath)) return {};
+    return JSON.parse(fs.readFileSync(filePath, 'utf8')) || {};
+  } catch (error) {
+    console.warn('[K210 MODEL TEST][UPLOAD] read upload profile store failed:', error.message);
+    return {};
+  }
+}
+
+function writeModelTestUploadProfileStore(store = {}) {
+  try {
+    const filePath = getModelTestUploadProfilePath();
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, JSON.stringify(store, null, 2), 'utf8');
+  } catch (error) {
+    console.warn('[K210 MODEL TEST][UPLOAD] write upload profile store failed:', error.message);
+  }
+}
+
+function findModelTestUploadProfile(profile = {}) {
+  return MODEL_TEST_FAST_UPLOAD_PROFILES.find((item) => (
+    item.chunkSize === Number(profile.chunkSize)
+    && item.ackBytes === Number(profile.ackBytes)
+  )) || null;
+}
+
+function getModelTestUploadProfiles(portInfo = {}) {
+  const key = getModelTestUploadProfileKey(portInfo);
+  const store = readModelTestUploadProfileStore();
+  const remembered = modelTestFastUploadProfileCache[key] || store[key];
+  const first = findModelTestUploadProfile(remembered);
+  if (!first) return [...MODEL_TEST_FAST_UPLOAD_PROFILES];
+  return [
+    first,
+    ...MODEL_TEST_FAST_UPLOAD_PROFILES.filter((item) => item !== first),
+  ];
+}
+
+function rememberModelTestUploadProfile(portInfo = {}, profile) {
+  const normalized = findModelTestUploadProfile(profile);
+  if (!normalized) return;
+  const key = getModelTestUploadProfileKey(portInfo);
+  const value = {
+    name: normalized.name,
+    chunkSize: normalized.chunkSize,
+    ackBytes: normalized.ackBytes,
+    updatedAt: new Date().toISOString(),
+  };
+  modelTestFastUploadProfileCache[key] = value;
+  const store = readModelTestUploadProfileStore();
+  store[key] = value;
+  writeModelTestUploadProfileStore(store);
 }
 
 function buildImageSyncMainPy(options = {}) {
@@ -386,6 +468,140 @@ async function writeRemoteFileBase64(port, remotePath, data, progressBase, progr
 
   const closeMarker = `VW_CLOSE_B64_${Date.now()}`;
   await rawExec(port, `f.close()\nprint('${closeMarker}')`, closeMarker);
+}
+
+function encodeFastUploadChunk(buffer) {
+  const escaped = [];
+  for (const byte of buffer) {
+    if (byte === 0x03 || byte === 0x04 || byte === 0x10 || byte === 0x11 || byte === 0x13) {
+      escaped.push(0x10, byte ^ 0x20);
+    } else {
+      escaped.push(byte);
+    }
+  }
+  return Buffer.from(escaped);
+}
+
+function buildFastUploadChunks(data, chunkSize) {
+  const chunks = [];
+  for (let offset = 0; offset < data.length; offset += chunkSize) {
+    const raw = data.slice(offset, offset + chunkSize);
+    chunks.push({
+      rawLength: raw.length,
+      encoded: encodeFastUploadChunk(raw),
+    });
+  }
+  return chunks;
+}
+
+async function writeRemoteFileFastBinary(port, remotePath, data, progressBase, progressSpan, fileName, progressEmitter, profile) {
+  const uploadProfile = findModelTestUploadProfile(profile) || MODEL_TEST_FAST_UPLOAD_PROFILES[0];
+  const chunks = buildFastUploadChunks(data, uploadProfile.chunkSize);
+  const encodedLengths = chunks.map((chunk) => chunk.encoded.length);
+  const readyMarker = `VW_BIN_READY_${Date.now()}`;
+  const doneMarker = `VW_BIN_DONE_${Date.now()}`;
+  const failMarker = `VW_BIN_FAIL_${Date.now()}`;
+  const ackPrefix = `VW_BIN_ACK_${Date.now()}_`;
+  const receiver = [
+    'import sys',
+    'try:',
+    '    import micropython',
+    '    micropython.kbd_intr(-1)',
+    'except Exception:',
+    '    micropython = None',
+    `remote_path = ${JSON.stringify(remotePath)}`,
+    `encoded_lengths = ${JSON.stringify(encodedLengths)}`,
+    `total_size = ${data.length}`,
+    `ack_step = ${uploadProfile.ackBytes}`,
+    'esc = 16',
+    'reader = getattr(sys.stdin, "buffer", sys.stdin)',
+    'def read_exact(n):',
+    '    data = b""',
+    '    while len(data) < n:',
+    '        part = reader.read(n - len(data))',
+    '        if part is None:',
+    '            continue',
+    '        if len(part) == 0:',
+    '            continue',
+    '        if isinstance(part, str):',
+    '            part = part.encode("latin1")',
+    '        data += part',
+    '    return data',
+    'def decode_chunk(data):',
+    '    out = bytearray()',
+    '    i = 0',
+    '    size = len(data)',
+    '    while i < size:',
+    '        b = data[i]',
+    '        if b == esc:',
+    '            i += 1',
+    '            out.append(data[i] ^ 32)',
+    '        else:',
+    '            out.append(b)',
+    '        i += 1',
+    '    return out',
+    'written = 0',
+    'next_ack = ack_step',
+    'f = None',
+    'try:',
+    '    f = open(remote_path, "wb")',
+    `    print("${readyMarker}")`,
+    '    for enc_len in encoded_lengths:',
+    '        raw = decode_chunk(read_exact(enc_len))',
+    '        f.write(raw)',
+    '        written += len(raw)',
+    '        if written >= total_size:',
+    `            print("${doneMarker}:%d" % written)`,
+    '        elif written >= next_ack:',
+    `            print("${ackPrefix}%d" % written)`,
+    '            next_ack += ack_step',
+    '    f.close()',
+    '    f = None',
+    'except Exception as e:',
+    `    print("${failMarker}:" + str(e))`,
+    '    try:',
+    '        if f:',
+    '            f.close()',
+    '    except Exception:',
+    '        pass',
+    'finally:',
+    '    try:',
+    '        if micropython:',
+    '            micropython.kbd_intr(3)',
+    '    except Exception:',
+    '        pass',
+  ].join('\n');
+
+  await writeAndDrain(port, `${receiver}\n`);
+  await writeAndDrain(port, Buffer.from([0x04]));
+  const ready = await waitForPattern(port, [readyMarker, failMarker], 15000);
+  if (!ready.text.includes(readyMarker)) {
+    throw new Error(`fast upload receiver failed: ${ready.text || 'no ready marker'}`);
+  }
+
+  let written = 0;
+  let nextAck = uploadProfile.ackBytes;
+  for (const chunk of chunks) {
+    await writeAndDrain(port, chunk.encoded);
+    written += chunk.rawLength;
+    const shouldWait = written >= nextAck || written >= data.length;
+    if (!shouldWait) continue;
+
+    const expected = written >= data.length ? `${doneMarker}:${data.length}` : `${ackPrefix}${written}`;
+    const response = await waitForPattern(port, [expected, failMarker], 30000);
+    if (!response.text.includes(expected)) {
+      throw new Error(`fast upload failed: ${response.text || `missing ${expected}`}`);
+    }
+    while (nextAck <= written) {
+      nextAck += uploadProfile.ackBytes;
+    }
+    progressEmitter({
+      status: 'uploading',
+      message: 'uploading',
+      file: fileName,
+      percent: Math.min(95, progressBase + Math.round((written / data.length) * progressSpan)),
+    });
+  }
 }
 
 function findFirstFile(dir, predicate) {
@@ -1044,16 +1260,77 @@ exports.uploadK210ModelTestProgram = async (options = {}) => {
         file: item.fileName,
         percent: base,
       });
-      await writeRemoteFileBase64(
-        uploadPort,
-        item.remotePath,
-        item.data,
-        base,
-        Math.round(fileSpan),
-        item.fileName,
-        emitModelTestUploadProgress,
-        MODEL_TEST_UPLOAD_CHUNK_SIZE
-      );
+      if (item.fileName === 'test.kmodel') {
+        let uploadedByFastPath = false;
+        let lastFastError = null;
+        const profiles = getModelTestUploadProfiles(uploadPortInfo);
+        for (const profile of profiles) {
+          try {
+            emitModelTestUploadProgress({
+              status: 'uploading',
+              message: 'uploading',
+              file: `${item.fileName} ${profile.name}`,
+              percent: base,
+            });
+            await writeRemoteFileFastBinary(
+              uploadPort,
+              item.remotePath,
+              item.data,
+              base,
+              Math.round(fileSpan),
+              item.fileName,
+              emitModelTestUploadProgress,
+              profile
+            );
+            rememberModelTestUploadProfile(uploadPortInfo, profile);
+            uploadedByFastPath = true;
+            break;
+          } catch (fastError) {
+            lastFastError = fastError;
+            console.warn('[K210 MODEL TEST][UPLOAD] fast upload failed:', profile.name, fastError.message);
+            await closeSerialPort(uploadPort);
+            uploadPort = null;
+            try {
+              await hardwareReset(uploadPortPath);
+            } catch (_resetError) {}
+            await delay(900);
+            uploadPort = await openSerialPort(uploadPortPath);
+            await enterRawRepl(uploadPort);
+            await assertSdWritable(uploadPort);
+          }
+        }
+
+        if (!uploadedByFastPath) {
+          console.warn('[K210 MODEL TEST][UPLOAD] all fast profiles failed, fallback to base64:', lastFastError?.message || 'unknown');
+          emitModelTestUploadProgress({
+            status: 'uploading',
+            message: 'uploading',
+            file: `${item.fileName} compatible`,
+            percent: base,
+          });
+          await writeRemoteFileBase64(
+            uploadPort,
+            item.remotePath,
+            item.data,
+            base,
+            Math.round(fileSpan),
+            item.fileName,
+            emitModelTestUploadProgress,
+            MODEL_TEST_UPLOAD_CHUNK_SIZE
+          );
+        }
+      } else {
+        await writeRemoteFileBase64(
+          uploadPort,
+          item.remotePath,
+          item.data,
+          base,
+          Math.round(fileSpan),
+          item.fileName,
+          emitModelTestUploadProgress,
+          MODEL_TEST_UPLOAD_CHUNK_SIZE
+        );
+      }
     }
 
     emitModelTestUploadProgress({
@@ -1071,15 +1348,16 @@ exports.uploadK210ModelTestProgram = async (options = {}) => {
       console.warn('[K210 MODEL TEST][UPLOAD] reset after upload failed:', resetError.message);
     }
     disconnectHandled = false;
-    currentPortPath = '';
-    currentPortInfo = null;
+    currentPortPath = uploadPortPath;
+    currentPortInfo = uploadPortInfo;
+    startPortWatch(uploadPortPath);
     emitPreviewStatus({
-      connected: false,
+      connected: true,
       authenticated: false,
       previewActive: false,
-      portPath: '',
+      portPath: uploadPortPath,
       lastFrameId: -1,
-      supportsImageSyncUpload: false,
+      supportsImageSyncUpload: true,
       error: '',
     });
     return { ok: true };
