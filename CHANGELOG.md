@@ -4,6 +4,22 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.7.6 - 2026-07-13
+
+### 中文
+
+- 自动更新安装成功后会清理 `AppData/Roaming/VisionWiz/updates` 中缓存的旧安装包、更新助手脚本和日志，避免长期占用大量磁盘空间。
+- 自动更新失败或用户选择重试时仍会保留当前安装包缓存，继续支持断点续传和失败后重试。
+- 优化上传测试程序时的进度显示，KModel 会按实际文件大小占据主要上传进度区间，避免大模型上传时进度误导。
+- 上传图传同步程序和模型测试程序时，进入主板上传模式失败后会自动复位并重试一次，同时提供更清晰的错误提示。
+
+### English
+
+- Automatic updates now clean cached installers, update-helper scripts, and helper logs from `AppData/Roaming/VisionWiz/updates` after a successful installation to avoid long-term disk usage growth.
+- Failed updates and retry flows still keep the current installer cache so resume download and retry remain available.
+- Improved model-test upload progress so KModel transfer uses a progress range based on real file size instead of being underrepresented.
+- Image-sync and model-test uploads now retry raw REPL entry once after an automatic board reset and show clearer failure guidance.
+
 ## 1.7.5 - 2026-06-24
 
 ### 中文

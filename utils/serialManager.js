@@ -392,6 +392,42 @@ async function enterRawRepl(port) {
   throw new Error('could not enter raw REPL');
 }
 
+async function openUploadRawReplPort(pathName, progressEmitter, resetBeforeRetry = true) {
+  let lastError = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    let port = null;
+    try {
+      if (attempt > 0) {
+        progressEmitter?.({
+          status: 'connecting-raw-repl',
+          message: 'connecting-raw-repl',
+          percent: 10,
+        });
+        if (resetBeforeRetry) {
+          try {
+            await uploadReset(pathName);
+          } catch (resetError) {
+            console.warn('[K210 UPLOAD] upload reset before raw REPL retry failed:', resetError.message);
+          }
+          await delay(1500);
+        }
+      }
+      port = await openSerialPort(pathName);
+      await enterRawRepl(port);
+      return port;
+    } catch (error) {
+      lastError = error;
+      await closeSerialPort(port);
+      if (attempt === 0) {
+        console.warn('[K210 UPLOAD] raw REPL first attempt failed, retrying after reset:', error.message);
+        continue;
+      }
+    }
+  }
+  const reason = lastError?.message || 'unknown error';
+  throw new Error(`无法进入主板上传模式，请确认连接的是 VESIBIT/CanMV 主板，或按一下主板复位键后重试。Raw REPL failed: ${reason}`);
+}
+
 async function rawExec(port, code, marker) {
   const waitPromise = waitForRawReplResponse(port, marker, RAW_REPL_TIMEOUT_MS);
   await writeAndDrain(port, code.endsWith('\n') ? code : `${code}\n`);
@@ -689,6 +725,28 @@ function buildModelTestPayloads(options = {}) {
       data: fs.readFileSync(path.join(payloadDir, fileName)),
     })),
   ];
+}
+
+function buildModelTestUploadProgressRanges(payloads, startPercent = 18, endPercent = 96) {
+  const totalBytes = payloads.reduce((sum, item) => sum + Math.max(1, item.data?.length || 0), 0) || 1;
+  const uploadSpan = endPercent - startPercent;
+  let cursor = startPercent;
+  return payloads.map((item, index) => {
+    const remainingItems = payloads.length - index - 1;
+    if (remainingItems === 0) {
+      return {
+        base: cursor,
+        span: Math.max(1, endPercent - cursor),
+      };
+    }
+    const byteWeight = Math.max(1, item.data?.length || 0) / totalBytes;
+    const weightedSpan = Math.max(1, Math.round(uploadSpan * byteWeight));
+    const maxSpan = Math.max(1, endPercent - cursor - remainingItems);
+    const span = Math.min(weightedSpan, maxSpan);
+    const range = { base: cursor, span };
+    cursor += span;
+    return range;
+  });
 }
 
 async function assertSdWritable(port) {
@@ -1114,8 +1172,7 @@ exports.uploadImageSyncProgram = async (options = {}) => {
       message: 'connecting-raw-repl',
       percent: 10,
     });
-    uploadPort = await openSerialPort(uploadPortPath);
-    await enterRawRepl(uploadPort);
+    uploadPort = await openUploadRawReplPort(uploadPortPath, emitImageSyncUploadProgress);
 
     emitImageSyncUploadProgress({
       status: 'backup',
@@ -1240,8 +1297,7 @@ exports.uploadK210ModelTestProgram = async (options = {}) => {
       message: 'connecting-raw-repl',
       percent: 10,
     });
-    uploadPort = await openSerialPort(uploadPortPath);
-    await enterRawRepl(uploadPort);
+    uploadPort = await openUploadRawReplPort(uploadPortPath, emitModelTestUploadProgress);
 
     emitModelTestUploadProgress({
       status: 'checking-sd',
@@ -1250,10 +1306,10 @@ exports.uploadK210ModelTestProgram = async (options = {}) => {
     });
     await assertSdWritable(uploadPort);
 
-    const fileSpan = 75 / payloads.length;
+    const progressRanges = buildModelTestUploadProgressRanges(payloads);
     for (let index = 0; index < payloads.length; index += 1) {
       const item = payloads[index];
-      const base = Math.round(18 + index * fileSpan);
+      const { base, span } = progressRanges[index];
       emitModelTestUploadProgress({
         status: 'uploading',
         message: 'uploading',
@@ -1277,7 +1333,7 @@ exports.uploadK210ModelTestProgram = async (options = {}) => {
               item.remotePath,
               item.data,
               base,
-              Math.round(fileSpan),
+              span,
               item.fileName,
               emitModelTestUploadProgress,
               profile
@@ -1313,7 +1369,7 @@ exports.uploadK210ModelTestProgram = async (options = {}) => {
             item.remotePath,
             item.data,
             base,
-            Math.round(fileSpan),
+            span,
             item.fileName,
             emitModelTestUploadProgress,
             MODEL_TEST_UPLOAD_CHUNK_SIZE
@@ -1325,7 +1381,7 @@ exports.uploadK210ModelTestProgram = async (options = {}) => {
           item.remotePath,
           item.data,
           base,
-          Math.round(fileSpan),
+          span,
           item.fileName,
           emitModelTestUploadProgress,
           MODEL_TEST_UPLOAD_CHUNK_SIZE
