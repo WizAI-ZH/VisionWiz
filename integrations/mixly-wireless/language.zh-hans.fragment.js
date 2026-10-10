@@ -1,0 +1,10 @@
+    ZhHans.VESIBIT_WIRELESS_PREVIEW_START = "启动无线图片同传";
+    ZhHans.VESIBIT_WIRELESS_PREVIEW_START_TOOLTIP = "[威智]通过 ESP32-S3 和已安装的 K210 无线代理启动摄像头。无需初始化 UARTHS，请先在 VisionWiz 完成无线初始化第二步。";
+    ZhHans.VESIBIT_WIRELESS_PREVIEW_CONFIGURE = "设置无线图片同传";
+    ZhHans.VESIBIT_WIRELESS_PREVIEW_CONFIGURE_TOOLTIP = "[威智]调整分辨率、JPEG 画质、帧率及 LCD 显示。无线代理独占 UART1，负责把图像发送到已连接的威智视界。";
+    ZhHans.VESIBIT_WIRELESS_PREVIEW_STOP = "停止无线图片同传";
+    ZhHans.VESIBIT_WIRELESS_PREVIEW_STOP_TOOLTIP = "[威智]停止无线摄像头图传，但不关闭无线设备认证和文件上传代理。";
+    ZhHans.VESIBIT_WIRELESS_PREVIEW_ACTIVE = "无线图传是否运行？";
+    ZhHans.VESIBIT_WIRELESS_PREVIEW_ACTIVE_TOOLTIP = "[威智]返回 K210 是否正在发送预览的布尔值，不代表电脑已成功收到图像。";
+    ZhHans.VESIBIT_WIRELESS_PREVIEW_STATUS = "读取无线图传状态";
+    ZhHans.VESIBIT_WIRELESS_PREVIEW_STATUS_TOOLTIP = "[威智]返回包含 active、mode、width、height、quality、fps、frame_id 的状态字典。";

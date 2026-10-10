@@ -254,7 +254,8 @@ class Train():
         log.i("数据增强模式(Data augmentation mode): {}".format(self.data_aug_mode))
         # 启动训练
         try:
-            classifier = Classifier(datasets_zip=self.datasets_zip_path, datasets_cls_dir=self.datasets_cls_dir,
+            classifier = Classifier(input_shape=self.input_shape,
+                                    datasets_zip=self.datasets_zip_path, datasets_cls_dir=self.datasets_cls_dir,
                                     unpack_dir=self.temp_datasets_dir,
                                     logger=log,
                                     max_classes_num=config.classifier_train_max_classes_num,
@@ -302,8 +303,8 @@ class Train():
         with open(self.result_boot_py_path, "w") as f:
             target = 'labels = [] # labels'
             boot_py = boot_py.replace(target, replace)
-            target = 'sensor.set_windowing((224, 224))'
-            replace = 'sensor.set_windowing(({}, {}))'.format(classifier.input_shape[1], classifier.input_shape[0])
+            target = 'sensor_window=(224, 224)'
+            replace = 'sensor_window=({}, {})'.format(classifier.input_shape[1], classifier.input_shape[0])
             boot_py = boot_py.replace(target, replace)
             f.write(boot_py)
 

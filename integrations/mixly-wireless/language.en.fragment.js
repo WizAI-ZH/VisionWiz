@@ -1,0 +1,10 @@
+    En.VESIBIT_WIRELESS_PREVIEW_START = "start Wi-Fi image sync";
+    En.VESIBIT_WIRELESS_PREVIEW_START_TOOLTIP = "[Vesi]Starts the installed VisionWiz wireless agent camera through ESP32-S3. Do not initialize UARTHS separately. Requires VisionWiz wireless setup step 2.";
+    En.VESIBIT_WIRELESS_PREVIEW_CONFIGURE = "set Wi-Fi image sync";
+    En.VESIBIT_WIRELESS_PREVIEW_CONFIGURE_TOOLTIP = "[Vesi]Change camera resolution, JPEG quality, FPS, and LCD display. The agent owns UART1 and sends frames to the connected VisionWiz client.";
+    En.VESIBIT_WIRELESS_PREVIEW_STOP = "stop Wi-Fi image sync";
+    En.VESIBIT_WIRELESS_PREVIEW_STOP_TOOLTIP = "[Vesi]Stops Wi-Fi image streaming but keeps the wireless authentication and upload agent connected.";
+    En.VESIBIT_WIRELESS_PREVIEW_ACTIVE = "Wi-Fi image sync running?";
+    En.VESIBIT_WIRELESS_PREVIEW_ACTIVE_TOOLTIP = "[Vesi]Returns the K210 camera streaming flag; it does not verify that the desktop received a frame.";
+    En.VESIBIT_WIRELESS_PREVIEW_STATUS = "Wi-Fi image sync status";
+    En.VESIBIT_WIRELESS_PREVIEW_STATUS_TOOLTIP = "[Vesi]Returns a dictionary containing active, mode, width, height, quality, fps, and frame_id.";

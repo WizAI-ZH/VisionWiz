@@ -1,0 +1,10 @@
+    ZhHant.VESIBIT_WIRELESS_PREVIEW_START = "啟動無線圖片同傳";
+    ZhHant.VESIBIT_WIRELESS_PREVIEW_START_TOOLTIP = "[威智]經 ESP32-S3 及已安裝的 K210 無線代理啟動攝影機。無須另外初始化 UARTHS，請先完成 VisionWiz 無線初始化第二步。";
+    ZhHant.VESIBIT_WIRELESS_PREVIEW_CONFIGURE = "設定無線圖片同傳";
+    ZhHant.VESIBIT_WIRELESS_PREVIEW_CONFIGURE_TOOLTIP = "[威智]調整解像度、JPEG 畫質、影格率及 LCD 顯示。無線代理獨佔 UART1，將影像傳送至已連線的威智視界。";
+    ZhHant.VESIBIT_WIRELESS_PREVIEW_STOP = "停止無線圖片同傳";
+    ZhHant.VESIBIT_WIRELESS_PREVIEW_STOP_TOOLTIP = "[威智]停止無線攝影機圖傳，但不關閉無線裝置認證及檔案上傳代理。";
+    ZhHant.VESIBIT_WIRELESS_PREVIEW_ACTIVE = "無線圖傳正在運行？";
+    ZhHant.VESIBIT_WIRELESS_PREVIEW_ACTIVE_TOOLTIP = "[威智]回傳 K210 是否正在傳送預覽畫面的布林值，不代表電腦已成功收到圖片。";
+    ZhHant.VESIBIT_WIRELESS_PREVIEW_STATUS = "讀取無線圖傳狀態";
+    ZhHant.VESIBIT_WIRELESS_PREVIEW_STATUS_TOOLTIP = "[威智]回傳包含 active、mode、width、height、quality、fps、frame_id 的狀態字典。";
