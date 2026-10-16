@@ -147,3 +147,68 @@ yarn.lock
 make-sense/dist_eng/
 make-sense/dist_zh/
 make-sense/dist_zht/
+
+# =============================================================
+# VisionWiz PRIVATE / LOCAL-ONLY files (never publish to GitHub)
+# These rules protect UNTRACKED files only. Already tracked
+# main.js, auth.html and utils/serialManager.js must additionally
+# be blocked by the local pre-commit / pre-push privacy guards.
+# =============================================================
+
+# Independent private Git history, local development records and backups
+/local-tools/
+/local-docs/
+/docs/
+/AGENTS.md
+/RELEASE_WORKFLOW.md
+/~/
+/.build/
+**/__pycache__/
+*.py[cod]
+
+# K210 and ESP32 wireless firmware, agent code and on-device recovery
+/tools/visionwiz_wireless/
+
+# Private authentication, USB and wireless implementation
+/utils/cryptoService.js
+/utils/wirelessManager.js
+/feature/usb-auth-compat.js
+/cryptoservice_critical_loader.js
+/cryptoService_critical_loader.js
+
+# Tracked mixed-source files: these rules do NOT stop tracked changes;
+# local hooks must refuse accidental staging / publishing of modifications.
+/main.js
+/auth.html
+/authPreload.js
+/utils/serialManager.js
+
+# Device diagnostics, radio firmware verification, identity/auth test traces
+/scripts/diagnose-*
+/scripts/test-wireless-*
+/scripts/test-usb-auth-*
+/scripts/test-esp32-*
+/scripts/build-wireless-*
+/scripts/inspect-wireless-*
+/scripts/probe-wireless-*
+/scripts/promote-wireless-*
+/scripts/verify-wireless-*
+/scripts/requirements-wireless-firmware.txt
+/scripts/test-image-sync-resolution.js
+/scripts/test-capture-image-*
+/scripts/test-training-mixed-resolutions.py
+
+# Secrets, credentials and private backups. Never commit real secrets even
+# under a different filename: code review and Git hooks are also required.
+.env
+.env.*
+*.pem
+*.p12
+*.pfx
+*.key
+*.secret
+*credentials*.json
+*secrets*.json
+*-flash-backup.bin
+*-flash-dump.bin
+*.nvs
