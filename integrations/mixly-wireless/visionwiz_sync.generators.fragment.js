@@ -8,8 +8,8 @@ function visionwizWirelessImport() {
 function visionwizWirelessArgs(block) {
     var width = Blockly.Python.valueToCode(block, 'WIDTH', Blockly.Python.ORDER_ATOMIC) || '320';
     var height = Blockly.Python.valueToCode(block, 'HEIGHT', Blockly.Python.ORDER_ATOMIC) || '240';
-    var quality = Blockly.Python.valueToCode(block, 'QUALITY', Blockly.Python.ORDER_ATOMIC) || '35';
-    var fps = Blockly.Python.valueToCode(block, 'FPS', Blockly.Python.ORDER_ATOMIC) || '2';
+    var quality = Blockly.Python.valueToCode(block, 'QUALITY', Blockly.Python.ORDER_ATOMIC) || '25';
+    var fps = Blockly.Python.valueToCode(block, 'FPS', Blockly.Python.ORDER_ATOMIC) || '6';
     var showLcd = Blockly.Python.valueToCode(block, 'SHOW_LCD', Blockly.Python.ORDER_ATOMIC) || 'True';
     return width + ', ' + height + ', ' + quality + ', ' + fps + ', ' + showLcd;
 }

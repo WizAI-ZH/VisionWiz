@@ -328,16 +328,34 @@ class Classifier(Train_Base):
         pass
 
     def get_sample_images(self, sample_num, copy_to_dir):
+        from PIL import Image
         if not self.datasets_dir or not os.path.exists(self.datasets_dir):
             raise Exception("数据集目录不存在 | Datasets directory does not exist")
+        os.makedirs(copy_to_dir, exist_ok=True)
+        target_h, target_w = int(self.input_shape[0]), int(self.input_shape[1])
         num_gen = self._get_sample_num(len(self.labels), sample_num)
+        saved = 0
         for label in self.labels:
             num = num_gen.__next__()
             label_dir = os.path.join(self.datasets_dir, label)
             images = [name for name in os.listdir(label_dir) if self._is_valid_image_file(os.path.join(label_dir, name))]
             images = random.sample(images, num)
-            for image in images:
-                shutil.copyfile(os.path.join(label_dir, image), os.path.join(copy_to_dir, image))
+            for filename in images:
+                # NCC calibration requires the same RGB tensor dimensions as
+                # the selected model input. Do not copy varying-size source
+                # images, and never overwrite the original dataset.
+                with Image.open(os.path.join(label_dir, filename)) as original:
+                    normalized = original.convert("RGB")
+                    if normalized.size != (target_w, target_h):
+                        normalized = normalized.resize((target_w, target_h), Image.BILINEAR)
+                    normalized.save(os.path.join(copy_to_dir, "calibration_{:04d}.jpg".format(saved)), quality=95)
+                    saved += 1
+        self.log.i(
+            "分类量化图片已统一为 {}x{}，共 {} 张；原始数据集未更改 | "
+            "Classifier calibration images: {}x{}, {} images; original dataset unchanged.".format(
+                target_w, target_h, saved, target_w, target_h, saved
+            )
+        )
 
 
     def _get_confusion_matrix(self, ):

@@ -32,7 +32,6 @@ import numpy as np
 import itertools
 import random
 import re
-import revoc
 import kmeans
 
 from train_base import Train_Base
@@ -796,10 +795,11 @@ class Detector(Train_Base):
                 continue
             self.on_warning_message("已忽略非 XML 标签文件: {} | Ignored non-XML annotation file: {}".format(path, path))
 
-        input_shape_checked = False
-
         # 期望输入
         expected_h, expected_w, expected_c = int(self.input_shape[0]), int(self.input_shape[1]), int(self.input_shape[2])
+        resized_images = 0
+        xml_size_corrections = 0
+        dropped_boxes = 0
 
         for xml_path in xmls:
             ok, result = decode_pascal_voc_xml(xml_path)
@@ -812,24 +812,11 @@ class Detector(Train_Base):
             for result in xml_results:
             # xml中的shape（原始标注尺寸）
                 xml_h, xml_w, xml_d = int(result['height']), int(result['width']), int(result['depth'])
-                has_xml_shape = xml_h > 0 and xml_w > 0 and xml_d > 0
-                img_shape = (xml_h, xml_w, xml_d)
-
-            # check first image shape, and switch to proper supported input_shape
-                if has_xml_shape and not input_shape_checked:
-                    if not self._check_update_input_shape(img_shape) and not self.allow_reshape:
-                        self.log.i(
-                            "不支持的输入大小，支持的尺寸: {} | Not supported input size, supported: {}".format(
-                                self.support_shapes, self.support_shapes
-                            ),
-                            [], None, None, None
-                        )
-                        self.log.i("开始调整图片尺寸..... | Start resizing VOC.....")
-                        if revoc.re(img_dir, ann_dir):
-                            self.log.i("调整图片尺寸成功。 | Resize VOC is OK.")
-                        else:
-                            self.log.e("错误：调整图片尺寸出错 | ERROR: Resize VOC error")
-                    input_shape_checked = True
+                # XML depth is optional: convert every image to RGB below.
+                # In particular, NEVER run the old revoc.re() here: it
+                # overwrote original JPG/XML to a hard-coded 224x224, and
+                # could delete input images when parsing failed.
+                has_xml_shape = xml_h > 0 and xml_w > 0
 
             # load image path
                 dir_name = os.path.split(os.path.split(result['path'])[0])[-1]  # class1 / images
@@ -869,16 +856,6 @@ class Detector(Train_Base):
                 img_w0, img_h0 = im.size  # (W,H)
                 if not has_xml_shape:
                     xml_w, xml_h, xml_d = img_w0, img_h0, 3
-                    img_shape = (xml_h, xml_w, xml_d)
-                    if not input_shape_checked:
-                        if not self._check_update_input_shape(img_shape) and not self.allow_reshape:
-                            self.log.i(
-                                "XML 缺少尺寸信息，已使用图片实际大小；不支持的输入大小，支持的尺寸: {} | XML has no size, used real image size; not supported input size, supported: {}".format(
-                                    self.support_shapes, self.support_shapes
-                                ),
-                                [], None, None, None
-                            )
-                        input_shape_checked = True
     
                 # load bndboxes（先按xml读取）
                 y = []
@@ -892,7 +869,12 @@ class Detector(Train_Base):
                     label_idx = labels.index(bbox[4])
     
                     # 原始bbox（通常是以xml尺寸为坐标系）
-                    xmin, ymin, xmax, ymax = float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3])
+                    try:
+                        xmin, ymin, xmax, ymax = (float(coord) for coord in bbox[:4])
+                    except (TypeError, ValueError):
+                        dropped_boxes += 1
+                        self.on_warning_message(f"XML 检测框坐标不合法，已跳过 | Invalid bounding box in {xml_path}")
+                        continue
     
                     # 暂存：先用 label_idx 替换类别
                     y.append([xmin, ymin, xmax, ymax, label_idx])
@@ -905,6 +887,7 @@ class Detector(Train_Base):
                 # 如果 xml尺寸 与 实际图片尺寸不一致，先把bbox从xml坐标系映射到真实图片坐标系
                 # （避免存在xml写2304但图片实际不是2304的情况）
                 if (xml_w != img_w0) or (xml_h != img_h0):
+                    xml_size_corrections += 1
                     sx0 = img_w0 / max(1.0, float(xml_w))
                     sy0 = img_h0 / max(1.0, float(xml_h))
                     y_mapped = []
@@ -912,8 +895,9 @@ class Detector(Train_Base):
                         y_mapped.append([xmin * sx0, ymin * sy0, xmax * sx0, ymax * sy0, cls])
                     y = y_mapped
     
-                # 若尺寸不符合，resize到expected，并同步缩放bbox
+                # Resize in memory ONLY. Never change source images or XMLs.
                 if (img_h0 != expected_h) or (img_w0 != expected_w):
+                    resized_images += 1
                     sx = expected_w / float(img_w0)
                     sy = expected_h / float(img_h0)
     
@@ -924,32 +908,31 @@ class Detector(Train_Base):
                         self.on_warning_message(f"图片resize失败(Resize failed) {img_path}: {e}")
                         continue
     
-                    # 缩放bbox并裁剪到边界
-                    y_resized = []
-                    for xmin, ymin, xmax, ymax, cls in y:
-                        xmin2 = xmin * sx
-                        xmax2 = xmax * sx
-                        ymin2 = ymin * sy
-                        ymax2 = ymax * sy
-    
-                        # clip
-                        xmin2 = max(0.0, min(xmin2, expected_w - 1.0))
-                        xmax2 = max(0.0, min(xmax2, expected_w - 1.0))
-                        ymin2 = max(0.0, min(ymin2, expected_h - 1.0))
-                        ymax2 = max(0.0, min(ymax2, expected_h - 1.0))
-    
-                        # 保证 xmin<xmax, ymin<ymax（过滤异常框）
-                        if xmax2 <= xmin2 or ymax2 <= ymin2:
-                            continue
-    
-                        y_resized.append([xmin2, ymin2, xmax2, ymax2, cls])
-    
-                    if len(y_resized) < 1:
-                        self.on_warning_message(f"resize后bbox无效，跳过(skip) {xml_path}")
+                else:
+                    sx = sy = 1.0
+
+                # Validate boxes even for already-correct images, then apply
+                # the same axis-specific scale factors as the image pixels.
+                y_resized = []
+                for xmin, ymin, xmax, ymax, cls in y:
+                    scaled = (xmin * sx, ymin * sy, xmax * sx, ymax * sy)
+                    if not all(np.isfinite(number) for number in scaled):
+                        dropped_boxes += 1
                         continue
-    
-                    y = y_resized
-    
+                    xmin2 = max(0.0, min(scaled[0], expected_w - 1.0))
+                    ymin2 = max(0.0, min(scaled[1], expected_h - 1.0))
+                    xmax2 = max(0.0, min(scaled[2], expected_w - 1.0))
+                    ymax2 = max(0.0, min(scaled[3], expected_h - 1.0))
+                    if xmax2 <= xmin2 or ymax2 <= ymin2:
+                        dropped_boxes += 1
+                        continue
+                    y_resized.append([xmin2, ymin2, xmax2, ymax2, cls])
+
+                if not y_resized:
+                    self.on_warning_message(f"检测框归一化后无效，跳过图像 | Invalid boxes after resizing: {xml_path}")
+                    continue
+                y = y_resized
+
                 # 转成numpy
                 img = np.asarray(im, dtype='uint8')
     
@@ -990,6 +973,13 @@ class Detector(Train_Base):
                 pass
 
         self.classes_image_counts = classes_image_counts
+        self.log.i(
+            "检测预处理：目标 {}x{}，加载 {} 张，内存缩放 {} 张，XML尺寸修正 {} 张，过滤无效框 {} 个（原文件未改写） | "
+            "Preprocess: target {}x{}, loaded {}, in-memory resized {}, XML-size corrections {}, invalid boxes {}, originals unchanged.".format(
+                expected_w, expected_h, len(datasets_x), resized_images, xml_size_corrections, dropped_boxes,
+                expected_w, expected_h, len(datasets_x), resized_images, xml_size_corrections, dropped_boxes
+            )
+        )
         return True, "ok", labels, classes_data_counts, datasets_x, datasets_y
     
     def _decode_pbtxt_file(self, file_path):

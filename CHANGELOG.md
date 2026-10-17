@@ -4,6 +4,35 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.8.0 - 2026-10-16
+
+### 中文
+
+- 修复图像采集页面连接威智板后摄像头选择按钮仍显示未连接的问题；在 USB/无线实际图传时显示绿色 VESIBIT 同传状态，停止或断线自动恢复。
+- 统一 USB/无线图传 JPEG 35/50 画质选项，无线保留自动质量和速度档位；修复所选图传分辨率与保存 JPG 像素不一致的问题。
+- 有线图传重新启用摄像头自动增益和自动白平衡，改善偏暗/偏色风险；高画质可能降低帧率，需实机按需选择。
+- 图像分类和目标检测混合分辨率数据预处理：统一训练/量化输入大小，转换检测框坐标且不改写原图及标注。
+- 增强旧版 USB AUTH 回复的换行、串口混合输出兼容性，继续严格验证签名；实机恢复情况待复测。
+- 图像分类和目标检测测试前新增模型命名弹窗，按训练记录记住名称；模型名限 24 个 ASCII 字符，以字母开头，支持数字、下划线及连字符，并禁止保留文件名。
+- 上传测试程序时，SD 卡中的 KModel 文件名与 main.py 加载路径同步使用用户名称，自定义名称继续使用高速上传和自动降级。
+- 修复图像分类选择 320x224 等输入尺寸后仍使用默认 224x224 建模的问题，导出 boot.py 的摄像头窗口同步使用所选尺寸；旧模型需重新训练。
+- 加入 GPT-6.1 开发入口、项目交接和发布流程文档，记录构建方式、设备身份和验证边界。
+- 包含实验性 VESIBIT 无线连接与初始化入口、独立 ESP32-S3 兼容固件及 K210 代理；保留旧协议，使用用户 Wi-Fi 配置或设备唯一热点。完整无线真机链路仍需验收。
+
+### English
+
+- Fixed the camera-selection button remaining disconnected while VESIBIT USB/wireless JPEG frames were streaming. It now shows the active VESIBIT source in green and resets on stop/disconnect.
+- Unified JPEG 35/50 image quality controls for USB and wireless capture, retained wireless Auto/FPS presets, and fixed incorrect physical image sizes in saved JPG files.
+- Re-enabled automatic gain and white balance for wired camera initialization to reduce dark/color-shifted captures; higher image quality may lower real FPS.
+- Aligned mixed-resolution classification/detection training and calibration data; detection boxes are scaled consistently without modifying original images or XML annotations.
+- Improved legacy USB AUTH framing in the presence of mixed serial output while retaining mandatory signature verification. On-device revalidation is still pending.
+- Added model naming before classification and detection tests, with names remembered per training record. Names use up to 24 ASCII characters, start with a letter, allow digits, underscores and hyphens, and reject reserved filenames.
+- Model-test uploads use the selected name for both the SD-card KModel file and the main.py loading path. Named models retain fast uploads and automatic fallback.
+- Fixed classification training falling back to 224x224 despite selecting an input size such as 320x224, and aligned the exported boot.py camera window with the selected dimensions. Previously generated models need retraining.
+- Added GPT-6.1 development entry points, handoff notes and release instructions covering builds, device identity and verification limits.
+- Includes experimental VESIBIT wireless connection and initialization, isolated compatible ESP32-S3 firmware and a K210 agent. Legacy protocols are retained; Wi-Fi uses user settings or a unique device access point. Full wireless hardware acceptance is still pending.
+
+
 ## 1.7.6 - 2026-07-13
 
 ### 中文

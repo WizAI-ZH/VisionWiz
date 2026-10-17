@@ -158,6 +158,7 @@ make-sense/dist_zht/
 # Independent private Git history, local development records and backups
 /local-tools/
 /local-docs/
+/.local/
 /docs/
 /AGENTS.md
 /RELEASE_WORKFLOW.md

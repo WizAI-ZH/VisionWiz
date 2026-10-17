@@ -58,6 +58,44 @@ def normalized_fragment(text, document):
     return text.replace("\r\n", "\n").replace("\n", end).rstrip() + end
 
 
+def upgrade_wireless_preview_defaults(filename, original):
+    """Upgrade only new wireless defaults; never touch the original USB blocks."""
+    if filename == "index.xml":
+        updated = original
+        for name in ("visionwiz_wireless_start", "visionwiz_wireless_configure"):
+            block_pattern = re.compile(
+                r'<block\b[^>]*type="' + name + r'"[^>]*>.*?</block>',
+                re.DOTALL,
+            )
+
+            def replace_block(match):
+                content = match.group(0)
+                for field, old, new in (("QUALITY", "35", "25"), ("FPS", "2", "6")):
+                    content = re.sub(
+                        r'(<value name="' + field +
+                        r'"><shadow type="math_number"><field name="NUM">)' +
+                        old + r'(</field></shadow></value>)',
+                        lambda value: value.group(1) + new + value.group(2),
+                        content, count=1,
+                    )
+                return content
+
+            updated = block_pattern.sub(replace_block, updated, count=1)
+        return updated
+    if filename == "generators/visionwiz_sync.js":
+        index = original.index("function visionwizWirelessArgs(")
+        head, tail = original[:index], original[index:]
+        tail = tail.replace(
+            "valueToCode(block, 'QUALITY', Blockly.Python.ORDER_ATOMIC) || '35'",
+            "valueToCode(block, 'QUALITY', Blockly.Python.ORDER_ATOMIC) || '25'",
+        ).replace(
+            "valueToCode(block, 'FPS', Blockly.Python.ORDER_ATOMIC) || '2'",
+            "valueToCode(block, 'FPS', Blockly.Python.ORDER_ATOMIC) || '6'",
+        )
+        return head + tail
+    return original
+
+
 def install_snippet(filename, original, snippet):
     """Pure, idempotent transformation; original outside files untouched."""
     marker = "visionwiz_wireless_start" if filename != "index.xml" else 'type="visionwiz_wireless_start"'
@@ -73,7 +111,8 @@ def install_snippet(filename, original, snippet):
             expected = ("VESIBIT_WIRELESS_PREVIEW_START", "VESIBIT_WIRELESS_PREVIEW_STATUS_TOOLTIP")
         if not all(token in original for token in expected):
             raise ValueError("Detected incomplete wireless Blockly update in " + filename)
-        return original, False
+        updated = upgrade_wireless_preview_defaults(filename, original)
+        return updated, updated != original
 
     fragment = normalized_fragment(snippet, original)
     end = "\r\n" if "\r\n" in original else "\n"

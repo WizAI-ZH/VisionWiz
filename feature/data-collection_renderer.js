@@ -1,4 +1,6 @@
 const { ipcRenderer } = require('electron');
+const { getBoardCaptureSize, normalizeJpegCapture } = require('./capture-image-sizing');
+const { getCameraSourceStatus, applyCameraSourceStatus } = require('./camera-source-status');
 
 let currentPreviewUrl = null;
 let currentPreviewDataUrl = '';
@@ -7,6 +9,7 @@ let latestPreviewState = {
   authenticated: false,
   previewActive: false,
   supportsImageSyncUpload: false,
+  connectionType: null,
   error: '',
 };
 
@@ -30,12 +33,20 @@ const k210PreviewStop = document.getElementById('k210_preview_stop');
 const k210ImageSyncUpload = document.getElementById('k210_image_sync_upload');
 const k210ImageSyncUploadStatus = document.getElementById('k210_image_sync_upload_status');
 const k210ImageSyncResolution = document.getElementById('k210_image_sync_resolution');
+const wirelessPreviewProfileRow = document.getElementById('wireless_preview_profile_row');
+const wirelessPreviewProfile = document.getElementById('wireless_preview_profile');
+const wirelessPreviewProfileLabel = document.getElementById('wireless_preview_profile_label');
+const wirelessPreviewMetrics = document.getElementById('wireless_preview_metrics');
+const imageSyncQualityRow = document.getElementById('image_sync_quality_row');
+const imageSyncQuality = document.getElementById('image_sync_quality');
+const imageSyncQualityLabel = document.getElementById('image_sync_quality_label');
 const captureResolutionBadge = document.getElementById('capture_resolution_badge');
 const customResolutionRow = document.getElementById('custom_resolution_row');
 const customResolutionWidth = document.getElementById('custom_resolution_width');
 const customResolutionHeight = document.getElementById('custom_resolution_height');
 const customResolutionApply = document.getElementById('custom_resolution_apply');
 const previewSourceBadge = document.getElementById('preview_source_badge');
+const cameraSourceSelector = document.getElementById('cbtn');
 const burstModeCheckbox = document.getElementById('burst_mode');
 const burstCountInput = document.getElementById('burst_count');
 const imglist = document.getElementById('imglist');
@@ -68,6 +79,8 @@ const LOCAL_CAMERA_COMMON_RESOLUTIONS = [
 
 let burstCaptureState = null;
 let imageSyncUploading = false;
+let k210CaptureSavePending = false;
+let lastWirelessFrameAt = 0;
 let rawCaptureImageFiles = [];
 let captureImageFiles = [];
 let selectedCapturePaths = new Set();
@@ -85,6 +98,15 @@ let updatingResolutionOptions = false;
 
 function isUsingK210Preview() {
   return latestPreviewState.previewActive && !!currentPreviewDataUrl;
+}
+
+function refreshCameraSourceSelector() {
+  const status = getCameraSourceStatus({
+    board: latestPreviewState,
+    hasBoardFrame: !!currentPreviewDataUrl,
+    local: localCameraState,
+  }, current_locales_local || {});
+  applyCameraSourceStatus(cameraSourceSelector, status);
 }
 
 function parseResolution(value) {
@@ -177,6 +199,8 @@ function refreshPreviewSurface() {
   const usingK210 = isUsingK210Preview();
   const previewSurface = document.querySelector('.preview-surface');
 
+  refreshCameraSourceSelector();
+
   k210PreviewImage.style.display = usingK210 ? 'block' : 'none';
   video.style.display = usingK210 ? 'none' : 'block';
 
@@ -204,17 +228,36 @@ function refreshPreviewSurface() {
 }
 
 function buildCaptureFilePath(baseDir, className, index = 0) {
-  const stamp = `${Date.now()}_${index}`;
-  return `${baseDir}/${className}_${stamp}.jpg`;
+  const stamp = `${Date.now()}_${index}_${Math.random().toString(36).slice(2, 8)}`;
+  return `${baseDir}/${className}_${stamp}.${isUsingK210Preview() ? 'jpg' : 'png'}`;
 }
 
-function saveCapturedImage(imgData, filePath) {
-  ipcRenderer.send('savedir', filePath);
-  ipcRenderer.send('imgbase64', imgData);
+async function saveCapturedImage(imgData, filePath) {
+  let captureData = imgData;
+  let expectedWidth;
+  let expectedHeight;
+  if (isUsingK210Preview() && String(imgData || '').startsWith('data:image/jpeg;base64,')) {
+    // Some USB MPY and wireless agent versions return QVGA bytes regardless
+    // of the configured window. The requested capture size must be enforced
+    // on actual image pixels, not merely in the UI badge or file name.
+    const target = getBoardCaptureSize(latestPreviewState.width, latestPreviewState.height);
+    if (!target) throw new Error('The configured K210 capture resolution is not supported.');
+    const normalized = await normalizeJpegCapture(imgData, target.width, target.height);
+    captureData = normalized.dataUrl;
+    expectedWidth = target.width;
+    expectedHeight = target.height;
+  }
+  return ipcRenderer.invoke('save-captured-image', {
+    dataUrl: captureData,
+    filePath,
+    baseDirectory: document.getElementById('sender').value.trim(),
+    ...(expectedWidth && expectedHeight ? { expectedWidth, expectedHeight } : {}),
+  });
 }
 
 function finishBurstCapture(successCount) {
   burstCaptureState = null;
+  updatePreviewButtons(latestPreviewState);
   Notiflix.Notify.success(`${current_locales_local.captureSuccess} (${successCount})`);
 }
 
@@ -234,7 +277,7 @@ async function captureLocalBurst(sender, className, totalCount) {
     canvas.height = realH;
     context.drawImage(video, 0, 0, realW, realH);
     const imgData = canvas.toDataURL('image/png');
-    saveCapturedImage(imgData, buildCaptureFilePath(sender, className, index));
+    await saveCapturedImage(imgData, buildCaptureFilePath(sender, className, index));
     savedCount += 1;
     if (index < totalCount - 1) {
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -256,6 +299,7 @@ function startK210Burst(sender, className, totalCount) {
     savedCount: 0,
     lastFrameId: -1,
   };
+  updatePreviewButtons(latestPreviewState);
   Notiflix.Notify.info(`${current_locales_local.burst_capture_waiting || 'Waiting for preview frames...'} (${totalCount})`);
 }
 
@@ -305,7 +349,7 @@ async function handleCaptureClick() {
     }
 
     const path = buildCaptureFilePath(sender, className);
-    saveCapturedImage(imgData, path);
+    await saveCapturedImage(imgData, path);
     Notiflix.Notify.success(current_locales_local.captureSuccess);
   } catch (err) {
     console.error('Capture failed:', err);
@@ -837,6 +881,7 @@ function revokePreviewUrl() {
 function resetPreviewImage() {
   if (burstCaptureState && burstCaptureState.source === 'k210') {
     burstCaptureState = null;
+    updatePreviewButtons(latestPreviewState);
   }
   revokePreviewUrl();
   currentPreviewDataUrl = '';
@@ -846,11 +891,93 @@ function resetPreviewImage() {
 
 function getPreviewStatusText(state) {
   if (!current_locales_local) return 'K210 preview';
-  if (state.error) return `${current_locales_local.k210_preview_error}: ${state.error}`;
-  if (state.previewActive) return current_locales_local.k210_preview_status_streaming;
-  if (state.authenticated) return current_locales_local.k210_preview_status_ready;
+  const prefix = state.connectionType === 'wireless'
+    ? `${current_locales_local.wireless_device || 'Wireless VESIBIT'} · `
+    : '';
+  if (state.connectionType === 'wireless' && state.deviceMode === 'model') {
+    return `${prefix}${current_locales_local.wireless_model_running || '模型正在威智板上运行，可以切换至图片同传模式'}`;
+  }
+  if (state.upgradeRequired) return current_locales_local.wireless_upgrade_required || 'Upgrade wireless firmware to use preview and uploads.';
+  if (state.error) return `${prefix}${current_locales_local.k210_preview_error}: ${state.error}`;
+  if (state.previewActive) return `${prefix}${current_locales_local.k210_preview_status_streaming}`;
+  if (state.authenticated) return `${prefix}${current_locales_local.k210_preview_status_ready}`;
   if (state.connected) return current_locales_local.k210_preview_status_wait_auth;
   return current_locales_local.k210_preview_status_wait_auth;
+}
+
+function refreshWirelessPreviewControls(state) {
+  const isWireless = state.connectionType === 'wireless' && state.connected;
+  const isUsb = state.connected && state.connectionType !== 'wireless'
+    && state.connectionType !== 'wireless-legacy';
+  // Both transports use the same K210 JPEG compressor. Wireless presets
+  // also have an automatic JPEG quality (18/25/40) for their FPS targets.
+  if (imageSyncQualityRow) imageSyncQualityRow.style.display = isWireless || isUsb ? 'block' : 'none';
+  if (imageSyncQuality) {
+    imageSyncQuality.disabled = !(isWireless || isUsb) || !state.authenticated
+      || !state.previewActive || imageSyncUploading || !!burstCaptureState;
+    const automatic = imageSyncQuality.querySelector('option[value="auto"]');
+    if (automatic) automatic.hidden = !isWireless;
+    imageSyncQuality.value = isWireless
+      ? (['35', '50'].includes(state.previewQualityMode) ? state.previewQualityMode : 'auto')
+      : (Number(state.quality) >= 50 ? '50' : '35');
+    const translations = current_locales_local || {};
+    if (imageSyncQualityLabel) {
+      imageSyncQualityLabel.textContent = translations.image_sync_quality_label
+        || '图传 JPEG 画质（USB / 无线通用）';
+    }
+    for (const item of imageSyncQuality.options) {
+      item.textContent = item.value === 'auto'
+        ? (translations.image_sync_quality_auto || '自动 · 跟随无线速度档位（JPEG 18–40）')
+        : item.value === '50'
+          ? (translations.image_sync_quality_clear || '清晰优先 · JPEG 50（文件更大，帧率可能降低）')
+          : (translations.image_sync_quality_fast || '流畅优先 · JPEG 35');
+    }
+  }
+  if (wirelessPreviewProfileRow) wirelessPreviewProfileRow.style.display = isWireless ? 'block' : 'none';
+  if (wirelessPreviewProfile) {
+    wirelessPreviewProfile.disabled = imageSyncUploading || !state.authenticated;
+    if (['quality', 'balanced', 'smooth'].includes(state.previewProfile)) {
+      wirelessPreviewProfile.value = state.previewProfile;
+    }
+    const translations = current_locales_local || {};
+    const options = {
+      quality: translations.wireless_preview_profile_quality || '画质优先 · 目标 3 FPS',
+      balanced: translations.wireless_preview_profile_balanced || '均衡 · 目标 6 FPS',
+      smooth: translations.wireless_preview_profile_smooth || '流畅优先 · 目标 10 FPS',
+    };
+    for (const option of wirelessPreviewProfile.options) {
+      if (options[option.value]) option.textContent = options[option.value];
+    }
+    if (wirelessPreviewProfileLabel) {
+      wirelessPreviewProfileLabel.textContent = translations.wireless_preview_profile_label
+        || '无线图传速度（实际 FPS 以测试为准）';
+    }
+  }
+  if (!wirelessPreviewMetrics) return;
+  const visible = isWireless && state.previewActive;
+  wirelessPreviewMetrics.style.display = visible ? 'inline-flex' : 'none';
+  if (!visible) {
+    wirelessPreviewMetrics.textContent = '';
+    return;
+  }
+  const translations = current_locales_local || {};
+  const target = Number(state.fps) || 6;
+  const received = Number(state.receivedFrames) || 0;
+  const stalled = lastWirelessFrameAt > 0 && Date.now() - lastWirelessFrameAt > 3000;
+  const actual = stalled ? '0.0' : received > 1 && Number.isFinite(Number(state.actualFps))
+    ? Number(state.actualFps).toFixed(1) : '--';
+  const speed = stalled ? '0.0' : received > 1 && Number.isFinite(Number(state.transferKBps))
+    ? Number(state.transferKBps).toFixed(1) : '--';
+  const jpeg = received > 0 && Number.isFinite(Number(state.averageJPEGKB))
+    ? Number(state.averageJPEGKB).toFixed(1) : '--';
+  const baud = Number(state.linkBaud) || 115200;
+  const lost = Math.max(0, Number(state.missedFrames) || 0);
+  const targetText = translations.wireless_preview_target_fps || '目标';
+  const actualText = translations.wireless_preview_actual_fps || '实际';
+  const jpegText = translations.wireless_preview_average_jpeg || 'JPEG 平均';
+  const lostText = translations.wireless_preview_lost_frames || '丢帧';
+  wirelessPreviewMetrics.textContent =
+    `${targetText} ${target} FPS · ${actualText} ${actual} FPS · ${speed} KB/s · ${jpegText} ${jpeg} KB · UART ${baud} · ${lostText} ${lost}`;
 }
 
 function updatePreviewButtons(state) {
@@ -863,14 +990,19 @@ function updatePreviewButtons(state) {
     k210ImageSyncUpload.classList.toggle('btn-secondary', unsupportedConnectedPort);
     k210ImageSyncUpload.textContent = unsupportedConnectedPort
       ? (current_locales_local?.k210_image_sync_upload_vesibit_only || 'Upload Image Sync Program (Only VESIBIT is supported)')
-      : (current_locales_local?.k210_image_sync_upload || 'Upload Image Sync Program');
+      : (state.connectionType === 'wireless'
+        ? (current_locales_local?.wireless_image_sync_enable || '开启无线图片同传')
+        : (current_locales_local?.k210_image_sync_upload || 'Upload Image Sync Program'));
     k210ImageSyncUpload.title = unsupportedConnectedPort
-      ? (current_locales_local?.k210_image_sync_ch340_required || 'Image sync upload requires a CH340 K210 controller port.')
+      ? (state.upgradeRequired
+        ? (current_locales_local?.wireless_upgrade_required || 'Upgrade wireless firmware to use upload.')
+        : (current_locales_local?.k210_image_sync_ch340_required || 'Image sync upload requires a CH340 K210 controller port.'))
       : '';
   }
   if (k210ImageSyncResolution) {
-    k210ImageSyncResolution.disabled = imageSyncUploading;
+    k210ImageSyncResolution.disabled = imageSyncUploading || !!burstCaptureState;
   }
+  refreshWirelessPreviewControls(state);
 }
 
 function updatePreviewState(partial = {}) {
@@ -956,7 +1088,9 @@ function setImageSyncUploadStatus(payload = {}) {
 async function startImageSyncUpload() {
   if (imageSyncUploading) return;
   if (!latestPreviewState.supportsImageSyncUpload) {
-    Notiflix.Notify.warning(current_locales_local?.k210_image_sync_ch340_required || 'Image sync upload requires a CH340 K210 controller port.');
+    Notiflix.Notify.warning(latestPreviewState.upgradeRequired
+      ? (current_locales_local?.wireless_upgrade_required || 'Upgrade wireless firmware to use upload.')
+      : (current_locales_local?.k210_image_sync_ch340_required || 'Image sync upload requires a CH340 K210 controller port.'));
     return;
   }
   imageSyncUploading = true;
@@ -978,7 +1112,9 @@ async function startImageSyncUpload() {
       status: 'done',
       percent: 100,
     });
-    Notiflix.Notify.success(current_locales_local.k210_image_sync_upload_done || 'Image sync program uploaded.');
+    Notiflix.Notify.success(latestPreviewState.connectionType === 'wireless'
+      ? (current_locales_local?.wireless_image_sync_started || '无线图片同传已开启')
+      : (current_locales_local.k210_image_sync_upload_done || 'Image sync program uploaded.'));
   } catch (error) {
     setImageSyncUploadStatus({
       status: 'failed',
@@ -992,9 +1128,15 @@ async function startImageSyncUpload() {
 }
 
 function confirmImageSyncUpload() {
-  const title = current_locales_local.k210_image_sync_upload_confirm_title || 'Upload image sync program?';
-  const message = current_locales_local.k210_image_sync_upload_confirm_message
-    || 'This will back up and replace the controller main.py, then restart and reconnect preview.';
+  const isWireless = latestPreviewState.connectionType === 'wireless';
+  const title = isWireless
+    ? (current_locales_local?.wireless_image_sync_confirm_title || '开启无线图片同传？')
+    : (current_locales_local.k210_image_sync_upload_confirm_title || 'Upload image sync program?');
+  const message = isWireless
+    ? (current_locales_local?.wireless_image_sync_confirm_message
+      || '直接启动摄像头；如模型测试正在运行，将先停止模型。不会重复烧录或重启威智板。')
+    : (current_locales_local.k210_image_sync_upload_confirm_message
+      || 'This will back up and replace the controller main.py, then restart and reconnect preview.');
   const uploadButton = current_locales_local.k210_image_sync_upload_confirm_button || 'Upload';
   const cancelButton = current_locales_local.k210_image_sync_upload_cancel_button
     || current_locales_local.update_cancel_button
@@ -1034,7 +1176,7 @@ if (k210ImageSyncUpload) {
 
 if (k210ImageSyncResolution) {
   k210ImageSyncResolution.addEventListener('change', async () => {
-    if (imageSyncUploading || updatingResolutionOptions) return;
+    if (imageSyncUploading || burstCaptureState || updatingResolutionOptions) return;
     const mode = getResolutionMode();
 
     if (mode !== 'k210') {
@@ -1073,6 +1215,55 @@ if (k210ImageSyncResolution) {
     } catch (error) {
       updatePreviewState({ error: error.message });
       Notiflix.Notify.failure(error.message);
+    }
+  });
+}
+
+if (wirelessPreviewProfile) {
+  wirelessPreviewProfile.addEventListener('change', async () => {
+    if (latestPreviewState.connectionType !== 'wireless' || imageSyncUploading) return;
+    const previous = latestPreviewState.previewProfile || 'balanced';
+    wirelessPreviewProfile.disabled = true;
+    try {
+      const state = await ipcRenderer.invoke('set-wireless-preview-profile', wirelessPreviewProfile.value);
+      updatePreviewState(state || {});
+    } catch (error) {
+      wirelessPreviewProfile.value = previous;
+      Notiflix.Notify.failure(error.message);
+    } finally {
+      refreshWirelessPreviewControls(latestPreviewState);
+    }
+  });
+}
+
+if (imageSyncQuality) {
+  imageSyncQuality.addEventListener('change', async () => {
+    if (!latestPreviewState.connected || !latestPreviewState.authenticated
+      || !latestPreviewState.previewActive || imageSyncUploading || burstCaptureState
+      || latestPreviewState.connectionType === 'wireless-legacy') return;
+    const isWireless = latestPreviewState.connectionType === 'wireless';
+    const previous = isWireless
+      ? (['35', '50'].includes(latestPreviewState.previewQualityMode)
+        ? latestPreviewState.previewQualityMode : 'auto')
+      : (Number(latestPreviewState.quality) >= 50 ? '50' : '35');
+    const selection = imageSyncQuality.value;
+    imageSyncQuality.disabled = true;
+    try {
+      const resolution = getResolutionKey(latestPreviewState.width, latestPreviewState.height);
+      if (!BOARD_IMAGE_SYNC_RESOLUTIONS.includes(resolution)
+        || !['35', '50', ...(isWireless ? ['auto'] : [])].includes(selection)) {
+        throw new Error('Invalid image-sync quality or resolution.');
+      }
+      const settings = { resolution, fps: Number(latestPreviewState.fps) || 2 };
+      if (isWireless) settings.previewQualityMode = selection;
+      else settings.quality = Number(selection);
+      const result = await ipcRenderer.invoke('set-k210-image-sync-params', settings);
+      updatePreviewState(result || {});
+    } catch (error) {
+      imageSyncQuality.value = previous;
+      Notiflix.Notify.failure(error.message || String(error));
+    } finally {
+      refreshWirelessPreviewControls(latestPreviewState);
     }
   });
 }
@@ -1118,30 +1309,47 @@ ipcRenderer.on('k210-image-sync-upload-progress', (_event, payload = {}) => {
   setImageSyncUploadStatus(payload);
 });
 
-ipcRenderer.on('k210-preview-frame', (_event, payload) => {
+ipcRenderer.on('k210-preview-frame', async (_event, payload) => {
   if (!payload || !payload.jpegBase64) return;
-  console.log('[K210 PREVIEW][RENDERER FRAME]', payload.frameId, payload.width, payload.height);
+  const hadPreviewFrame = !!currentPreviewDataUrl;
+  lastWirelessFrameAt = Date.now();
   currentPreviewDataUrl = `data:image/jpeg;base64,${payload.jpegBase64}`;
   revokePreviewUrl();
   currentPreviewUrl = currentPreviewDataUrl;
   k210PreviewImage.src = currentPreviewDataUrl;
-  updatePreviewState({
-    previewActive: true,
-    error: '',
-  });
+  // A JPEG only needs an image update; full layout/controls are handled by
+  // aggregated (~1/sec) performance status events, not every frame.
+  if (!latestPreviewState.previewActive || latestPreviewState.error) {
+    updatePreviewState({ previewActive: true, error: '' });
+  } else if (!hadPreviewFrame) {
+    // A camera is streaming only after the FIRST real JPEG, not just when
+    // the board reports previewActive. Avoid DOM updates for every frame.
+    refreshCameraSourceSelector();
+  }
 
-  if (burstCaptureState && burstCaptureState.source === 'k210') {
-    if (burstCaptureState.lastFrameId === payload.frameId) {
+  if (burstCaptureState && burstCaptureState.source === 'k210' && !k210CaptureSavePending) {
+    const job = burstCaptureState;
+    if (job.lastFrameId === payload.frameId) {
       return;
     }
-    burstCaptureState.lastFrameId = payload.frameId;
-    saveCapturedImage(
-      currentPreviewDataUrl,
-      buildCaptureFilePath(burstCaptureState.sender, burstCaptureState.className, burstCaptureState.savedCount)
-    );
-    burstCaptureState.savedCount += 1;
-    if (burstCaptureState.savedCount >= burstCaptureState.totalCount) {
-      finishBurstCapture(burstCaptureState.savedCount);
+    job.lastFrameId = payload.frameId;
+    k210CaptureSavePending = true;
+    try {
+      await saveCapturedImage(
+        currentPreviewDataUrl,
+        buildCaptureFilePath(job.sender, job.className, job.savedCount)
+      );
+      if (burstCaptureState !== job) return;
+      job.savedCount += 1;
+      if (job.savedCount >= job.totalCount) {
+        finishBurstCapture(job.savedCount);
+      }
+    } catch (error) {
+      burstCaptureState = null;
+      updatePreviewButtons(latestPreviewState);
+      Notiflix.Notify.failure(error.message || String(error));
+    } finally {
+      k210CaptureSavePending = false;
     }
   }
 });

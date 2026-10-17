@@ -1,5 +1,7 @@
 ﻿const { ipcRenderer } = require('electron');
 const { FitAddon } = require('xterm-addon-fit');
+const { requestModelTestName } = require('./model-test-name-dialog');
+let modelTestUploadBusy = false;
 const { WebLinksAddon } = require('xterm-addon-web-links');
 const echarts = require('echarts');
 const { setupXtermCopyBehavior } = require('./xterm-copy-helper');
@@ -294,15 +296,24 @@ document.getElementById('train_history_dir_cls').addEventListener('click', funct
     ipcRenderer.send('update_train_history_list', '')
 });
 
-document.getElementById('test_model_button').addEventListener('click', function () {
+document.getElementById('test_model_button').addEventListener('click', async function () {
+    const runName = current_tab_dir;
+    this.disabled = true;
+    try {
+        if (!await requestModelTestName(ipcRenderer, runName, current_locales)) return;
     //鎸夐挳鎸変笅鏃惰繘琛屾ā鍨嬫祴璇?
     //鑾峰彇鍓嶇鐨勬祴璇曞浘鐗囪矾寰?
     let test_dir = document.getElementById('test_img_dir_cls').value
     //褰撳墠妯″瀷鐨勮缁冭祫鏂欒矾寰?
-    let dir = `${process.cwd()}/trainOutput/${current_tab_dir}`
+    let dir = `${process.cwd()}/trainOutput/${runName}`
     test_model(dir, test_dir)
     //鏇存柊娴嬭瘯缁撴灉鍒拌鎯呯獥鍙ｄ腑
-    ipcRenderer.send('update_test_result_cls', current_tab_dir)
+    ipcRenderer.send('update_test_result_cls', runName)
+    } catch (error) {
+        Notiflix.Notify.failure(error.message);
+    } finally {
+        this.disabled = false;
+    }
 });
 
 function getModelTestUploadText(key, fallback) {
@@ -313,10 +324,14 @@ async function refreshModelTestUploadButton() {
     const button = document.getElementById('upload_model_test_button');
     const status = document.getElementById('upload_model_test_status');
     if (!button) return;
+    if (modelTestUploadBusy) {
+        button.disabled = true;
+        return;
+    }
     button.textContent = getModelTestUploadText('upload_model_test_button', 'Upload Test Program');
     try {
         const state = await ipcRenderer.invoke('get-k210-preview-state');
-        const enabled = !!state.connected && !!state.supportsImageSyncUpload && !!current_tab_dir;
+        const enabled = !!state.connected && !!state.supportsModelTestUpload && !!current_tab_dir;
         button.disabled = !enabled;
         if (status) {
             status.textContent = enabled ? '' : getModelTestUploadText('upload_model_test_vesibit_only', 'Connect VESIBIT first');
@@ -328,22 +343,31 @@ async function refreshModelTestUploadButton() {
 }
 
 document.getElementById('upload_model_test_button')?.addEventListener('click', async function () {
+    if (modelTestUploadBusy) return;
     if (!current_tab_dir) {
         Notiflix.Notify.warning(getModelTestUploadText('upload_model_test_no_record', 'Please open a training record first.'));
         return;
     }
+    const runName = current_tab_dir;
     const status = document.getElementById('upload_model_test_status');
+    modelTestUploadBusy = true;
     this.disabled = true;
     if (status) status.textContent = getModelTestUploadText('upload_model_test_preparing', 'Preparing upload');
     let finalStatus = '';
     try {
-        await ipcRenderer.invoke('upload-k210-model-test-program', { dir: current_tab_dir });
-        finalStatus = getModelTestUploadText('upload_model_test_done', 'Test program uploaded');
-        Notiflix.Notify.success(getModelTestUploadText('upload_model_test_done', 'Test program uploaded'));
+        const modelName = await requestModelTestName(ipcRenderer, runName, current_locales);
+        if (!modelName) return;
+        const result = await ipcRenderer.invoke('upload-k210-model-test-program', { dir: runName, modelName });
+        const isWireless = result?.state?.connectionType === 'wireless';
+        finalStatus = isWireless
+            ? getModelTestUploadText('wireless_model_test_running', 'Model test running on the K210')
+            : getModelTestUploadText('upload_model_test_done', 'Test program uploaded');
+        Notiflix.Notify.success(finalStatus);
     } catch (error) {
         finalStatus = error.message;
         Notiflix.Notify.failure(error.message);
     } finally {
+        modelTestUploadBusy = false;
         await refreshModelTestUploadButton();
         if (status && finalStatus) status.textContent = finalStatus;
     }

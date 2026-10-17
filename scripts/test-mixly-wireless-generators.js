@@ -46,7 +46,7 @@ assert.equal(generate('visionwiz_wireless_configure'),
 assert.equal(generate('visionwiz_wireless_stop'),
   '_visionwiz_wireless.wireless_preview_stop()\n');
 assert.equal(generate('visionwiz_wireless_start', { values: {} }),
-  '_visionwiz_wireless.wireless_preview_start(320, 240, 35, 2, True)\n');
+  '_visionwiz_wireless.wireless_preview_start(320, 240, 25, 6, True)\n');
 assert.equal(generate('visionwiz_wireless_active')[0],
   '_visionwiz_wireless.wireless_preview_active()');
 assert.equal(generate('visionwiz_wireless_status')[0],

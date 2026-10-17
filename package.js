@@ -176,9 +176,12 @@ function calcInputsSignatureForUnpacked() {
   const inputs = [
     path.join(projectRoot, 'package.json'),
     path.join(projectRoot, 'package-lock.json'), // 或 yarn.lock/pnpm-lock.yaml
+    path.join(projectRoot, 'package.js'),
     // 你的打包入口/资源（示例）
     path.join(projectRoot, 'main_bootstrap.js'),
     path.join(projectRoot, 'utils_protected'),
+    path.join(projectRoot, 'tools', 'visionwiz_wireless', 'VESIBIT', 'esp32_s3', 'dist'),
+    path.join(projectRoot, 'tools', 'visionwiz_wireless', 'VESIBIT', 'k210', 'payload'),
     // 如果有 electron-builder.yml，也应把它加入
   ];
 

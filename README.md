@@ -4,6 +4,34 @@ VisionWiz is a desktop AI tool focused on K210 and lightweight vision model work
 
 VisionWiz 是一款面向 K210 与轻量视觉模型工作流的桌面 AI 工具，集成图像采集、数据标注、图像分类训练、目标检测训练、模型测试与结果查看等能力。
 
+## 1.8.0 Update
+
+### 中文
+
+- 图片采集页现会根据实际图像来源更新摄像头选择按钮：收到 VESIBIT USB/无线图传画面时显示绿色「VESIBIT 摄像头同传中」；停止图传或断开时自动恢复，仍可选择电脑摄像头。
+- USB 与无线图传共用 JPEG 35/50 画质选项，无线额外保留随速度档位变化的自动画质；修复不同分辨率抓拍统一保存为 320x240 的问题，同时优化有线摄像头自动增益和白平衡。
+- 图像分类及目标检测的混合分辨率训练进一步统一模型输入尺寸与量化样本；检测 XML 坐标随缩放同步换算，避免旧预处理覆盖原始图片或标注文件。
+- 优化旧版威智板 USB AUTH 回应兼容性，修复杂音/换行干扰下收到正确签名却不能完成验证的情况，继续严格校验签名；该修复仍需实机复测。
+- 图像分类和目标检测测试前新增模型命名弹窗，按训练记录记住名称；模型名限 24 个 ASCII 字符，以字母开头，支持数字、下划线及连字符，并禁止保留文件名。
+- 上传测试程序时，SD 卡中的 KModel 文件名与 main.py 加载路径同步使用用户名称，自定义名称继续使用高速上传和自动降级。
+- 修复图像分类选择 320x224 等输入尺寸后仍使用默认 224x224 建模的问题，导出 boot.py 的摄像头窗口同步使用所选尺寸；旧模型需重新训练。
+- 加入 GPT-6.1 开发入口、项目交接和发布流程文档，记录构建方式、设备身份和验证边界。
+- 包含实验性 VESIBIT 无线连接与初始化入口、独立 ESP32-S3 兼容固件及 K210 代理；保留旧协议，使用用户 Wi-Fi 配置或设备唯一热点。完整无线真机链路仍需验收。
+
+### English
+
+- The capture-page camera selector now follows the actual image source: a green “VESIBIT Camera Streaming” label appears after a USB/wireless VESIBIT JPEG arrives, reverting when the feed stops or disconnects; local webcams remain selectable.
+- USB and wireless image sync share JPEG 35/50 quality options, while wireless retains automatic quality by FPS preset. Fixed capture files ignoring the requested resolution and improved automatic gain/white balance for wired K210 image sync.
+- Mixed-resolution classification/detection training now aligns model inputs and calibration samples; object-detection XML bounding boxes are scaled with the images without rewriting source files.
+- Improved backward compatibility with legacy K210 USB AUTH replies by handling additional serial output and line endings while keeping signature verification mandatory. Hardware revalidation is still needed.
+- Added model naming before classification and detection tests, with names remembered per training record. Names use up to 24 ASCII characters, start with a letter, allow digits, underscores and hyphens, and reject reserved filenames.
+- Model-test uploads use the selected name for both the SD-card KModel file and the main.py loading path. Named models retain fast uploads and automatic fallback.
+- Fixed classification training falling back to 224x224 despite selecting an input size such as 320x224, and aligned the exported boot.py camera window with the selected dimensions. Previously generated models need retraining.
+- Added GPT-6.1 development entry points, handoff notes and release instructions covering builds, device identity and verification limits.
+- Includes experimental VESIBIT wireless connection and initialization, isolated compatible ESP32-S3 firmware and a K210 agent. Legacy protocols are retained; Wi-Fi uses user settings or a unique device access point. Full wireless hardware acceptance is still pending.
+
+开发入口：[AGENTS.md](AGENTS.md)、[开发交接](docs/development-handoff.md)、[发布惯例](RELEASE_WORKFLOW.md)。
+
 ## 1.7.6 Update
 
 ### 中文

@@ -131,6 +131,20 @@
       font-size: 13px;
       text-align: center;
     }
+    .wireless-preview-metrics {
+      display: none;
+      align-items: center;
+      padding: 5px 11px;
+      min-height: 32px;
+      border-radius: 10px;
+      background: #e0f2fe;
+      color: #075985;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
+    }
+    #wireless_preview_profile_row { display: none; }
+    #image_sync_quality_row { display: none; }
 
     .preview-surface {
       position: relative;
@@ -518,6 +532,7 @@
             <div id="preview_source_badge" class="preview-source">Local Camera</div>
             <div id="k210_preview_status" class="preview-status">Waiting for authentication</div>
             <div id="capture_resolution_badge" class="capture-resolution">Output: --</div>
+            <div id="wireless_preview_metrics" class="wireless-preview-metrics" aria-label="Wireless preview performance"></div>
           </div>
         </div>
         <div class="preview-surface">
@@ -544,6 +559,22 @@
             <option value="224x224">224x224</option>
           </select>
           <label id="k210_image_sync_resolution_label" for="k210_image_sync_resolution">Image Sync Resolution</label>
+        </div>
+        <div id="wireless_preview_profile_row" class="form-floating">
+          <select class="form-select" id="wireless_preview_profile">
+            <option value="quality">画质优先 · 目标 3 FPS</option>
+            <option value="balanced" selected>均衡 · 目标 6 FPS</option>
+            <option value="smooth">流畅优先 · 目标 10 FPS</option>
+          </select>
+          <label id="wireless_preview_profile_label" for="wireless_preview_profile">无线图传速度（实际 FPS 以测试为准）</label>
+        </div>
+        <div id="image_sync_quality_row" class="form-floating">
+          <select class="form-select" id="image_sync_quality">
+            <option value="auto" hidden>自动 · 跟随无线速度档位</option>
+            <option value="35">流畅优先 · JPEG 35</option>
+            <option value="50">清晰优先 · JPEG 50（文件更大，帧率更低）</option>
+          </select>
+          <label id="image_sync_quality_label" for="image_sync_quality">图传 JPEG 画质（USB / 无线通用）</label>
         </div>
         <div id="custom_resolution_row" class="custom-resolution-row">
           <div class="form-floating">
