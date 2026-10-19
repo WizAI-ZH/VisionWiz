@@ -4,6 +4,22 @@ VisionWiz is a desktop AI tool focused on K210 and lightweight vision model work
 
 VisionWiz 是一款面向 K210 与轻量视觉模型工作流的桌面 AI 工具，集成图像采集、数据标注、图像分类训练、目标检测训练、模型测试与结果查看等能力。
 
+## 1.8.1 Update
+
+### 中文
+
+- 修复通过设备验证后可能不显示新版本更新弹窗的问题：当 GitHub 匿名 API 返回 403 限流、超时或短暂不可用时，自动从 GitHub 官方公开 Release 页面查询最新版及 Windows 安装包。
+- 更新检查失败时不再立即认定已检查完成；会在 15、45、120 秒后有限次数重试，成功后仅提示一次，不会因一次网络故障永久跳过本次启动的升级提示。
+- 备用检查会严格限定官方 GitHub 仓库、正式版本号及 Windows Setup 安装包链接，避免把无关下载链接当成更新。
+- 已通过 GitHub API 限流模拟、版本与下载地址校验、自动重试及官方公开页面在线检查；设备验证后真实安装版弹窗联调仍需验收。
+
+### English
+
+- Fixed a missing update prompt after successful device authentication: if the anonymous GitHub API is rate-limited (HTTP 403), times out, or becomes temporarily unavailable, VisionWiz checks the official public GitHub Release page for the latest installer.
+- Update checks are no longer permanently marked complete after a transient failure. Limited retries after 15, 45, and 120 seconds help recover without opening duplicate prompts.
+- The fallback strictly validates the official repository, stable version tag, and Windows Setup asset link.
+- Verified with rate-limit simulations, version/download-link checks, retry tests, and a live public GitHub Release lookup. End-to-end verification with an installed app and actual device authentication remains pending.
+
 ## 1.8.0 Update
 
 ### 中文

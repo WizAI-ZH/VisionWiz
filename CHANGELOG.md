@@ -4,6 +4,22 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.8.1 - 2026-10-19
+
+### 中文
+
+- 修复设备验证通过后因 GitHub 匿名 API 403 限流、超时或临时不可用而不显示更新提示的问题：失败时改查 GitHub 官方公开 Release 页面，识别最新版和安装包。
+- 更新检查在首次失败后不再永久停止；增加 15、45、120 秒有限重试，验证成功后仅显示一次更新弹窗。
+- 备用检查限定官方仓库、稳定版本 Tag、匹配版本的 Windows Setup 安装包，避免错误更新链接。
+- 已通过 API 限流模拟、备用页面在线查询、重试和链接校验；真实安装版与设备验证的完整联调仍需复验。
+
+### English
+
+- Fixed silent update-prompt failures after device authentication when GitHub's anonymous API is rate-limited (HTTP 403), times out, or is temporarily unavailable; the updater now falls back to the official public GitHub Release page.
+- Added bounded retries after 15, 45, and 120 seconds instead of treating a failed update check as permanently complete; the update prompt still appears only once.
+- Validated official repository URLs, stable version tags, and matching Windows Setup installers to avoid incorrect update links.
+- Passed API rate-limit simulations, live Release-page lookup, retry, and URL checks; the installed-app and real-device authentication flow still needs end-to-end verification.
+
 ## 1.8.0 - 2026-10-16
 
 ### 中文
