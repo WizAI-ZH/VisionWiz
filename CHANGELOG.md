@@ -4,6 +4,26 @@ All notable changes to VisionWiz are documented in this file.
 
 VisionWiz 的重要变更都会记录在此文件中。
 
+## 1.8.2 - 2026-10-22
+
+### 中文
+
+- 优化模型测试上传：按板上 SD 卡模型内容校验，重复模型无需再次传输；同内容异名模型可安全复用，并同步更新测试程序引用路径。
+- 增强上传完成后的内容确认，优化程序上传稳定性及部分上传失败、中断后的恢复处理。
+- 图像采集预览增加实时 FPS，新增 JPEG 85 极清画质档位，改进 224×224 等尺寸的摄像头硬件取景及图传状态。
+- 改善摄像头重新连接后的预览启动等待，减少初始化期间的错误提示。
+- 更新助手增加直接可点击的重试、文件夹、取消与确定按钮，并改善下载中断后的安装包释放和续传。
+- 已完成本机及实体威智板 USB 模型复用测试；其他连接方式和硬件配置的表现仍以实际测试为准。
+
+### English
+
+- Improved model-test uploads with SD-card content verification. Identical models are reused without retransmission, including when filenames differ; the test program's model path follows the reused file.
+- Strengthened post-upload content checks and improved program-upload reliability and recovery from interrupted transfers.
+- Added live FPS to the camera preview, a JPEG 85 highest-quality setting, and improved native camera framing and stream state for resolutions such as 224×224.
+- Improved camera preview startup after reconnection to reduce false initialization errors.
+- Added clickable Retry, Open Folder, Cancel, and OK buttons to the update helper, with better installer-file release and resumable downloads on cancellation.
+- Verified USB model reuse on a real controller and completed local regression tests; results on other devices and connections may vary.
+
 ## 1.8.1 - 2026-10-19
 
 ### 中文

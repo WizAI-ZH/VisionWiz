@@ -1,6 +1,6 @@
 {
   "name": "VisionWiz",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "description": "VisionWiz AI toolset",
   "main": "main_bootstrap.js",
   "author": "VisionWiz Team",
@@ -260,7 +260,7 @@
   },
   "buildInfo": {
     "productName": "VisionWiz",
-    "date": "2026-10-19",
+    "date": "2026-10-22",
     "copyright": "(C) 2025 VisionWiz Team"
   }
 }

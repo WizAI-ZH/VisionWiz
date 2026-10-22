@@ -4,6 +4,26 @@ VisionWiz is a desktop AI tool focused on K210 and lightweight vision model work
 
 VisionWiz 是一款面向 K210 与轻量视觉模型工作流的桌面 AI 工具，集成图像采集、数据标注、图像分类训练、目标检测训练、模型测试与结果查看等能力。
 
+## 1.8.2 Update
+
+### 中文
+
+- 优化模型测试上传：当威智板 SD 卡已有内容完全相同的 KModel 时，即使模型名称不同，也可以复用现有文件，避免重复传输。上传完成后增加文件内容校验。
+- 优化程序上传稳定性，改善部分上传失败、传输中断后的恢复流程，以及 USB 摄像头图传程序的兼容性。
+- 图像采集预览窗口右上角新增实时 FPS 显示；USB/无线图传增加 JPEG 85 极清画质选项，改善 224×224 等分辨率的摄像头取景方式。
+- 改进图传预览启动等待和摄像头重新连接体验，降低摄像头初始化期间的误报。
+- 更新助手增加可点击的重试、打开文件夹、取消和确定按钮；中断下载时主动释放安装包文件，保留断点续传能力。
+- 本版通过实体威智板 USB 模型去重测试和本地上传/更新助手回归测试；不同型号硬件及网络环境仍建议按实际情况验证。
+
+### English
+
+- Improved model-test uploads: an identical KModel already present on the board's SD card is reused even when its filename differs, avoiding unnecessary transfers. Added post-upload file-content verification.
+- Improved program-upload reliability and recovery from interrupted transfers, including compatibility fixes for USB camera streaming programs.
+- Added a live FPS indicator to the top-right of the capture preview, a JPEG 85 highest-quality option for USB/wireless feeds, and improved native camera framing for resolutions such as 224×224.
+- Improved preview startup/reconnect handling to reduce false errors while the camera initializes.
+- Added clickable Retry, Open Folder, Cancel, and OK controls to the update helper. Cancelling a download now releases the installer file while preserving resumable downloads.
+- Validated USB model reuse on a real controller and completed local upload/updater regression tests; other hardware and network configurations may still require device-specific testing.
+
 ## 1.8.1 Update
 
 ### 中文
